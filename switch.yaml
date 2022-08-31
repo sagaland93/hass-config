@@ -1,0 +1,36 @@
+# switch:
+
+  - platform: wake_on_lan
+    name: wol_pc
+    host: !secret wol_hst
+    mac: !secret wol_mac
+
+  - platform: wake_on_lan
+    name: wol_plex
+    host: !secret wol_plex_hst
+    mac: !secret wol_plex_mac
+
+  - platform: template
+    switches:
+      office_pc:
+        friendly_name: Office PC
+        icon_template: ios:desktopcomputer
+        value_template: >
+          {{ is_state('switch.wake_on_lan', 'on') }}
+        turn_on:
+          - service: switch.toggle
+            target:
+              entity_id: switch.wake_on_lan
+        turn_off:
+          - choose:
+            - conditions:
+                - condition: state
+                  entity_id: input_boolean.computer_lock
+                  state: 'on'
+              sequence:
+                - service: browser_mod.toast
+                  data:
+                    duration: 4000
+                    message: PC is already locked
+            default:
+              - service: script.office_lock_pc

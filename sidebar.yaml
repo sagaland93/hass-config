@@ -1,0 +1,176 @@
+- sensor:
+    - unique_id: sidebar
+      state: template
+      attributes:
+        time: >
+          {% set hours = now().strftime('%H') %}
+          {% set minutes = now().strftime('%M') %}
+          <span class="time">
+            {{ hours }}<span class="time-colon">:</span>{{ minutes }}
+          </span>
+        date: |
+          <span class="date">
+            <font color='#6a7377'><b>
+              {{- state_attr('sensor.fancy_date', 'week_day') }}<br>
+              {{- state_attr('sensor.fancy_date', 'short_date') }}
+            </b></font>
+          </span>
+        greet: |
+          <span class="greet">
+            {%- set time = now().hour %}
+            {%- if time <= 1 -%} <b>Good night</b> {{'💤'}}
+            {%- elif time <= 3 -%} <b>Good night</b> {{'😴'}}
+            {%- elif time <= 5 -%} <b>Good night</b> {{'😪'}}
+            {%- elif time <= 7 -%} <b>Good morning</b> {{'🧠'}}
+            {%- elif time <= 9 -%} <b>Good morning</b> {{'🤟'}}
+            {%- elif time <= 10 -%} <b>Good morning</b> {{'😘'}}
+            {%- elif time <= 13 -%} <b>Good day</b> {{'😍'}}
+            {%- elif time <= 15 -%} <b>Good day</b> {{'😏'}}
+            {%- elif time <= 17 -%} <b>Good day</b> {{'🖖'}}
+            {%- elif time <= 19 -%} <b>Good evening</b> {{'🤩'}}
+            {%- elif time <= 22 -%} <b>Good evening</b> {{'🤗'}}
+            {%- elif time <= 23 -%} <b>Good night</b> {{'🤫'}}
+            {%- else %} <b>Good night</b> {{'🤫'}}
+            {%- endif -%}
+          </span>
+        weather: |
+          {%- set temperature = states('sensor.netatmo_hjemme_weather_station_outdoor_module_temperature') %}
+          {%- set apparent = states('sensor.netatmo_hjemme_weather_station_outdoor_module_temperature') | round %}
+          {%- set precip = states('sensor.pirateweather_precip_probability') | round %}
+          {% if states.sensor.netatmo_hjemme_weather_station_outdoor_module_temperature.state %}
+            {%- if temperature | float(default=0) <= 0.0 -%}
+              It feels like {{ apparent }}° with {{ precip }}% risk for snow {{'\u2744\uFE0F'}}
+            {%- elif temperature | float(default=0) > 0.0 -%}
+              It feels like {{ apparent }}° with {{ precip }}% risk for rain {{ '\u2614\uFE0F' if precip > 30 }}
+            {%- endif %}
+          {%- else %}
+            Can't gather weather info...
+          {%- endif %}
+        occasion: |
+          {%- set occasion = states.sensor.special_occasions.state %}
+          {%- if occasion == "New year" -%} {{'🎉'}} <b>Happy new year!!</b>
+          {%- elif occasion == "Christmas" -%} {{'🎄'}} <b>Merry Christmas!</b> {{'🎅🏼'}}
+          {%- elif "Pappa" in occasion -%} {{'🎂'}} <b>Special occasion!</b><br>It's dad's birthday <strong>today</strong>! He turns {{now().strftime('%Y') | round(0) - 1961}}</b> {{'👴'}}
+          {%- elif "Mamma" in occasion -%} {{'🎂'}} <b>Special occasion!</b><br>It's mom's birthday <strong>today</strong>! She turns {{now().strftime('%Y') | round(0) - 1968}}</b> {{'👵'}}
+          {%- elif "Birthday" in occasion -%} {{'🎂'}} <b>Happy birthday, André!!</b>
+          {%- elif "Constitution" in occasion -%} {{'🤝🏼'}} <b>Happy birthday, Norway!</b>
+          {%- elif "Mother" in occasion -%} {{'🎖️'}} <b>Remember Mother's day's today!</b>
+          {%- elif "Father" in occasion -%} {{'🎖️'}} <b>Remember Father's day's today!</b>
+          {%- endif %}
+        active: |
+          {%- set lights = [
+            states.light.kommode,
+            states.light.hue_color_hallway_lamp,
+            states.light.vitrineskap,
+            states.light.ecodim_dimmer_downlights_entrance,
+            states.light.ecodim_dimmer_kitchen_cabinets,
+            states.light.ecodim_dimmer_downlights_kitchen,
+            states.light.ecodim_dimmer_downlights_hallway,
+            states.light.ecodim_dimmer_downlights_stairs,
+            states.light.ecodim_dimmer_ceiling_dining_room,
+            states.light.ecodim_dimmer_downlights_dining_room,
+            states.light.ecodim_dimmer_downlights_living_room,
+            states.light.ecodim_dimmer_downlights_bathroom,
+            states.light.ecodim_dimmer_downlights_wc,
+            states.light.ecodim_dimmer_ceiling_downstairs,
+            states.light.hue_fair_ceiling_office,
+            states.light.superman_symbol,
+            states.light.hue_play_1,
+            states.light.hue_play_2,
+            states.light.ecodim_dimmer_ceiling_bedroom
+          ] %}
+
+          {%- set switches = [
+            states.media_player.lg_tv_77,
+            states.media_player.lg_tv_55,
+            states.switch.office_pc
+          ] %}
+
+          {%- set media_players = [
+            states.media_player.apple_tv_1,
+            states.media_player.apple_tv_2,
+            states.sensor.shield_real_state,
+            states.media_player.sonos_connect_stua,
+            states.media_player.spisestua,
+            states.media_player.play_one_2,
+            states.media_player.badet
+          ] %}
+
+          {%- set lights_on = lights | selectattr('state','eq','on') | list %}
+          {%- set lights_name = lights | selectattr('state','eq','on') | map(attribute='name') | join(', ') %}
+
+          {%- set switches_on = switches | selectattr('state','eq','on') | list %}
+          {%- set media_players_playing = media_players | selectattr('state','eq','playing') | list %}
+          {%- set append = switches_on + media_players_playing %}
+          {%- set switches_name = append | map(attribute='name') | join(', ') %}
+
+          {%- if (lights_on | length == 0) and (switches_on | length > 0) -%}
+            <b>{{ switches_name | regex_replace(',([^,]*)$',' and\\1') }} is on</b>
+
+          {%- elif (lights_on | length == 1) and (switches_on | length == 1) -%}
+            <b>{{ lights_name }} and the {{switches_name }} is on</b>
+
+          {%- elif (lights_on | length == 1) and (switches_on | length > 1) -%}
+            <b>{{ lights_name }}, {{ switches_name | regex_replace(',([^,]*)$',' and\\1') }} is on</b>
+
+          {%- elif (lights_on | length > 1) and (switches_on | length == 1) -%}
+            <b>{{ lights_on | length }} lights and the {{ switches_name }} is on</b>
+
+          {%- elif (lights_on | length > 1) and (switches_on | length > 1) -%}
+            <b>{{ lights_on | length }} lights, {{ switches_name | regex_replace(',([^,]*)$',' and\\1') }} are on</b>
+
+          {%- elif (lights_on | length == 1) and (switches_on | length == 0) -%}
+            {{'💡'}} <b>{{ lights_name }} is on</b>
+
+          {%- elif (lights_on | length > 1) and (switches_on | length == 0) -%}
+            {{'💡'}} <b>{{ lights_on | length }} lights are on</b>
+
+          {%- else %}
+            <b><font color='#6a7377'>Everything is off</font></b>
+          {%- endif -%}
+        power: |
+          {%- set nordpool = states('sensor.nordpool_hvfoss') %}
+          {% if nordpool not in ['unavailable', 'unknown'] %}
+            {%- set elprice = states('sensor.nordpool_hvfoss') | round(2) %}
+            {% if elprice >= 5 -%} {{'⚡'}} price is: <strong>{{ elprice }}</strong>,- {{'🚀'}}
+            {%- elif elprice >= 4 -%} {{'⚡'}} price is: <strong>{{ elprice }}</strong>,- {{'📈'}}
+            {%- elif elprice >= 3 -%} {{'⚡'}} price is: <strong>{{ elprice }}</strong>,- {{'💰'}}
+            {%- elif elprice >= 2 -%} {{'⚡'}} price is: <strong>{{ elprice }}</strong>,- {{'💸'}}
+            {%- elif elprice >= 1 -%} {{'⚡'}} price is: <strong>{{ elprice }}</strong>,-
+            {%- endif %}
+          {%- endif %}
+        battery: |
+          {% set entities = states.sensor 
+            | selectattr('entity_id', 'search', 'battery')
+            | rejectattr('entity_id', 'search', 'iphone')
+            | map(attribute = 'entity_id') | list %}
+          {%- for sensor in entities if states(sensor) != 'unknown' and states(sensor) != 'Not Charging' and 
+          states(sensor) != 'unavailable' and states(sensor) != 'None' and states(sensor) | int(default=0) <= 10 %}
+            {%- if loop.first %} {{-'\u26A0\uFE0F'}} {% else %}, {% endif -%}
+            {{ state_attr(sensor, 'friendly_name') }}: {% if states(sensor) | int(default=0) == 0 %}<strong>dead</strong>{% else %}{{ states(sensor) }}%{% endif -%}
+          {%- endfor %}
+        plex: |
+          {% if states.binary_sensor.ping_rackstation.state != 'on' -%}
+            {{-'\u26A0\uFE0F'}} Plex is down...
+          {%- endif %}
+        nas: |
+          {% if states.binary_sensor.ping_rackstation.state != 'on' -%}
+            {{-'\u26A0\uFE0F'}} RackStation is down...
+          {%- endif %}
+          {% if states.binary_sensor.ping_diskstation.state != 'on' -%}
+            {{-'\u26A0\uFE0F'}} DiskStation is down...
+          {%- endif %}
+        waste: |
+          {%- if states.sensor.waste_pickup.state != 'off' -%} 
+            {%- set time = now().hour %}
+            {%- set today = state_attr('sensor.waste_pickup','today') %}
+            {%- set waste_today = today | join(', ')%}
+            {%- set tomorrow = state_attr('sensor.waste_pickup','tomorrow') %}
+            {%- set waste_tomorrow = tomorrow | join(', ')%}
+            {%- if waste_tomorrow != "nothing" -%} The <strong>{{waste_tomorrow | regex_replace(',([^,]*)$',' and\\1')}}</strong> waste gets picked up <strong>tomorrow</strong>
+            {%- elif waste_today != "nothing" -%} 
+              {%- if time <= 7 -%}
+                The <strong>{{waste_today | regex_replace(',([^,]*)$',' and\\1')}}</strong> waste<br> gets picked up <strong>today</strong>
+              {%- endif %}
+            {%- endif %}
+          {%- endif %}
