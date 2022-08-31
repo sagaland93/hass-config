@@ -1,0 +1,101 @@
+#group:
+
+
+  # CAMERAS
+  cameras:
+    entities:
+      - camera.driveway
+      - camera.doorbell
+      - camera.living_room
+      - camera.terrace
+
+
+  # SECURITY - SENSORS
+  contact_sensors:
+    name: Contact Sensors
+    icon: custom:contact-sensor
+    entities:
+      - binary_sensor.contact_sensor_entrance
+      - binary_sensor.contact_sensor_terrace_door
+
+  motion_sensors:
+    name: Motion Sensors
+    icon: mdi:motion-sensor
+    entities:
+      - binary_sensor.motion_sensor_entrance
+      - binary_sensor.motion_sensor_hallway
+      - binary_sensor.motion_sensor_kitchen
+      - binary_sensor.motion_sensor_bathroom
+      - binary_sensor.motion_sensor_tv_cabinet
+      - binary_sensor.motion_sensor_dining_table
+      - binary_sensor.motion_living_room
+
+  sensors_upstairs:
+    name: Sensors Upstairs
+    icon: mdi:motion-sensor
+    entities:
+      - binary_sensor.contact_sensor_entrance
+      - binary_sensor.contact_sensor_terrace_door
+      - binary_sensor.motion_sensor_entrance
+      - binary_sensor.motion_sensor_hallway
+      - binary_sensor.motion_sensor_kitchen
+      - binary_sensor.motion_sensor_bathroom
+      - binary_sensor.motion_sensor_tv_cabinet
+      - binary_sensor.motion_sensor_dining_table
+      - binary_sensor.motion_living_room
+
+  sensors_stairs:
+    name: Sensors Stairs
+    icon: hue:motion-sensor
+    entities:
+      - binary_sensor.occupancy_stairs_top
+      - binary_sensor.occupancy_stairs_bottom
+
+  sensors_downstairs:
+    name: Sensors Downstairs
+    icon: mdi:motion-sensor
+    entities:
+      - binary_sensor.contact_sensor_office
+      - binary_sensor.motion_sensor_stairs_down
+      - binary_sensor.motion_sensor_wc
+
+  sensors_security:
+    name: Sensors Security
+    icon: mdi:motion-sensor
+    entities:
+      - binary_sensor.contact_sensor_entrance
+      - binary_sensor.contact_sensor_terrace_door
+      - binary_sensor.motion_driveway
+      - binary_sensor.motion_sensor_entrance
+      - binary_sensor.motion_sensor_hallway
+      - binary_sensor.motion_sensor_bathroom
+      - binary_sensor.occupancy_stairs_top
+      - binary_sensor.motion_sensor_plant
+      - binary_sensor.motion_living_room
+      - binary_sensor.motion_sensor_dining_table
+      - binary_sensor.motion_sensor_kitchen
+      - binary_sensor.motion_sensor_tv_cabinet
+
+
+  # AUDIO - SUBS
+  subwoofers:
+    name: Subwoofers
+    icon: custom:subwoofers
+    entities:
+      - switch.lumi_plug_sub_1_left
+      - switch.lumi_plug_sub_2_right
+
+
+  # UNAVAILABLE ENTITIES
+  ignored_entities:
+    entities: 
+      - binary_sensor.updater # always unknown after restart
+      - sensor.unavailable_entities
+      - sensors.that.always.fail
+
+
+  # IGNORED GUESTS
+  ignored_guests:
+    entities: 
+      - device_tracker.saga_sin_iphone_2
+      - device_tracker.siri_s_iphone
