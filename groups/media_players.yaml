@@ -1,0 +1,21 @@
+#media_player:
+
+
+    # SONOS
+  - platform: group
+    unique_id: sonos_music_players
+    name: SONOS
+    entities:
+      - media_player.sonos_connect_stua
+      - media_player.badet
+      - media_player.spisestua
+
+    # NOTIFICATION
+  - platform: group
+    unique_id: notification_players
+    name: Notification Players
+    entities:
+      - media_player.badet
+      - media_player.spisestua
+      - media_player.sonos_one_office
+

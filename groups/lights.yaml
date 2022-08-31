@@ -1,0 +1,128 @@
+#light:
+
+    # HOUSE
+  - platform: group
+    name: All lights
+    entities:
+      - light.ecodim_dimmer_downlights_hallway
+      - light.kommode
+      - light.hue_color_hallway_lamp
+      - light.vitrineskap_v
+      - light.vitrineskap_h
+      - light.ecodim_dimmer_kitchen_cabinets
+      - light.ecodim_dimmer_downlights_kitchen
+      - light.ecodim_dimmer_ceiling_dining_room
+      - light.ecodim_dimmer_downlights_dining_room
+      - light.ecodim_dimmer_downlights_living_room
+      - light.ecodim_dimmer_downlights_bathroom
+      - light.ecodim_dimmer_downlights_wc
+      - light.ecodim_dimmer_downlights_entrance
+      - light.hue_fair_ceiling_office
+      - light.superman_symbol
+      - light.hue_play_1
+      - light.hue_play_2
+      - light.ecodim_dimmer_ceiling_bedroom
+      - light.ecodim_dimmer_ceiling_downstairs
+      - light.ecodim_dimmer_downlights_stairs
+
+  - platform: group
+    name: All lights except hallways
+    entities:
+      - light.kommode
+      - light.hue_color_hallway_lamp
+      - light.vitrineskap_v
+      - light.vitrineskap_h
+      - light.ecodim_dimmer_kitchen_cabinets
+      - light.ecodim_dimmer_downlights_kitchen
+      - light.ecodim_dimmer_ceiling_dining_room
+      - light.ecodim_dimmer_downlights_dining_room
+      - light.ecodim_dimmer_downlights_living_room
+      - light.ecodim_dimmer_downlights_bathroom
+      - light.ecodim_dimmer_downlights_wc
+      - light.hue_fair_ceiling_office
+      - light.superman_symbol
+      - light.hue_play_1
+      - light.hue_play_2
+      - light.ecodim_dimmer_ceiling_bedroom
+
+  - platform: group
+    name: Lights upstairs
+    entities:
+      - light.ecodim_dimmer_downlights_entrance
+      - light.kommode
+      - light.hue_color_hallway_lamp
+      - light.vitrineskap_v
+      - light.vitrineskap_h
+      - light.ecodim_dimmer_kitchen_cabinets
+      - light.ecodim_dimmer_downlights_kitchen
+      - light.ecodim_dimmer_ceiling_dining_room
+      - light.ecodim_dimmer_downlights_dining_room
+      - light.ecodim_dimmer_downlights_living_room
+      - light.ecodim_dimmer_downlights_bathroom
+      - light.ecodim_dimmer_ceiling_bedroom
+      - light.ecodim_dimmer_downlights_stairs
+      - light.ecodim_dimmer_downlights_hallway
+      
+
+    # HALLWAY
+  - platform: group
+    name: Hallway lights
+    entities:
+      - light.ecodim_dimmer_downlights_hallway
+      - light.hue_color_hallway_lamp
+      - light.kommode
+
+  - platform: group
+    name: All Hallway lights
+    all: true
+    entities:
+      - light.ecodim_dimmer_downlights_hallway
+      - light.hue_color_hallway_lamp
+      - light.kommode
+
+
+    # KITCHEN
+  - platform: group
+    name: Kitchen lights
+    entities:
+      - light.ecodim_dimmer_downlights_kitchen
+      - light.ecodim_dimmer_kitchen_cabinets
+
+
+    # DINING-ROOM
+  - platform: group
+    name: Dining-room lights
+    entities:
+      - light.ecodim_dimmer_downlights_dining_room
+      - light.ecodim_dimmer_ceiling_dining_room
+      - light.vitrineskap_v
+      - light.vitrineskap_h
+
+  - platform: group
+    name: Vitrineskap
+    entities:
+      - light.vitrineskap_v
+      - light.vitrineskap_h
+
+
+    # BEDROOM
+  - platform: group
+    name: Bedroom lights
+    entities:
+      - light.ecodim_dimmer_ceiling_bedroom
+
+
+    # OFFICE
+  - platform: group
+    name: Office lights
+    entities:
+      - light.hue_play_1
+      - light.hue_play_2
+      - light.superman_symbol
+      - light.hue_fair_ceiling_office
+      
+  - platform: group
+    name: Hue Play
+    entities:
+      - light.hue_play_1
+      - light.hue_play_2
