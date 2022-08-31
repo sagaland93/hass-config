@@ -19,7 +19,7 @@ My personal config - based on [Mattias's config](https://github.com/matt8707/has
 
 #### Rooms
 
-![rooms2](https://user-images.githubusercontent.com/93126880/187751172-d3f65cf0-839f-4e0e-a5ce-deb69cc183e1.gif)
+![rooms2-short](https://user-images.githubusercontent.com/93126880/187751467-eb873846-452c-4334-acda-2f9a05e6d7ba.gif)
 ![office](https://user-images.githubusercontent.com/93126880/187751207-17268f49-a907-4b35-93ea-35258e6d93eb.gif)
 
 
