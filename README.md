@@ -31,7 +31,11 @@ Popups that supports notifications.
 
 RSS Feed
 
+Using [feedparser](https://github.com/custom-components/feedparser) to gather data and displaying RSS feed with custom icons.
 ![rss-feed](https://user-images.githubusercontent.com/93126880/187744661-00a74549-344d-466e-98e1-6982ed8e24dc.gif)
+
+Popup displayed when the RSS footer is clicked.
+![image](https://user-images.githubusercontent.com/93126880/187751839-4a3b5f65-8a5f-4bf8-92eb-0ff0ec3fba01.png)
 
 
 ## Screenshots
