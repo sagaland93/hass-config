@@ -1,0 +1,71 @@
+action: fire-dom-event
+browser_mod:
+  command: popup
+  title: Hallway
+  style:
+    .: |
+      :host .content {
+        padding: 1.5em 1.5em 1.5em 1.5em;
+      }
+      :host .main-title {
+        pointer-events: none;
+      }
+    $: |
+      .mdc-dialog__surface {
+        background: transparent !important;
+        border-style: none !important;
+        border: 0px !important;
+        box-shadow: none;
+      }
+
+  card:
+    type: custom:layout-card
+    layout_type: custom:grid-layout
+    layout:
+      grid-template-columns: 385px 510px
+      grid-template-rows: 1fr
+      grid-template-areas: |
+        "hallway"
+      mediaquery:
+        #phone
+        "(max-width: 800px)":
+          grid-template-columns: 1fr
+          grid-template-rows: repeat(2, 1fr)
+          grid-template-areas: |
+            "hallway"
+            "hallway"
+    cards:
+
+      #################################################
+      #                                               #
+      #                    HALLWAY                    #
+      #                                               #
+      #################################################
+
+      - type: grid
+        #title: Hallway
+        view_layout:
+          grid-area: hallway
+        columns: 2
+        cards:
+
+          - type: custom:button-card
+            entity: light.ecodim_dimmer_downlights_hallway
+            name: Spots
+            template:
+              - light
+              - icon_light_recessed
+
+          - type: custom:button-card
+            entity: light.hue_color_hallway_lamp
+            name: Lamp
+            template:
+              - light
+              - icon_silus_dome
+
+          - type: custom:button-card
+            entity: light.kommode
+            name: Cabinet
+            template:
+              - light
+              - icon_light_flush

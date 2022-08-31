@@ -1,0 +1,92 @@
+action: fire-dom-event
+browser_mod:
+  command: popup
+  title: Climate
+  style:
+    .: |
+      :host .main-title {
+        pointer-events: none;
+      }
+    hui-vertical-stack-card:
+      $hui-entities-card$ : |
+        #states {
+          padding-top: 0.5em;
+          padding-bottom: 0em;
+        }
+  card:
+    type: vertical-stack
+    cards:
+
+      - type: thermostat
+        entity: climate.sensibo
+        name: ' '
+
+      - type: entities
+        card_mod:
+          class: content
+        entities:
+          - type: attribute
+            entity: climate.sensibo
+            name: AC temperature
+            attribute: current_temperature
+            suffix: ' °C'
+          - entity: sensor.temperature_average_upstairs
+            name: Room temperature
+          - entity: sensor.netatmo_hjemme_weather_station_outdoor_module_humidity
+            name: Humidity
+          - entity: binary_sensor.kaiteki_6600_filter_clean_required
+            icon: mdi:air-filter
+            name: Filters
+            tap_action:
+              action: call-service
+              service: button.press
+              service_data:
+                entity_id: button.kaiteki_6600_reset_filter
+              confirmation:
+                text: "Are you sure you want to reset the filter?"
+
+      - type: custom:apexcharts-card
+        layout: minimal
+        locale: se #no? #se
+        graph_span: 8h
+        show:
+          loading: false
+        apex_config:
+          plotOptions:
+            area:
+              fillTo: end
+          grid:
+            padding:
+              top: -15
+          fill:
+            type: gradient
+            gradient:
+              type: vertical
+              opacityFrom: 0.8
+              opacityTo: 0
+              stops:
+                - 0
+                - 99
+                - 100
+          stroke:
+            width: 4
+          tooltip:
+            style:
+              fontSize: 14px
+            x:
+              format: dddd HH:mm
+          chart:
+            height: 140px
+            offsetY: -20px
+          xaxis:
+            crosshairs:
+              show: false
+        series:
+          - entity: sensor.temperature_average_upstairs
+            name: Temp
+            color: '#385581'
+            type: area
+            fill_raw: last
+            group_by:
+              func: avg
+              duration: 1h

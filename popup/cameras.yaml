@@ -1,0 +1,90 @@
+action: fire-dom-event
+browser_mod:
+  command: popup
+  #hide_header: true
+  large: true
+  title: Cameras
+  style:
+    .: |
+      :host .main-title {
+        pointer-events: none;
+      }
+    $: |
+      .mdc-dialog__surface {
+        background: transparent !important;
+        border-style: none !important;
+        border: 0px !important;
+        box-shadow: none;
+      }
+      
+  card:
+    type: vertical-stack
+    cards:
+      - type: custom:layout-card
+        layout_type: grid
+        layout:
+          grid-gap: 0.4vw
+          #grid-template-columns: 860px 860px
+          grid-template-rows: 540px 540px
+          grid-template-areas: |
+            "cam1 cam2"
+            "cam3 cam4"
+
+          mediaquery:
+            #hide_header: false
+            #phone
+            "(max-width: 800px)":
+              grid-gap: 1.5vw
+              grid-template-columns: auto
+              grid-template-rows: auto auto auto auto
+              grid-template-areas: |
+                "cam1"
+                "cam2"
+                "cam3"
+                "cam4"
+
+            #tablet
+            "(max-width: 2000px)":
+              grid-gap: 0.5vw
+              grid-template-rows: 23vw 23vw
+              grid-template-areas: |
+                "cam1 cam2"
+                "cam3 cam4"
+
+        cards:
+          - type: picture-entity
+            entity: camera.doorbell
+            aspect_ratio: 50%
+            show_info: false
+            show_state: false
+            show_name: false
+            camera_view: auto
+            view_layout:
+              grid-area: cam1
+
+          - type: picture-entity
+            entity: camera.driveway
+            show_info: false
+            show_state: false
+            show_name: false
+            camera_view: auto
+            view_layout:
+              grid-area: cam2
+
+          - type: picture-entity
+            entity: camera.living_room
+            show_info: false
+            show_state: false
+            show_name: false
+            camera_view: auto
+            view_layout:
+              grid-area: cam3
+
+          - type: picture-entity
+            entity: camera.terrace
+            show_info: false
+            show_state: false
+            show_name: false
+            camera_view: auto
+            view_layout:
+              grid-area: cam4

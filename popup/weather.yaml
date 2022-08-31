@@ -1,0 +1,23 @@
+action: fire-dom-event
+browser_mod:
+  command: popup
+  title: Weather forecast
+  style:
+    .: |
+      ha-card {
+        animation: none !important;
+        margin: 0px !important;
+        padding: 1.5em 2.2em 2em 2.2em !important;
+      }
+      :host .main-title {
+        pointer-events: none;
+      }
+
+  card:
+  
+    type: vertical-stack
+    cards:
+      - type: weather-forecast
+        entity: weather.pirateweather
+        name: Hvittingfoss
+

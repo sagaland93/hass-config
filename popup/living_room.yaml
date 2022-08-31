@@ -1,0 +1,140 @@
+action: fire-dom-event
+browser_mod:
+  command: popup
+  title: Living
+  style:
+    .: |
+      :host .content {
+        padding: 1.5em 1.5em 1.5em 1.5em;
+      }
+      :host .main-title {
+        pointer-events: none;
+      }
+    $: |
+      .mdc-dialog__surface {
+        background: transparent !important;
+        border-style: none !important;
+        border: 0px !important;
+        box-shadow: none;
+      }
+
+  card:
+    type: custom:layout-card
+    layout_type: custom:grid-layout
+    layout:
+      #grid-template-columns: 15vw # 510px
+      grid-template-rows: 1fr
+      grid-template-areas: |
+        "living"
+        "living"
+
+      mediaquery:
+        #phone
+        "(max-width: 800px)":
+          #grid-template-columns: 1fr
+          grid-template-rows: 1fr
+          grid-template-areas: |
+            "living"
+            "living"
+        #tablet
+        "(max-width: 2000px)":
+          #grid-template-columns: 1fr #20vw
+          grid-template-rows: 1fr
+          grid-template-areas: |
+            "living"
+            "living"
+
+    cards:
+
+      #################################################
+      #                                               #
+      #                    LIVING                     #
+      #                                               #
+      #################################################
+
+      - type: grid
+        #title: " " #Living
+        view_layout:
+          grid-area: living
+        columns: 2
+        cards:
+
+          - type: custom:button-card
+            entity: light.ecodim_dimmer_downlights_living_room
+            name: Spots
+            template:
+              - light
+              - icon_light_recessed
+
+          - type: custom:button-card
+            entity: media_player.lg_tv_77
+            name: LG TV
+            template:
+              - media
+              - icon_tv
+            triggers_update:
+              - input_boolean.lg_tv_77_screen_state
+            tap_action:
+              action: call-service
+              service: script.living_room_tv_screen_toggle
+            double_tap_action:
+              action: none
+            variables:
+              tv: input_boolean.lg_tv_77_screen_state
+
+          - type: custom:button-card
+            entity: media_player.sonos_connect_stua
+            name: SONOS
+            template:
+              - sonos
+              - icon_sonos
+
+          - type: custom:button-card
+            entity: media_player.denon_receiver
+            name: Receiver
+            template:
+              - media
+              - icon_receiver
+              - media_volume
+            variables:
+              player: '[[[ return states["sensor.active_media_players"].attributes.active; ]]]'
+
+          - type: custom:button-card
+            entity: sensor.shield_real_state
+            name: SHIELD
+            template:
+              - media
+              - icon_nvidia_shield
+
+          - type: custom:button-card
+            entity: media_player.apple_tv_1
+            name: ATV 1
+            template:
+              - media
+              - icon_apple_tv
+              - atv
+
+          - type: custom:button-card
+            entity: switch.lumi_plug_sub_1_left
+            name: Sub 1
+            tap_action:
+              action: call-service
+              service: switch.toggle
+              service_data:
+                entity_id: switch.lumi_plug_sub_1_left
+            template:
+              - base
+              - icon_sub
+
+          - type: custom:button-card
+            entity: switch.lumi_plug_sub_2_right
+            name: Sub 2
+            tap_action:
+              action: call-service
+              service: switch.toggle
+              service_data:
+                entity_id: switch.lumi_plug_sub_2_right
+            template:
+              - base
+              - icon_sub
+              

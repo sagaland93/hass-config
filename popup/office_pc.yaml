@@ -1,0 +1,155 @@
+action: fire-dom-event
+browser_mod:
+  command: popup
+  title: PC
+  style:
+    .: |
+      :host .main-title {
+        pointer-events: none;
+      }
+    hui-vertical-stack-card:
+      $hui-conditional-card>hui-vertical-stack-card$: |
+        hui-horizontal-stack-card {
+          padding: 0em 2em 1.5em 2em;
+        }
+      $hui-conditional-card>hui-vertical-stack-card$hui-horizontal-stack-card$: |
+        #root {
+          justify-content: space-evenly;
+        }
+        
+  card:
+    type: vertical-stack
+    cards:
+
+      ### ON ###
+      - type: conditional
+        conditions:
+          - entity: switch.wake_on_lan
+            state: 'on'
+        card:
+          type: vertical-stack
+          cards:
+            - type: entities
+              state_color: true
+              card_mod:
+                class: content
+              entities:
+
+                - entity: switch.office_pc
+                  name: Power state
+                  secondary_info: last-changed
+                  icon: mdi:power
+
+                - entity: sensor.office_pc_real_session_state
+                  name: Session state
+                  icon: mdi:account
+
+                - type: custom:bar-card
+                  width: 55%
+                  height: 2em
+                  decimal: 0
+                  unit_of_measurement: '%'
+                  positions: &pos
+                    icon: outside
+                    indicator: 'off'
+                    name: outside
+                  severity: &sev
+                    - color: '#303435'
+                      from: 0
+                      to: 89
+                    - color: '#6d2525'
+                      from: 90
+                      to: 100
+                  entity_row: true
+                  entities:
+
+                    - entity: sensor.sagasdesktop_cpuload
+                      name: CPU load
+                      tap_action:
+                        action: call-service
+                        service: homeassistant.update_entity
+                        service_data:
+                          entity_id: sensor.sagasdesktop_cpuload
+
+                    - entity: sensor.sagasdesktop_memoryusage
+                      name: RAM usage
+                      tap_action:
+                        action: call-service
+                        service: homeassistant.update_entity
+                        service_data:
+                          entity_id: sensor.sagasdesktop_memoryusage
+
+                    - entity: sensor.sagasdesktop_gpuload
+                      name: GPU load
+                      tap_action:
+                        action: call-service
+                        service: homeassistant.update_entity
+                        service_data:
+                          entity_id: sensor.sagasdesktop_gpuload
+
+                - entity: sensor.sagasdesktop_lastboot
+                  name: Last boot
+
+
+            - type: horizontal-stack
+              cards:
+
+              - type: custom:button-card
+                name: Lock
+                icon: mdi:lock
+                tap_action:
+                  action: call-service
+                  service: button.press
+                  service_data:
+                    entity_id: button.sagasdesktop_lock
+                template: icon_name
+
+              - type: custom:button-card
+                name: Sleep
+                icon: mdi:power-sleep
+                tap_action:
+                  action: call-service
+                  service: button.press
+                  service_data:
+                    entity_id: button.sagasdesktop_sleep
+                template: icon_name
+
+              - type: custom:button-card
+                name: Reboot
+                icon: mdi:restart
+                tap_action:
+                  action: call-service
+                  service: button.press
+                  service_data:
+                    entity_id: button.sagasdesktop_restart
+                template: icon_name
+
+
+      ### OFF ###
+      - type: conditional
+        conditions:
+          - entity: switch.wake_on_lan
+            state: 'off'
+        card:
+          type: vertical-stack
+          cards:
+            - type: entities
+              state_color: true
+              show_header_toggle: false
+              card_mod:
+                class: content
+              entities:
+
+                - entity: switch.wake_on_lan
+                  name: PC
+                  secondary_info: last-changed
+
+            - type: horizontal-stack
+              cards:
+                - type: custom:button-card
+                  name: Power On
+                  icon: mdi:power
+                  tap_action:
+                    action: call-service
+                    service: script.office_pc_power_switch
+                  template: icon_name

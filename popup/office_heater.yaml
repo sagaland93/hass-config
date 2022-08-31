@@ -1,0 +1,90 @@
+action: fire-dom-event
+browser_mod:
+  command: popup
+  title: Temperature
+
+  card:
+    type: vertical-stack
+    cards:
+      - type: entities
+        card_mod:
+          class: content
+        entities:
+          - entity: switch.lumi_plug_heater_office_on_off
+            secondary_info: last-changed
+            name: Office Heater
+            state_color: true
+
+          - entity: automation.office_6_1_heater_control
+            secondary_info: last-changed
+            name: Heater automation
+            state_color: true
+
+          - entity: input_datetime.office_heater
+            name: Turn ON at
+
+
+      - card_type: markdown
+        content: |
+          <br>
+          <br>
+          <span> ‍ ‍‍ ‍</span>{{states.sensor.temp_sensor_pc_room.state | round(0)}}°
+          <br>
+          <br>
+        style: |
+          ha-card {
+            --ha-card-background: 'rgba(0, 0, 0, 0)';
+            --ha-card-box-shadow: 'none';
+            font-size: 5.5em;
+            font-weight: 200;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+          }
+        type: 'custom:hui-element'
+
+
+      - type: custom:apexcharts-card
+        layout: minimal
+        locale: 'no' #no? #se
+        graph_span: 12h
+        show:
+          loading: false
+        apex_config:
+          plotOptions:
+            area:
+              fillTo: end
+          grid:
+            padding:
+              top: -15
+          fill:
+            type: gradient
+            gradient:
+              type: vertical
+              opacityFrom: 0.5
+              opacityTo: 0
+              stops:
+                - 0
+                - 99
+                - 100
+          stroke:
+            width: 4
+          tooltip:
+            style:
+              fontSize: 14px
+            x:
+              format: dddd HH:mm
+          chart:
+            height: 200px # 400px
+            offsetY: -20px
+          xaxis:
+            crosshairs:
+              show: false
+        series:
+          - entity: sensor.temp_sensor_pc_room
+            name: Temp
+            color: '#3182b7'
+            type: area
+            fill_raw: last
+            group_by:
+              func: avg
+              duration: 1h

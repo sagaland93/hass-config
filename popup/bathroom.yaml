@@ -1,0 +1,79 @@
+action: fire-dom-event
+browser_mod:
+  command: popup
+  title: Bathroom
+  style:
+    .: |
+      :host .content {
+        padding: 1.5em 1.5em 1.5em 1.5em;
+      }
+      :host .main-title {
+        pointer-events: none;
+      }
+    $: |
+      .mdc-dialog__surface {
+        background: transparent !important;
+        border-style: none !important;
+        border: 0px !important;
+        box-shadow: none;
+      }
+
+
+  card:
+    type: custom:layout-card
+    layout_type: custom:grid-layout
+    style: |
+      ha-card {
+        pointer-events: none;
+      }
+    layout:
+      #grid-template-columns: 15vw # 510px
+      grid-template-rows: 1fr
+      grid-template-areas: |
+        "bathroom"
+        "bathroom"
+
+      mediaquery:
+        #phone
+        "(max-width: 800px)":
+          #grid-template-columns: 1fr
+          grid-template-rows: 1fr
+          grid-template-areas: |
+            "bathroom"
+            "bathroom"
+        #tablet
+        "(max-width: 2000px)":
+          #grid-template-columns: 1fr #20vw
+          grid-template-rows: 1fr
+          grid-template-areas: |
+            "bathroom"
+            "bathroom"
+
+    cards:
+
+      #################################################
+      #                                               #
+      #                   BATHROOM                    #
+      #                                               #
+      #################################################
+
+      - type: grid
+        #title: Bathroom
+        view_layout:
+          grid-area: bathroom
+        columns: 2
+        cards:
+
+          - type: custom:button-card
+            entity: light.ecodim_dimmer_downlights_bathroom
+            name: Spots
+            template:
+              - light
+              - icon_light_flush
+
+          - type: custom:button-card
+            entity: light.ecodim_dimmer_downlights_bathroom
+            name: Spots
+            template:
+              - media
+              - icon_light_flush
