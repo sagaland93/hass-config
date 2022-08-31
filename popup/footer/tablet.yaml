@@ -1,0 +1,181 @@
+action: fire-dom-event
+browser_mod:
+  command: popup
+  title: Information
+  style:
+    .: |
+      :host .main-title {
+        pointer-events: none;
+      }
+    layout-card:
+      $grid-layout$:
+        hui-entities-card:
+          $: |
+            .card-content {
+              padding: 1.5em 2.2em 2.3em 2.2em;
+            }
+            ha-card {
+              animation: border 1s forwards;
+              border-radius: 0;
+            }
+            /* phone */
+            @media screen and (max-width: 800px) {
+              ha-card {
+                animation: none;
+              }
+            }
+          $hui-horizontal-stack-card$: |
+            #root {
+              justify-content: space-evenly;
+              margin-top: 1.9em;
+            }
+  card:
+    type: custom:layout-card
+    layout_type: custom:grid-layout
+    layout:
+      #grid-template-columns: repeat(3, 1fr)
+      grid-template-rows: 1fr
+      grid-template-areas: |
+        "tablet"
+      mediaquery:
+        #phone
+        "(max-width: 800px)":
+          grid-template-columns: 1fr
+          grid-template-rows: repeat(3, 1fr)
+          grid-template-areas: |
+            "tablet"
+
+    cards:
+
+      #################################################
+      #                                               #
+      #                    TABLET                     #
+      #                                               #
+      #################################################
+
+      - type: entities
+        view_layout:
+          grid-area: tablet
+        title: Galaxy Tab
+        show_header_toggle: false
+        card_mod:
+          class: header
+          style: |
+            ha-card {
+              margin: 0px !important;
+            }
+
+        entities:
+          - entity: switch.galaxy_tab_a7_screensaver
+            name: Screensaver
+
+          - entity: light.galaxy_tab_a7_screen
+            name: Screen
+
+          - type: custom:slider-entity-row
+            entity: light.galaxy_tab_a7_screen
+            name: Brightness
+            icon: mdi:brightness-6
+            hide_state: false
+
+          - entity: binary_sensor.galaxy_tab_a7_plugged_in
+            name: Power
+
+          - entity: sensor.galaxy_tab_a7_last_app_start
+            name: Last restart
+
+          - type: custom:bar-card
+            width: 55%
+            height: 2em
+            decimal: 0
+            unit_of_measurement: '%'
+            positions: &bar_card_positions
+              icon: outside
+              indicator: 'off'
+              name: outside
+            severity:
+              - color: '#6d2525'
+                from: 0
+                to: 29
+              - color: '#303435'
+                from: 30
+                to: 59
+              - color: '#256d3d'
+                from: 60
+                to: 100
+
+            entity_row: true
+            entities:
+
+              - entity: sensor.galaxy_tab_a7_battery_level
+                name: Battery
+                icon: mdi:battery
+
+          - type: custom:bar-card
+            width: 55%
+            height: 2em
+            decimal: 0
+            unit_of_measurement: '%'
+            positions: *bar_card_positions
+            severity: &bar_card_severity
+              - color: '#303435'
+                from: 0
+                to: 89
+              - color: '#6d2525'
+                from: 90
+                to: 200
+            entity_row: true
+            entities:
+
+              - entity: sensor.template_fullykiosk_memory
+                name: Memory - 2GB
+                icon: mdi:memory
+                tap_action:
+                  action: call-service
+                  service: homeassistant.update_entity
+                  service_data:
+                    entity_id: sensor.template_fullykiosk_memory
+
+              - entity: sensor.template_fullykiosk_storage
+                name: Storage - 32GB
+                icon: mdi:sd
+                tap_action:
+                  action: call-service
+                  service: homeassistant.update_entity
+                  service_data:
+                    entity_id: sensor.template_fullykiosk_storage
+
+          - type: custom:hui-horizontal-stack-card
+            cards:
+              - type: custom:button-card
+                name: Home Page
+                icon: mdi:reload
+                tap_action:
+                  services: |
+                    [[[
+                      return `[[[
+                        hass.callService('browser_mod', 'toast', {
+                          message: 'Refreshing...'
+                        });
+                        hass.callService('fullykiosk', 'load_start_url', {
+                          entity_id: 'media_player.galaxy_tab_a7_media_player'
+                      ]]]`
+                    ]]]
+                template: icon_name
+
+              - type: custom:button-card
+                name: Refresh Fully
+                icon: mdi:reload
+                tap_action:
+                  services: |
+                    [[[
+                      return `[[[
+                        hass.callService('browser_mod', 'toast', {
+                          message: 'Restarting the Fully Kiosk Browser...'
+                        });
+                        hass.callService('fullykiosk', 'restart', {
+                          entity_id: 'media_player.galaxy_tab_a7_media_player'
+                      ]]]`
+                    ]]]
+                template: icon_name
+

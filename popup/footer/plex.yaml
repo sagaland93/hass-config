@@ -1,0 +1,158 @@
+action: fire-dom-event
+browser_mod:
+  command: popup
+  title: Plex
+  style:
+    .: |
+      :host .main-title {
+        pointer-events: none;
+      }
+    hui-vertical-stack-card:
+      $hui-conditional-card>hui-vertical-stack-card$: |
+        hui-horizontal-stack-card {
+          padding: 0em 2em 1.5em 2em;
+        }
+      $hui-conditional-card>hui-vertical-stack-card$hui-horizontal-stack-card$: |
+        #root {
+          justify-content: space-evenly;
+        }
+        
+  card:
+    type: vertical-stack
+    cards:
+
+      ### ON ###
+      - type: conditional
+        conditions:
+          - entity: binary_sensor.ping_rackstation
+            state: 'on'
+        card:
+          type: vertical-stack
+          cards:
+            - type: entities
+              state_color: true
+              card_mod:
+                class: content
+              entities:
+
+                - entity: switch.wol_plex
+                  name: Power state
+                  secondary_info: last-changed
+                  icon: mdi:power
+
+                - type: custom:bar-card
+                  width: 55%
+                  height: 2em
+                  decimal: 0
+                  unit_of_measurement: '%'
+                  positions: &pos
+                    icon: outside
+                    indicator: 'off'
+                    name: outside
+                  severity: &sev
+                    - color: '#303435'
+                      from: 0
+                      to: 89
+                    - color: '#6d2525'
+                      from: 90
+                      to: 100
+                  entity_row: true
+                  entities:
+
+                    - entity: sensor.rackstation_cpu_utilization_total
+                      name: CPU load
+                      tap_action:
+                        action: call-service
+                        service: homeassistant.update_entity
+                        service_data:
+                          entity_id: sensor.rackstation_cpu_utilization_total
+
+                    - entity: sensor.rackstation_memory_usage_real
+                      name: RAM usage
+                      tap_action:
+                        action: call-service
+                        service: homeassistant.update_entity
+                        service_data:
+                          entity_id: sensor.rackstation_memory_usage_real
+
+
+                - entity: sensor.plex_issues
+                  name: Health
+
+                - entity: sensor.plex_sagaflix
+                  name: Activity
+                  icon: mdi:progress-upload
+
+                - entity: sensor.rackstation_last_boot
+                  name: Last boot
+
+                - entity: sensor.sagaflix_library_movies
+                  name: Movies
+
+                - entity: sensor.sagaflix_library_tv_shows
+                  name: TV Shows
+
+
+            - type: horizontal-stack
+              cards:
+              - type: custom:button-card
+                name: Sleep
+                icon: mdi:power-sleep
+                tap_action:
+                  action: call-service
+                  service: switch.toggle
+                  service_data:
+                    entity_id: switch.hass_custom_sleep_cmd
+                template: icon_name
+
+              - type: custom:button-card
+                name: Refresh
+                icon: mdi:cog-refresh
+                tap_action:
+                  action: call-service
+                  service: switch.toggle
+                  service_data:
+                    entity_id: switch.hass_custom_hass_restart
+                template: icon_name
+
+              - type: custom:button-card
+                name: Reboot
+                icon: mdi:restart
+                tap_action:
+                  action: call-service
+                  service: switch.toggle
+                  service_data:
+                    entity_id: switch.hass_pc_restart
+                template: icon_name
+
+
+      ### OFF ###
+      - type: conditional
+        conditions:
+          - entity: binary_sensor.ping_rackstation
+            state: 'off'
+        card:
+          type: vertical-stack
+          cards:
+            - type: entities
+              state_color: true
+              show_header_toggle: false
+              card_mod:
+                class: content
+              entities:
+
+                - entity: switch.wol_plex
+                  name: Plex
+                  secondary_info: last-changed
+
+            - type: horizontal-stack
+              cards:
+                - type: custom:button-card
+                  name: Power On
+                  icon: mdi:power
+                  tap_action:
+                    action: call-service
+                    service: switch.turn_on
+                    service_data:
+                      entity_id: switch.wol_plex
+                  template: icon_name

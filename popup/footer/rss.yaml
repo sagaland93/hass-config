@@ -1,0 +1,36 @@
+action: fire-dom-event
+browser_mod:
+  command: popup
+  title: RSS Results
+  style:
+    .: |
+      :host .content {
+        width: 100%;
+      }
+      :host .main-title {
+        pointer-events: none;
+      }
+    hui-grid-card:
+      $: |
+        #root {
+          grid-gap: 0 !important;
+          padding: var(--card-content-padding);
+          width: max-content;
+        }
+  card:
+    type: grid
+    columns: 1
+    square: false
+    cards:
+      - type: custom:button-card
+        entity: sensor.rss_search_result
+        template: rss_results_movie
+
+      - color_type: blank-card
+        type: custom:button-card
+
+      - type: custom:button-card
+        entity: sensor.rss_search_result_tv_shows
+        template: rss_results_tv
+
+
