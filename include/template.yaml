@@ -1,0 +1,1775 @@
+template:
+
+  # SELECT
+
+  # SELECT - CONDITIONAL MEDIA
+  select:
+    - name: conditional_media
+      state: >
+        {% set recently_added = 'Recently Added' %}
+        {% set paused_timeout_minutes = 15 %}
+        {% set media_players = [
+          states.media_player.apple_tv_1,
+          states.media_player.apple_tv_2,
+          states.sensor.shield_real_state ] %}
+
+        {% macro media(state) %}
+        {% set state = media_players | selectattr('state','eq',state) | list %}
+        {% set last_changed = recently_added if state | length == 0 else state | map(attribute='last_changed') | list | max %}
+          {{ state | selectattr('last_changed','eq', last_changed) | map(attribute='name') | list | join }}
+        {% endmacro %}
+
+        {% set playing = media_players | selectattr('state','eq','playing') | list %}
+        {% set timeout_playing = False if playing | length == 0 else
+          (as_timestamp(now()) - as_timestamp(playing | map(attribute='last_changed') | list | max)) < paused_timeout_minutes * 60 %}
+          
+        {% set paused = media_players | selectattr('state','eq','paused') | list %}
+        {% set timeout_paused = False if paused | length == 0 else
+          (as_timestamp(now()) - as_timestamp(paused | map(attribute='last_changed') | list | max)) < paused_timeout_minutes * 60 %}
+
+        {% if playing %}
+          {{ media('playing') if timeout_playing else media('paused') if timeout_paused else media('playing') }}
+        {% elif paused %}
+          {{ media('paused') if timeout_paused else recently_added }}
+        {% else %}
+          {{ recently_added }}
+        {% endif %}
+      options: >
+        {% set recently_added = ['Recently Added'] %}
+        {% set media_players = [
+          states.media_player.apple_tv_1,
+          states.media_player.apple_tv_2,
+          states.sensor.shield_real_state ] %}
+        {{ recently_added + media_players | map(attribute='name') | list }}
+      select_option:
+        service: select.select_option
+        target:
+          entity_id: select.conditional_media
+        data:
+          option: >
+            {{ option }}
+
+    # SELECT - VACUUM SPEED
+    - name: vacuum_speed
+      state: >
+        {% set fan_speed = state_attr('vacuum.roborock_s6', 'fan_speed') %}
+        {{ 'Standard' if fan_speed == None else fan_speed }}
+      options: >
+        {% set fan_speed_list = state_attr('vacuum.roborock_s6', 'fan_speed_list') %}
+        {{ ['Standard'] if fan_speed_list == None else fan_speed_list }}
+      select_option:
+        service: vacuum.set_fan_speed
+        target:
+          entity_id: vacuum.roborock_s6
+        data:
+          fan_speed: >
+            {{ option }}
+  
+
+  # BINARY SENSORS
+  binary_sensor:
+
+    - unique_id: sidebar_update_color
+      state: >
+        {% set installed = states('sensor.hass_version_installed') %}
+        {% set latest = states('sensor.hass_version_latest') 
+        if not installed | regex_search('b') else states('sensor.hass_version_latest_beta') %}
+        {{ (installed != latest and installed != 'unknown' and latest != 'unknown')
+        or (states('sensor.hacs') != 'unknown' and states('sensor.hacs') | int(default=0) > 0) }}
+
+
+  # SENSORS
+  sensor:
+
+    # SENSOR - SYSTEM - BASE URL
+    - unique_id: base_url
+      name: 'Base URL'
+      state: 'https://saga93.me:8123'
+
+
+    # SENSOR - SYSTEM - VERSIONS
+    - unique_id: hass_version
+      icon: mdi:home-assistant
+      state: >
+        {{ 'Latest' if states('sensor.hass_version_installed') == 
+        states('sensor.hass_version_latest') else states('sensor.hass_version_latest') }}
+      attributes:
+        friendly_name: >
+          Installed {{ states('sensor.hass_version_installed') }}
+
+    - unique_id: hacs_version
+      state: >
+        {{ device_attr(device_id('sensor.hacs'), 'sw_version') }}
+
+
+    # SENSOR - SYSTEM - UNAVAILABLE ENTITIES
+    - unique_id: unavailable_entities
+      name: 'Unavailable Entities'
+      unit_of_measurement: entities
+      state: >
+        {% if state_attr('sensor.unavailable_entities','entities')|lower not in ['unknown','unavailable','none'] %}
+          {{ state_attr('sensor.unavailable_entities','entities')|count }}
+        {% endif %}
+      attributes:
+        entities: >
+          {% set ignore_sec = 60 %}
+          {% set unavail = namespace(entities=[]) %}
+          {% set entities = states|rejectattr('domain','eq','group')
+            |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id'))
+            |selectattr('state','in',['unavailable','unknown','none'])|map(attribute='entity_id')|list %}
+          {% for item in entities %}
+            {% if not '.browser_' in item %}
+              {% if not 'scene.' in item %}
+                {% if states[item].last_changed < now() - timedelta(seconds=ignore_sec) %}
+                  {% set unavail.entities = unavail.entities + [item] %}
+                {% endif %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+          {{ unavail.entities }}
+
+
+    # SENSOR - SYSTEM - HOME ALONE
+    - unique_id: home_alone
+      name: 'Home Alone'
+      state: >
+        {% set iam = states.person.andre.state %}
+        {% set siri = states.person.siri.state %}
+        {% if iam == 'home' and siri != 'home' %}
+          yes
+        {% else %}
+          no
+        {% endif %}
+      icon: >
+        {% if is_state("sensor.home_alone", "yes") %}
+          mdi:party-popper
+        {% else %}
+          mdi:emoticon-sad
+        {% endif %}
+
+
+    # SENSOR - SYSTEM - SEASON CALCULATOR
+    - unique_id: current_season
+      name: 'Current Season'
+      state: >
+        {% set month = now().month %}
+        {% if month in [1, 2, 12] %}
+          winter
+        {% elif month in [3, 4, 5] %}
+          spring
+        {% elif month in [6, 7, 8] %}
+          summer
+        {% elif month in [9, 10, 11] %}
+          autumn
+        {% endif %}
+      icon: >
+        {% if is_state("sensor.current_season", "winter") %}
+          mdi:snowflake
+        {% elif is_state("sensor.current_season", "spring") %}
+          mdi:sprout
+        {% elif is_state("sensor.current_season", "summer") %}
+          mdi:sunglasses
+        {% elif is_state("sensor.current_season", "autumn") %}
+          mdi:leaf-maple
+        {% endif %}
+
+
+    # SENSOR - SYSTEM - SPECIAL OCCASIONS
+    - unique_id: special_occasions
+      name: 'Special Occasions'
+      state: >
+        {% set hours = now().strftime('%H') %}
+        {% set minutes = now().strftime('%M') %}
+        {% set date = now().strftime('%D') %}
+        {% if "01/01" in date %}
+          New year
+        {% elif "12/24" in date %}
+          Christmas
+        {% elif "12/25" in date %}
+          First Christmas day
+        {% elif "12/26" in date %}
+          Second Christmas day
+        {% elif "01/30" in date %}
+          Mamma
+        {% elif "02/13" in date %}
+          Mother's day
+        {% elif "02/14" in date %}
+          Valentine's day
+        {% elif "05/17" in date %}
+          Constitution Day
+        {% elif "05/20" in date %}
+          Birthday
+        {% elif "09/02" in date %}
+          Pappa
+        {% elif "11/13" in date %}
+          Father's day
+        {% else %}
+          nothing
+        {% endif %}
+      icon: >
+        {% set state = states.sensor.special_occasions.state %}
+        {% if state == "New year" %}
+          mdi:party-popper
+        {% elif state == "Christmas" %}
+          phu:christmas-tree-v2
+        {% elif state == "Constitution Day" %}
+          mdi:flag-variant
+        {% elif state == "Birthday" %}
+          mdi:cake-variant
+        {% elif state == "Mamma" %}
+          mdi:cake-variant
+        {% elif state == "Pappa" %}
+          mdi:cake-variant
+        {% else %}
+          mdi:calendar-star
+        {% endif %}
+
+
+    # SENSOR - SYSTEM - WASTE CALENDAR
+    - unique_id: waste_pickup
+      name: 'Renovasjon Tracker'
+      state: >
+        {% set date = now().strftime('%d/%m/%Y') %}
+        {% set food = states.sensor.matavfall.state %}
+        {% set paper = states.sensor.papir.state %}
+        {% set rest = states.sensor.restavfall.state %}
+        {% if food in date or paper in date or rest in date %}
+          on
+        {% else %}
+          off
+        {% endif %}
+      attributes:
+        today: >
+          {% set today = now().strftime('%d/%m/%Y') %}
+          {% set dates = expand('sensor.matavfall', 'sensor.papir', 'sensor.restavfall') %}
+          {% set dates = dates | selectattr('state', 'search', today) | map(attribute='name') | list %}
+          {{ dates or ['nothing'] }}
+        tomorrow: >
+          {% set tomorrow = (as_timestamp(now())+ (86400)) | timestamp_custom("%d/%m/%Y",true) %}
+          {% set dates = expand('sensor.matavfall', 'sensor.papir', 'sensor.restavfall') %}
+          {% set dates = dates | selectattr('state', 'search', tomorrow) | map(attribute='name') | list %}
+          {{ dates or ['nothing'] }}
+      icon: mdi:calendar
+
+
+    # SENSOR - SYSTEM - NORDPOOL
+    - unique_id: nordpool_cheapest_price
+      name: 'Nordpool cheapest price'
+      state: >
+        {% if states('sensor.nordpool_hvfoss') not in ['unavailable', 'unknown'] %}
+          {% set prices=states.sensor.nordpool_hvfoss.attributes.raw_today + states.sensor.nordpool_hvfoss.attributes.raw_tomorrow -%}
+          {%set list = namespace(prices=[]) -%}
+          {% for price in prices -%}
+            {%- if price.end > now() -%}{% set list.prices = list.prices + [price] -%}{%- endif -%}
+          {% endfor -%}
+          {% set cheapest = list.prices | sort(attribute='value') -%}
+          {{cheapest[0].value}}
+        {% else -%}
+          error
+        {% endif -%}
+
+    - unique_id: nordpool_cheapest_price_start
+      name: 'Nordpool cheapest price start'
+      state: >
+        {% if states('sensor.nordpool_hvfoss') not in ['unavailable', 'unknown'] %}
+          {% set prices=states.sensor.nordpool_hvfoss.attributes.raw_today + states.sensor.nordpool_hvfoss.attributes.raw_tomorrow -%}
+          {% set list = namespace(prices=[]) -%}
+          {% for price in prices -%}
+            {%- if price.end > now() -%}{% set list.prices = list.prices + [price] -%}{%- endif -%}
+          {% endfor -%}
+          {% set cheapest = list.prices | sort(attribute='value') -%}
+          {{as_timestamp(cheapest[0].start) | timestamp_custom('%H')}}
+        {% else -%}
+          error
+        {% endif -%}
+
+    - unique_id: nordpool_cheapest_price_end
+      name: 'Nordpool cheapest price end'
+      state: >
+        {% if states('sensor.nordpool_hvfoss') not in ['unavailable', 'unknown'] %}
+          {% set prices=states.sensor.nordpool_hvfoss.attributes.raw_today + states.sensor.nordpool_hvfoss.attributes.raw_tomorrow -%}
+          {%set list = namespace(prices=[]) -%}
+          {% for price in prices -%}
+            {%- if price.end > now() -%}{% set list.prices = list.prices + [price] -%}{%- endif -%}
+          {% endfor -%}
+          {% set cheapest = list.prices | sort(attribute='value') -%}
+          {{as_timestamp(cheapest[0].end) | timestamp_custom('%H')}}
+        {% else -%}
+          error
+        {% endif -%}
+
+
+    # SENSOR - VACUUM
+    - unique_id: vacuum_filter
+      icon: custom:roborock-filter
+      unit_of_measurement: '%'
+      state: >
+        {{ (states('sensor.roborock_s6_filter_left') | int(default=0) / 5400) | int(default=0) }}
+      attributes:
+        friendly_name: Filter
+
+    - unique_id: vacuum_mainbrush
+      icon: custom:roborock-mainbrush
+      unit_of_measurement: '%'
+      state: >
+        {{ (states('sensor.roborock_s6_main_brush_left') | int(default=0) / 10800) | int(default=0) }}
+      attributes:
+        friendly_name: Main brush
+
+    - unique_id: vacuum_sensors
+      icon: custom:roborock-sensor
+      unit_of_measurement: '%'
+      state: >
+        {{ (states('sensor.roborock_s6_sensor_dirty_left') | int(default=0) / 1080) | int(default=0) }}
+      attributes:
+        friendly_name: Sensors
+
+    - unique_id: vacuum_sidebrush
+      icon: custom:roborock-sidebrush
+      unit_of_measurement: '%'
+      state: >
+        {{ (states('sensor.roborock_s6_side_brush_left') | int(default=0) / 7200) | int(default=0) }}
+      attributes:
+        friendly_name: Side brush
+
+    # SENSOR - UPDATES
+    - unique_id: updates
+      state: template
+      attributes:
+        unifi: >
+          {% set installed = states('sensor.template_udm_version') %}
+          {% set url = 'https://community.ui.com/releases?q=dream+machine' %}
+          {% if is_state('binary_sensor.template_udm_upgradable', 'on') %}
+            <b><a href="#" onclick="window.open('{{ url }}');">UniFi Dream Machine ({{ installed }})</a></b> uppdatering tillgänglig
+          {% endif %}
+
+    # SENSOR - DOMAIN COUNTER
+    - unique_id: domain_counter
+      state: >
+        {{ states | count }}
+      attributes:
+        automation: >
+          {{ states.automation | count }}
+        binary_sensor: >
+          {{ states.binary_sensor | count }}
+        device_tracker: >
+          {{ states.device_tracker | count }}
+        light: >
+          {{ states.light | count }}
+        media_player: >
+          {{ states.media_player | count }}
+        sensor: >
+          {{ states.sensor | count }}
+        switch: >
+          {{ states.switch | count }}
+        other: >
+          {{ states.calendar | count +
+          states.camera | count +
+          states.climate | count +
+          states.fan | count +
+          states.input_boolean | count +
+          states.input_number | count +
+          states.input_select | count +
+          states.lock | count +
+          states.person | count +
+          states.remote | count +
+          states.scene | count +
+          states.script | count +
+          states.select | count +
+          states.sun | count +
+          states.timer | count +
+          states.vacuum | count +
+          states.weather | count +
+          states.zone | count }}
+
+
+    # SENSOR - ELECTRICITY COST
+    - unique_id: electrical_daily_cost_rounded
+      name: 'Electrical - Daily Cost (Rounded)'
+      unit_of_measurement: 'NOK'
+      state: >-
+        {% set cost = states.sensor.electrical_daily_cost.state %}
+        {% if cost not in ['unavailable', 'null', 'undefined', 'none'] %}
+          {{ cost | round }}
+        {% endif %}
+
+    # SENSOR - WEATHER
+    - unique_id: weather_min_temp
+      name: 'Weather Min Temp'
+      state: >-
+        {% set today = states.sensor.date.state %}
+        {% set forecasts = state_attr('weather.pirateweather', 'forecast') %}
+        {% for forecast in forecasts %}
+          {%- set date = forecast.datetime | replace('T22:00:00+00:00', '') %}
+          {%- if date == today %}
+            {{ forecast.templow }}
+          {% endif %}
+        {% endfor %}
+
+    # SENSOR - WEATHER
+    - unique_id: weather_max_temp
+      name: 'Weather Max Temp'
+      state: >-
+        {% set today = states.sensor.date.state %}
+        {% set forecasts = state_attr('weather.pirateweather', 'forecast') %}
+        {% for forecast in forecasts %}
+          {%- set date = forecast.datetime | replace('T22:00:00+00:00', '') %}
+          {%- if date == today %}
+            {{ forecast.temperature }}
+          {% endif %}
+        {% endfor %}
+
+
+    # SENSOR - FANCY DATE
+    - unique_id: fancy_date
+      name: 'Fancy Date'
+      state: >-
+        {%- if strptime(states('sensor.date'), '%Y-%m-%d').day != null %}
+          {%- set days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+          {%- set months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] %}
+          {%- set num = strptime(states('sensor.date'), '%Y-%m-%d').day | int %}
+          {%- set d = {1:'st',2:'nd',3:'rd'} %}
+          {%- if 10 < num % 100 <= 20 %}
+            {{ days[now().weekday()] }}, {{ num }}th of {{ months[now().month-1] }}
+          {%- else %}
+            {{ days[now().weekday()] }}, {{ num }}{{ d.get(num % 10, 'th') }} of {{ months[now().month-1] }}
+          {%- endif %}
+        {%- endif -%}
+      attributes:
+        short_date: >-
+          {%- if strptime(states('sensor.date'), '%Y-%m-%d').day != null %}
+            {%- set months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] %}
+            {%- set num = strptime(states('sensor.date'), '%Y-%m-%d').day | int %}
+            {%- set d = {1:'st',2:'nd',3:'rd'} %}
+            {%- if 10 < num % 100 <= 20 %}
+              {{- num }}th of {{ months[now().month-1] }}
+            {%- else %}
+              {{- num }}{{ d.get(num % 10, 'th') }} of {{ months[now().month-1] }}
+            {%- endif %}
+          {%- endif -%}
+        week_day: >-
+          {%- if strptime(states('sensor.date'), '%Y-%m-%d').day != null %}
+          {%- set days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+            {{- days[now().weekday()] }}
+          {%- endif -%}
+        day: >-
+          {% set today = states("sensor.date") %}
+          {% set day = as_timestamp(today) | timestamp_custom('%d') | round %}
+          {{ day }}
+        month_num: >-
+          {% set today = states("sensor.date") %}
+          {% set month = as_timestamp(today) | timestamp_custom('%m') | round %}
+          {{ month }}
+        month_name: >-
+          {% set today = states("sensor.date") %}
+          {% set arr_months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] %}
+          {% set month = as_timestamp(today) | timestamp_custom('%m') | int %}
+          {{ arr_months[month-1] }}
+        year: >-
+          {% set today = states("sensor.date") %}
+          {% set year = as_timestamp(today) | timestamp_custom('%Y') | int %}
+          {{ year }}
+
+
+    # SENSOR - UNIFI PROTECT
+    - unique_id: surveillance_cameras
+      name: 'Surveillance Cameras'
+      state: >
+        {%- set cameras = [
+          states.camera.driveway,
+          states.camera.living_room,
+          states.camera.terrace
+        ] %}
+        {% set recording = cameras | selectattr('state','eq','recording') | list %}
+        {% if (recording | length < 3) %}
+          error
+        {% else %}
+          recording
+        {% endif %}
+
+    # SENSOR - UNIFI NETWORK
+    - unique_id: unifi_switch_health
+      name: 'UniFi Switch Health'
+      state: >
+        {%- set switches = [
+          states.device_tracker.switch_1_rack,
+          states.device_tracker.switch_2_stua,
+          states.device_tracker.switch_3_office,
+          states.device_tracker.switch_4_loft,
+          states.device_tracker.switch_5_loft
+        ] %}
+        {% set switch_state = switches | selectattr('state','eq','home') | list %}
+        {% if (switch_state | length < 5) %}
+          error
+        {% else %}
+          healthy
+        {% endif %}
+
+
+    # SENSOR - SYNOLOGY - RACKSTATION
+    - unique_id: rs_status
+      icon: mdi:heart-pulse
+      state: >
+        {% set entity_id = 'sensor.rackstation_volume_1_status' %}
+        {% if is_state(entity_id, 'normal') %}
+          Healthy
+        {% elif is_state(entity_id, 'background') %}
+          Verifying
+        {% else %}
+          {{ states(entity_id) | capitalize }}
+        {% endif %}
+      attributes:
+        friendly_name: System Health
+
+    # SENSOR - SYNOLOGY - DISKSTATION
+    - unique_id: ds_status
+      icon: mdi:heart-pulse
+      state: >
+        {% set entity_id = 'sensor.diskstation_status' %}
+        {% if is_state(entity_id, 'normal') %}
+          Healthy
+        {% elif is_state(entity_id, 'background') %}
+          Verifying
+        {% else %}
+          {{ states(entity_id) | capitalize }}
+        {% endif %}
+      attributes:
+        friendly_name: System Health
+
+
+    # SENSOR - TABLET - MEMORY
+    - unique_id: fullykiosk_memory
+      icon: mdi:memory
+      unit_of_measurement: '%'
+      state: >
+        {% set FreeMemory = states('sensor.galaxy_tab_a7_ram_free_memory') | float(default=0) %}
+        {% set TotalMemory = states('sensor.galaxy_tab_a7_ram_total_memory') | float(default=0) %}
+        {% if not (FreeMemory == 0.0 or TotalMemory == 0.0) %}
+          {{ 100 - (FreeMemory / TotalMemory * 100) | int(default=0) }}
+        {% endif %}
+      attributes:
+        friendly_name: Memory
+
+    # SENSOR - TABLET - STORAGE
+    - unique_id: fullykiosk_storage
+      icon: mdi:sd
+      unit_of_measurement: '%'
+      state: >
+        {% set FreeSpace = states('sensor.galaxy_tab_a7_internal_storage_free_space') | float(default=0) %}
+        {% set TotalSpace = states('sensor.galaxy_tab_a7_internal_storage_total_space') | float(default=0) %}
+        {% if not (FreeSpace == 0.0 or TotalSpace == 0.0) %}
+          {{ 100 - (FreeSpace / TotalSpace * 100) | int(default=0) }}
+        {% endif %}
+      attributes:
+        friendly_name: Storage
+
+    # SENSOR - HOME STATE
+    - unique_id: home_state
+      name: 'Home State'
+      state: >
+        {%- set time = now().hour %}
+        {%- if time <= 1 -%} night
+        {%- elif time <= 4 -%} night
+        {%- elif time <= 9 -%} morning
+        {%- elif time <= 11 -%} late morning
+        {%- elif time <= 18 -%} afternoon
+        {%- elif time <= 19 -%} day
+        {%- elif time <= 22 -%} evening
+        {%- elif time <= 23 -%} night
+        {%- else %} night
+        {%- endif -%}
+      icon: >-
+        {%- set state = states.sensor.home_state.state %}
+        {%- if state == 'night' -%} ios:moon-fill
+        {%- elif state == 'night' -%} ios:moon-fill
+        {%- elif state == 'morning' -%} ios:sun-min-fill
+        {%- elif state == 'late morning' -%} mdi:coffee
+        {%- elif state == 'afternoon' -%} mdi:food
+        {%- elif state == 'day' -%} hue:scene-relax
+        {%- elif state == 'evening' -%} ios:bed-double-fill
+        {%- elif state == 'night' -%} mdi:sleep
+        {%- else %} mdi:sleep
+        {%- endif -%}
+
+    # SENSOR - HOME OCCUPIED
+    - unique_id: home_occupied
+      name: 'Home Occupied'
+      state: >
+        {% set state = 'yes' %}
+        {% if not is_state('person.andre', 'home') %}
+          {% if not is_state('person.siri', 'home') %}
+            {% if ((as_timestamp(now()) - as_timestamp(states.group.motion_sensors.last_changed))) | round(0) > 1800 %}
+              {% if is_state('media_player.denon_receiver', 'off') %}
+                {% if is_state('media_player.lg_tv_55', 'off') %}
+                  {% if is_state('switch.wake_on_lan', 'off') %}
+                    {% if is_state('sensor.saga_sin_iphone_battery_state', 'Not Charging') %}
+                      {% set state = 'no' %}
+                    {% endif %}
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        {% endif %}
+        {{ state }}
+      icon: >
+        {% set state = states.sensor.home_occupied.state %}
+        {% if state == 'no' %}
+          mdi:home-variant
+        {% else %}
+          mdi:home-variant-outline
+        {%- endif %}
+
+
+    # SENSOR - HOME OCCUPIED SCRIPTS
+    - unique_id: home_occupied_scripts_state
+      name: 'Home Occupation Scripts'
+      state: >
+        {% set state = 'off' %}
+        {% if is_state('script.home_arrive', 'on') %}
+          {% set state = 'on' %}
+        {% elif is_state('script.home_leave', 'on') %}
+          {% set state = 'on' %}
+        {% endif %}
+        {{ state }}
+
+
+    # SENSOR - HOME WINDING DOWN
+    - unique_id: home_winding_down
+      name: 'Home Winding Down'
+      state: >
+        {% set state = 'yes' %}
+        {% if not is_state('sensor.home_state', 'evening') %}
+          {% if not is_state('sensor.home_state', 'night') %}
+              {% set state = 'no' %}
+          {% endif %}
+        {% endif %}
+        {{ state }}
+
+
+    # SENSOR - HOME MOOD LIGHTING
+    - unique_id: home_mood_lighting
+      name: 'Home Mood Lighting'
+      state: >
+        {% set state = 'yes' %}
+        {% if not is_state('sensor.home_state', 'evening') %}
+          {% if not is_state('sensor.home_state', 'night') %}
+            {% if not is_state('sensor.home_state', 'morning') %}
+              {% set state = 'no' %}
+            {% endif %}
+          {% endif %}
+        {% endif %}
+        {{ state }}
+
+
+    # SENSOR - SLEEPING
+    - unique_id: home_sleep_mode
+      name: 'Home Sleep Mode'
+      state: >
+        {% set state = 'off' %}
+        {% if states('sensor.saga_sin_iphone_battery_state') in ["Charging", "Full"] %} 
+          {% if not is_state('media_player.denon_receiver', 'on') %}
+            {% if not is_state('sensor.office_pc_real_session_state', 'Active') %}
+              {% set state = 'on' %}
+            {% endif %}
+          {% endif %}
+        {% endif %}
+        {{ state }}
+
+
+    # SENSOR - MODES
+    - unique_id: home_mode
+      name: 'Home Mode'
+      state: >
+        {% set state = states('sensor.home_state') | title %}
+        {% set sleep = states('sensor.home_sleep_mode') %}
+        {% set mood = states('sensor.home_mood_lighting') %}
+        {% set winding_down = states('sensor.home_winding_down') %}
+        {% set occupied = states('sensor.home_occupied') %}
+        {% if occupied == 'no' %}
+          {% set state = 'Empty' %}
+        {% elif sleep == 'on' %}
+          {% set state = 'Sleep' %}
+        {% elif mood == 'yes' %}
+          {% set state = 'Comfort' %}
+        {% elif winding_down == 'on' %}
+          {% set state = 'Comfort' %}
+        {% else %}
+          {% set state = 'Occupied' %}
+        {% endif %}
+        {{ state }}
+
+
+    # SENSOR - CONDITIONAL MEDIA BACKGROUND
+    - unique_id: active_media_players
+      name: 'Active Media Players'
+      state: >
+        {% set media_players = [
+          states.media_player.apple_tv_1,
+          states.media_player.apple_tv_2,
+          states.sensor.shield_real_state
+        ] %}
+        {{ media_players | selectattr('state','search','(playing|paused)') | list | count }}
+      attributes:
+        active: >
+          {% set media_players = [
+            states.media_player.apple_tv_1,
+            states.media_player.apple_tv_2,
+            states.sensor.shield_real_state
+          ] %}
+
+          {%- set media_players_playing = media_players | selectattr('state','eq','playing') | list %}
+          {%- set media_player_id_playing = media_players_playing | map(attribute='entity_id') | join(', ') %}
+
+          {%- set media_players_paused = media_players | selectattr('state','eq','paused') | list %}
+          {%- set media_player_id_paused = media_players_paused | map(attribute='entity_id') | join(', ') %}
+
+          {%- if (media_players_playing | length > 0) -%}
+            {{ media_player_id_playing }}
+          {%- elif (media_players_paused | length > 0) -%}
+            {{ media_player_id_paused }}
+          {%- endif -%}
+        app: >
+          {%- set active_players = states.sensor.active_media_players.state %}
+          {%- if active_players != 'unavailable' %}
+            {%- if active_players | int > 0 %}
+              {% set players = (state_attr('sensor.active_media_players', 'active')).split(', ') %}
+              {% if players[0] is defined %}
+                {% set app = state_attr(players[0], 'app_id') %}
+                {% if app is defined %}
+                  {{ app }}
+                {% endif %}
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        entity_picture: >
+          {%- set active_players = states.sensor.active_media_players.state %}
+          {%- if active_players != 'unavailable' %}
+            {%- if active_players | int > 0 %}
+              {%- set players = (state_attr('sensor.active_media_players', 'active')).split(', ') %}
+              {% if players[0] is defined %}
+                {%- set entitypic = state_attr(players[0],'entity_picture') %}
+                {%- set app = state_attr('sensor.active_media_players','app') %}
+                {%- if app is defined %}
+                  {{- entitypic if 'plex' in app -}}
+                  {{- entitypic if 'infuse' in app -}}
+                  {{- '/local/images/ATVPlus_bg.jpg' if app == 'com.apple.TVWatchList' -}}
+                  {{- '/local/images/AirPlay_bg.jpg' if 'AirPlay' in app -}}
+                  {{- '/local/images/AmazonPrime_bg.jpg' if 'com.amazon' in app -}}
+                  {{- '/local/images/DisneyPlus_bg.jpg' if 'disneyplus' in app -}}
+                  {{- '/local/images/yt_bg.jpg' if 'youtube' in app -}}
+                  {{- '/local/images/tv2play_bg.jpg' if 'tv2' in app -}}
+                  {{- '/local/images/HBOMax_bg.jpg' if 'hbo' in app -}}
+                  {{- '/local/images/netflix_bg.jpg' if 'netflix' in app -}}
+                  {{- '/local/images/nrk_bg.jpg' if 'nrk' in app -}}
+                  {{- '/local/images/ViaPlay_bg.jpg' if 'viasat' in app -}}
+                  {{- '/local/images/ViaPlay_bg.jpg' if 'ViaPlay' in app -}}
+                  {{- '/local/images/ViaFree_bg.jpg' if 'ViaFree' in app -}}
+                  {{- '/local/images/discovery_bg.jpg' if 'kanal5' in app -}}
+                {%- elif 'plex' in players %}
+                  {{ '/local/images/Plex_bg.png' }}
+                {%- endif %}
+              {%- endif %}
+            {%- endif %}
+          {%- endif %}
+
+
+    # SENSOR - SHIELD REAL STATE
+    - unique_id: shield_real_state
+      name: 'SHIELD Real State'
+      state: >
+        {% set players = [
+          states.media_player.plex_plex_for_android_tv_shield_android_tv,
+          states.media_player.android_tv_192_168_20_92,
+          states.media_player.shield
+        ] %}
+        {% if players | selectattr('state','eq','playing') | list | count >= 1 %}
+          playing
+        {% elif players | selectattr('state','eq','paused') | list | count >= 1 %}
+          paused
+        {% elif players | selectattr('state','eq','idle') | list | count >= 1 %}
+          idle
+        {% else %}
+          off
+        {% endif %}
+      attributes:
+        player: >
+          {% if states.sensor.shield_real_state.state | lower not in ['unknown','unavailable','none','off'] %}
+            {% set app = states.media_player.android_tv_192_168_20_92.attributes.app_name %}
+            {%- if app is defined %}
+              {%- if app == 'Plex' %}
+                media_player.plex_plex_for_android_tv_shield_android_tv
+              {% else %}
+                media_player.shield
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        app_name: >
+          {% if states.sensor.shield_real_state.state | lower not in ['unknown','unavailable','none','off'] %}
+            {% set app = states.media_player.android_tv_192_168_20_92.attributes.app_name %}
+            {%- if app is defined %}
+              {%- if app != '' and app not in ['unknown','unavailable','none'] %}
+                {{ app }}
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        app_id: >
+          {% if states.sensor.shield_real_state.state | lower not in ['unknown','unavailable','none','off'] %}
+            {% set app = states.media_player.android_tv_192_168_20_92.attributes.app_id %}
+            {%- if app is defined %}
+              {%- if app != '' and app not in ['unknown','unavailable','none'] %}
+                {{ app }}
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        entity_picture: >
+          {% if states.sensor.shield_real_state.state | lower not in ['unknown','unavailable','none','off'] %}
+            {% set current_app = states.sensor.shield_real_state.attributes.app_name %}
+            {% set picture = states.media_player.plex_plex_for_android_tv_shield_android_tv.attributes.entity_picture %}
+            {%- if picture is defined %}
+              {%- if picture != '' and picture not in ['unknown','unavailable','none'] %}
+                {%- if current_app is defined and current_app == 'Plex' %}
+                  {{- '/local/images/Plex_bg.png' if current_app == 'Plex' else picture -}}
+                {% endif %}
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        media_artist: >
+          {% if states.sensor.shield_real_state.state | lower not in ['unknown','unavailable','none','off'] %}
+            {% set artist = states.media_player.shield.attributes.media_artist %}
+            {%- if artist is defined %}
+              {%- if artist != '' and artist not in ['unknown','unavailable','none'] %}
+                {{ artist }}
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        media_title: >
+          {% if states.sensor.shield_real_state.state | lower not in ['unknown','unavailable','none','off'] %}
+            {% set media_title = states.media_player.shield.attributes.media_title %}
+            {%- if media_title is defined %}
+              {%- if media_title != '' and media_title not in ['unknown','unavailable','none'] %}
+                {{ media_title }}
+              {% endif %}
+            {% endif %}
+          {% endif %}
+
+
+    # SENSOR - DENON RECEIVER SOURCE
+    - unique_id: denon_receiver_source
+      name: 'Denon Receiver Source'
+      state: >
+        {% set receiver = states.media_player.denon_receiver.state %}
+        {% set source = states.media_player.denon_receiver.attributes.source %}
+        {% if receiver == 'on' and source is defined %}
+          {{ source }}
+        {% else %}
+          N/A
+        {% endif %}
+
+
+    # SENSOR - RSS - PrivateHD Movies
+    - unique_id: rss_search_result
+      name: 'RSS Search Result'
+      state: >
+        {% if state_attr('sensor.rss_search_result','titles') %}
+          {{ state_attr('sensor.rss_search_result','titles') | count }}
+        {% else %}
+          0
+        {% endif %}
+      attributes:
+        titles: >
+          {% set torrents = namespace(search=[]) %}
+          {% set rating = "" %}
+          {% set rating_pattern = "(?<=IMDB Rating: )(.*)(?= \()" %}
+          {% set imdb_id = "" %}
+          {% set id_pattern = "(?:imdb.com\/title\/)(tt[0-9]*)" %}
+          {% set search = state_attr('sensor.torrents_high_quality_movies', 'entries') %}
+          {% set options = state_attr('input_select.rss_search_list', 'options') %}
+          {% set first_choice = states.input_select.rss_search_list.state %}
+          {%- for option in options %}
+            {%- for torrent in search | reverse() %}
+              {%- if torrent.title is defined %}
+                {%- if not ' Extras ' in torrent.title %}
+                  {% set rating = (torrent.summary | regex_findall_index(rating_pattern)).split("/")[0] if torrent.summary is search(rating_pattern) else null %}
+                  {% set imdb_id = (torrent.summary | regex_findall_index(id_pattern)) if torrent.summary is search(id_pattern) else null %}
+                  {%- if first_choice in torrent.title %}
+                    {%- if rating and imdb_id %}
+                      {% set torrents.search = [torrent.title + " - IMDB Rating:" + rating + " - ID:" + imdb_id] %}
+                    {%- elif rating %}
+                      {% set torrents.search = [torrent.title + " - IMDB Rating:" + rating] %}
+                    {%- elif imdb_id %}
+                      {% set torrents.search = [torrent.title + " - ID:" + imdb_id] %}
+                    {%- else %}
+                     {% set torrents.search = [torrent.title] %}
+                    {%- endif %}
+                  {%- elif option in torrent.title %}
+                    {%- if rating and imdb_id %}
+                      {% set torrents.search = [torrent.title + " - IMDB Rating:" + rating + " - ID:" + imdb_id] %}
+                    {%- elif rating %}
+                      {% set torrents.search = [torrent.title + " - IMDB Rating:" + rating] %}
+                    {%- elif imdb_id %}
+                      {% set torrents.search = [torrent.title + " - ID:" + imdb_id] %}
+                    {%- else %}
+                     {% set torrents.search = [torrent.title] %}
+                    {%- endif %}
+                  {%- endif %}
+                {%- endif %}
+              {%- endif %}
+            {%- endfor %}
+          {%- endfor %}
+          {{ torrents.search }}
+        name: >
+          {%- set rss = states.sensor.rss_search_result.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result','titles') %}
+            {% set pattern = "(.*?)[\{\(\[]?[0-9]{4}" %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {{ (title | regex_findall_index(pattern) | replace(" Of ", " of ") | replace(" With ", " with ") | replace(" In ", " in ") | replace(" The ", " the ") | replace(".", " ") ) if title is search(pattern) else null }}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        year: >
+          {%- set rss = states.sensor.rss_search_result.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result','titles') %}
+            {% set pattern = "[\{\(\[]?[0-9]{4}" %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {{ (title | regex_findall_index(pattern)) if title is search(pattern) else null }}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        rating: >
+          {%- set rss = states.sensor.rss_search_result.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result','titles') %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {%- if "IMDB Rating" in title %}
+                  {{ title.split("IMDB Rating:")[1][:3] }}
+                {%- endif %}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        id: >
+          {%- set rss = states.sensor.rss_search_result.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result','titles') %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {%- if " ID:" in title %}
+                  {{ title.split(" ID:")[1] }}
+                {%- endif %}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        resolution: >
+          {%- set rss = states.sensor.rss_search_result.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result','titles') %}
+            {% set pattern = ".*?(\d{3,4}[p]).*" %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {{ (title | regex_findall_index(pattern)) if title is search(pattern) else null }}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        hdr: >
+          {%- set rss = states.sensor.rss_search_result.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result','titles') %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {{- ' HDR' if ' HDR ' in title -}}
+                {{- ' DV' if ' DV ' in title -}}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        source: >
+          {%- set rss = states.sensor.rss_search_result.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result','titles') %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {{- ' Netflix' if ' NF ' in title -}}
+                {{- ' WEBDL' if 'WEBDL' in title -}}
+                {{- ' WEB-DL' if 'WEB-DL' in title -}}
+                {{- ' WEBRip' if 'WEBRip' in title -}}
+                {{- ' BluRay' if 'BluRay' in title -}}
+                {{- ' Blu-Ray' if 'Blu-Ray' in title -}}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        quality: >
+          {%- set rss = states.sensor.rss_search_result.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result','titles') %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {{- ' LOSSLESS' if ' REMUX ' in title else ' RIP' -}}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        audio: >
+          {%- set rss = states.sensor.rss_search_result.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result','titles') %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {{- ' AAC' if 'AAC' in title -}}
+                {{- ' DTS' if ' DTS ' in title -}}
+                {{- ' DTS-HD' if ' DTS-HD ' in title -}}
+                {{- ' DTS-X' if ' DTS-X' in title -}}
+                {{- ' DD' if ' DD ' in title -}}
+                {{- ' DDP' if 'DDP' in title -}}
+                {{- ' DD+' if 'DD+' in title -}}
+                {{- ' TrueHD' if 'TrueHD' in title -}}
+                {{- ' Atmos' if 'Atmos' in title -}}
+                {{- ' FLAC' if 'FLAC' in title -}}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        audio_channels: >
+          {%- set rss = states.sensor.rss_search_result.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result','titles') %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {{- ' 5.1' if ' 5.1' in title -}}
+                {{- ' 7.1' if ' 7.1' in title -}}
+                {{- ' 2.0' if ' 2.0' in title -}}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        link: >
+          {%- set rss = states.sensor.rss_search_result.state %}
+          {%- if rss != 'unavailable' %}
+            {%- if rss != '0' %}
+              {% set torrents = namespace(search=[]) %}
+              {% set search = state_attr('sensor.torrents_high_quality_movies', 'entries') %}
+              {% set options = state_attr('input_select.rss_search_list', 'options') %}
+              {% set first_choice = states.input_select.rss_search_list.state %}
+              {%- for option in options %}
+                {%- for torrent in search | reverse() %}
+                  {%- if torrent.title is defined %}
+                    {%- if not ' Extras ' in torrent.title %}
+                      {%- if first_choice in torrent.title %}
+                        {% set torrents.search = [torrent.link] %}
+                      {%- elif option in torrent.title %}
+                        {% set torrents.search = [torrent.link] %}
+                      {%- endif %}
+                    {%- endif %}
+                  {%- endif %}
+                {%- endfor %}
+              {%- endfor %}
+              {{ torrents.search }}
+            {%- endif %}
+          {%- endif %}
+        torrent: >
+          {%- set rss = states.sensor.rss_search_result.state %}
+          {%- if rss != 'unavailable' %}
+            {%- if rss != '0' %}
+              {% set torrents = namespace(search=[]) %}
+              {% set search = state_attr('sensor.torrents_high_quality_movies', 'entries') %}
+              {% set options = state_attr('input_select.rss_search_list', 'options') %}
+              {% set first_choice = states.input_select.rss_search_list.state %}
+              {%- for option in options %}
+                {%- for torrent in search | reverse() %}
+                  {%- if torrent.title is defined %}
+                    {%- if not ' Extras ' in torrent.title %}
+                      {%- if first_choice in torrent.title %}
+                        {% set torrents.search = [torrent.link + ".torrent"] %}
+                      {%- elif option in torrent.title %}
+                        {% set torrents.search = [torrent.link + ".torrent"] %}
+                      {%- endif %}
+                    {%- endif %}
+                  {%- endif %}
+                {%- endfor %}
+              {%- endfor %}
+              {{ torrents.search | replace('to/torrent', 'to/download/torrent') }}
+            {%- endif %}
+          {%- endif %}
+
+
+    # SENSOR - RSS - PrivateHD Movies
+    - unique_id: torrent_movie_downloaded
+      name: 'Torrent - Movie - Already Downloaded'
+      state: >
+        {% set state = namespace(return='') %}
+        {%- set rss = states.sensor.rss_search_result.state %}
+        {%- if rss != 'unavailable' %}
+          {%- if rss != '0' %}
+            {% set title = state_attr('sensor.rss_search_result','name') %}
+            {% set year = state_attr('sensor.rss_search_result','year') %}
+            {% set recent = state_attr('sensor.recently_added_movies', 'data') %}
+            {% for download in recent if state.return != 'Yes' %}
+              {%- if not loop.first %}
+                {% if title in download.title %}
+                  {% set state.return = 'Yes' %}
+                {% else %}
+                  {% set state.return = 'No match' %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          {%- endif %}
+        {%- endif %}
+        {{ state.return }}
+      attributes:
+        title: >
+          {%- set state = states.sensor.torrent_movie_already_downloaded.state %}
+          {%- if state == 'Yes' %}
+            {% set title = state_attr('sensor.rss_search_result','name') %}
+            {% set recent = state_attr('sensor.recently_added_movies', 'data') %}
+            {% for download in recent %}
+              {%- if not loop.first %}
+                {% if title in download.title %}
+                  {{- download.title }}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          {%- endif %}
+
+
+    # SENSOR - RSS - PrivateHD TV Shows
+    - unique_id: rss_search_result_tv
+      name: 'RSS Search Result - TV Shows'
+      state: >
+        {% if state_attr('sensor.rss_search_result_tv_shows','titles') %}
+          {{ state_attr('sensor.rss_search_result_tv_shows','titles') | count }}
+        {% else %}
+          0
+        {% endif %}
+      attributes:
+        titles: >
+          {% set torrents = namespace(search=[]) %}
+          {% set rating = "" %}
+          {% set rating_pattern = "(?<=IMDB Rating: )(.*)(?= \()" %}
+          {% set imdb_id = "" %}
+          {% set id_pattern = "(?:imdb.com\/title\/)(tt[0-9]*)" %}
+          {% set search = state_attr('sensor.torrents_high_quality_tv_shows', 'entries') %}
+          {% set options = state_attr('input_select.rss_search_list_tv_shows', 'options') %}
+          {% set first_choice = states.input_select.rss_search_list_tv_shows.state %}
+          {%- for option in options %}
+            {%- for torrent in search | reverse() %}
+              {%- if torrent.title is defined %}
+                {%- if not ' Extras ' in torrent.title %}
+                  {% set rating = (torrent.summary | regex_findall_index(rating_pattern)).split("/")[0] if torrent.summary is search(rating_pattern) else null %}
+                  {% set imdb_id = (torrent.summary | regex_findall_index(id_pattern)) if torrent.summary is search(id_pattern) else null %}
+                  {%- if first_choice in torrent.title %}
+                    {%- if rating and imdb_id %}
+                      {% set torrents.search = [torrent.title + " - IMDB Rating:" + rating + " - ID:" + imdb_id] %}
+                    {%- else %}
+                     {% set torrents.search = [torrent.title] %}
+                    {%- endif %}
+                  {%- elif option in torrent.title %}
+                    {%- if rating and imdb_id %}
+                      {% set torrents.search = [torrent.title + " - IMDB Rating:" + rating + " - ID:" + imdb_id] %}
+                    {%- else %}
+                     {% set torrents.search = [torrent.title] %}
+                    {%- endif %}
+                  {%- endif %}
+                {%- endif %}
+              {%- endif %}
+            {%- endfor %}
+          {%- endfor %}
+          {{ torrents.search }}
+        name: >
+          {%- set name = namespace(return='') %}
+          {%- if states.sensor.rss_search_result_tv_shows.state not in ['unknown','unavailable','none','0'] %}
+            {% set titles = state_attr('sensor.rss_search_result_tv_shows','titles') %}
+            {% set pattern_s_e = "(.*?)[.\s][sS]\d{1,2}" %}
+            {% set pattern_year = "(.*?)[\{\(\[]?[0-9]{4}" %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {% set temp = (title | regex_findall_index(pattern_s_e) | replace(" Of ", " of ") | replace(" With ", " with ") | replace(" In ", " in ") | replace(" The ", " the ") ) if title is search(pattern_s_e) else null %}
+                {% set name.return = (temp | regex_findall_index(pattern_year) ) if temp is search(pattern_year) else temp %}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+          {{ name.return }}
+        season_episode: >
+          {%- if states.sensor.rss_search_result_tv_shows.state not in ['unknown','unavailable','none','0'] %}
+            {% set titles = state_attr('sensor.rss_search_result_tv_shows','titles') %}
+            {% set pattern_s = "[.\s][sS](\d{1,2}).*" %}
+            {% set pattern_e = "[eE](\d{1,3}).*" %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {%- if title is search(pattern_s) -%}
+                  S{{ (title | regex_findall_index(pattern_s)) }}
+                  {%- if title is search(pattern_e) -%}
+                    E{{ (title | regex_findall_index(pattern_e)) }}
+                  {%- endif -%}
+                {%- elif title is search(pattern_e) -%}
+                  E{{ (title | regex_findall_index(pattern_e)) }}
+                {%- else -%}
+                  null
+                {%- endif %}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        rating: >
+          {%- set rss = states.sensor.rss_search_result_tv_shows.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result_tv_shows','titles') %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {%- if "IMDB Rating" in title %}
+                  {{ title.split("IMDB Rating:")[1][:3] }}
+                {%- endif %}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        id: >
+          {%- set rss = states.sensor.rss_search_result_tv_shows.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result_tv_shows','titles') %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {%- if " ID:" in title %}
+                  {{ title.split(" ID:")[1] }}
+                {%- endif %}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        resolution: >
+          {%- set rss = states.sensor.rss_search_result_tv_shows.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result_tv_shows','titles') %}
+            {% set pattern = ".*?(\d{3,4}[p]).*" %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {{ (title | regex_findall_index(pattern)) if title is search(pattern) else null }}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        hdr: >
+          {%- set rss = states.sensor.rss_search_result_tv_shows.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result_tv_shows','titles') %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {{- ' HDR' if ' HDR ' in title -}}
+                {{- ' DV' if ' DV ' in title -}}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        source: >
+          {%- set rss = states.sensor.rss_search_result_tv_shows.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result_tv_shows','titles') %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {{- ' Netflix' if ' NF ' in title -}}
+                {{- ' WEBDL' if 'WEBDL' in title -}}
+                {{- ' WEB-DL' if 'WEB-DL' in title -}}
+                {{- ' WEBRip' if 'WEBRip' in title -}}
+                {{- ' BluRay' if 'BluRay' in title -}}
+                {{- ' Blu-Ray' if 'Blu-Ray' in title -}}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        quality: >
+          {%- set rss = states.sensor.rss_search_result_tv_shows.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result_tv_shows','titles') %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {{- ' LOSSLESS' if ' REMUX ' in title else ' RIP' -}}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        audio: >
+          {%- set rss = states.sensor.rss_search_result_tv_shows.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result_tv_shows','titles') %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {{- ' AAC' if 'AAC' in title -}}
+                {{- ' DTS' if ' DTS ' in title -}}
+                {{- ' DTS-HD' if ' DTS-HD ' in title -}}
+                {{- ' DD' if ' DD ' in title -}}
+                {{- ' DDP' if 'DDP' in title -}}
+                {{- ' DD+' if 'DD+' in title -}}
+                {{- ' TrueHD' if 'TrueHD' in title -}}
+                {{- ' Atmos' if 'Atmos' in title -}}
+                {{- ' FLAC' if 'FLAC' in title -}}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        audio_channels: >
+          {%- set rss = states.sensor.rss_search_result_tv_shows.state %}
+          {%- if rss != 'unavailable' and rss != '0' %}
+            {% set titles = state_attr('sensor.rss_search_result_tv_shows','titles') %}
+            {%- for title in titles %}
+              {%- if loop.first and title is defined and title != '' %}
+                {{- ' 5.1' if ' 5.1' in title -}}
+                {{- ' 7.1' if ' 7.1' in title -}}
+                {{- ' 2.0' if ' 2.0' in title -}}
+              {%- endif %}
+            {%- endfor %}
+          {%- endif %}
+        link: >
+          {%- set rss = states.sensor.rss_search_result_tv_shows.state %}
+          {%- if rss != 'unavailable' %}
+            {%- if rss != '0' %}
+              {% set torrents = namespace(search=[]) %}
+              {% set search = state_attr('sensor.torrents_high_quality_tv_shows', 'entries') %}
+              {% set options = state_attr('input_select.rss_search_list_tv_shows', 'options') %}
+              {% set first_choice = states.input_select.rss_search_list_tv_shows.state %}
+              {%- for option in options %}
+                {%- for torrent in search | reverse() %}
+                  {%- if torrent.title is defined %}
+                    {%- if not ' Extras ' in torrent.title %}
+                      {%- if first_choice in torrent.title %}
+                        {% set torrents.search = [torrent.link] %}
+                      {%- elif option in torrent.title %}
+                        {% set torrents.search = [torrent.link] %}
+                      {%- endif %}
+                    {%- endif %}
+                  {%- endif %}
+                {%- endfor %}
+              {%- endfor %}
+              {{ torrents.search }}
+            {%- endif %}
+          {%- endif %}
+        torrent: >
+          {%- set rss = states.sensor.rss_search_result_tv_shows.state %}
+          {%- if rss != 'unavailable' %}
+            {%- if rss != '0' %}
+              {% set torrents = namespace(search=[]) %}
+              {% set search = state_attr('sensor.torrents_high_quality_tv_shows', 'entries') %}
+              {% set options = state_attr('input_select.rss_search_list_tv_shows', 'options') %}
+              {% set first_choice = states.input_select.rss_search_list_tv_shows.state %}
+              {%- for option in options %}
+                {%- for torrent in search | reverse() %}
+                  {%- if torrent.title is defined %}
+                    {%- if not ' Extras ' in torrent.title %}
+                      {%- if first_choice in torrent.title %}
+                        {% set torrents.search = [torrent.link + ".torrent"] %}
+                      {%- elif option in torrent.title %}
+                        {% set torrents.search = [torrent.link + ".torrent"] %}
+                      {%- endif %}
+                    {%- endif %}
+                  {%- endif %}
+                {%- endfor %}
+              {%- endfor %}
+              {{ torrents.search | replace('to/torrent', 'to/download/torrent') }}
+            {%- endif %}
+          {%- endif %}
+
+
+    # SENSOR - RSS - PrivateHD TV Shows
+    - unique_id: torrent_tv_show_downloaded
+      name: 'Torrent - TV Show - Already Downloaded'
+      state: >
+        {%- set state = namespace(return='') %}
+        {%- if states.sensor.rss_search_result_tv_shows.state not in ['unknown','unavailable','none','0'] %}
+          {% set title = state_attr('sensor.rss_search_result_tv_shows','name') %}
+          {% set season_episode = state_attr('sensor.rss_search_result_tv_shows','season_episode') %}
+          {% set recent = state_attr('sensor.recently_added_tv_shows', 'data') %}
+          {% for download in recent if state.return != 'Yes' %}
+            {%- if not loop.first %}
+              {% if download.title in title %}
+                {% if season_episode in download.number %}
+                  {% set state.return = 'Yes' %}
+                {% else %}
+                  {% set state.return = 'No' %}
+                {% endif %}
+              {% else %}
+                {% set state.return = 'No match' %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        {%- endif %}
+        {{ state.return }}
+      attributes:
+        title: >
+          {%- if states.sensor.torrent_tv_show_already_downloaded.state == 'Yes' %}
+            {% set title = state_attr('sensor.rss_search_result_tv_shows','name') %}
+            {% set season_episode = state_attr('sensor.rss_search_result_tv_shows','season_episode') %}
+            {% set recent = state_attr('sensor.recently_added_tv_shows', 'data') %}
+            {% for download in recent %}
+              {%- if not loop.first %}
+                {% if download.title in title %}
+                  {% if season_episode in download.number %}
+                    {{- download.title }} {{download.number}}
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          {%- endif %}
+
+
+    # SENSOR - RSS - CinemaZ (Norwegian)
+    - unique_id: rss_search_result_norwegian
+      name: 'RSS Search Result - Norwegian'
+      state: >
+        {% if state_attr('sensor.rss_search_result_norwegian','titles') %}
+          {{ state_attr('sensor.rss_search_result_norwegian','titles') | count }}
+        {% else %}
+          0
+        {% endif %}
+      attributes:
+        titles: >
+          {%- if states.sensor.torrents_norwegian.state | int > 0 %}
+            {% set torrents = namespace(search=[]) %}
+            {% set search = state_attr('sensor.torrents_norwegian', 'entries') %}
+            {% set input = state_attr('input_text.rss_search_norwegian', 'pattern') %}
+            {% for item in search %}
+              {%- if input in item.title %}
+                {% set torrents.search = torrents.search + [item.title] %}
+              {%- endif %}
+            {% endfor %}
+            {{ torrents.search }}
+          {%- endif %}
+        first_movie_name_full: >
+          {%- set rss = states.sensor.rss_search_result_norwegian.state %}
+          {%- if rss != 'unavailable' %}
+            {%- if rss | int > 0 %}
+              {% set value = state_attr('sensor.rss_search_result_norwegian','titles')[0] %}
+              {% set pattern = "(.*?)([\{\(\[]?[0-9]{4}).*" %}
+              {%- if value != '' %}
+                {{ (value | regex_findall_index(pattern)) if value is search(pattern) else null }}
+              {%- endif %}
+            {%- endif %}
+          {%- endif %}
+        resolution: >
+          {%- set rss = states.sensor.rss_search_result_norwegian.state %}
+            {%- if rss != 'unavailable' %}
+              {%- if rss | int > 0 %}
+              {% set value = state_attr('sensor.rss_search_result_norwegian','titles')[0] %}
+              {% set pattern = ".*?(\d{3,4}[p]).*" %}
+              {%- if value != '' %}
+                {{ (value | regex_findall_index(pattern)) if value is search(pattern) else null }}
+              {%- endif %}
+            {%- endif %}
+          {%- endif %}
+        hdr: >
+          {%- set rss = states.sensor.rss_search_result_norwegian.state %}
+          {%- if rss != 'unavailable' %}
+            {%- if rss | int > 0 %}
+              {% set value = state_attr('sensor.rss_search_result_norwegian','titles')[0] %}
+              {% set pattern = "(?:HDR)" %}
+              {%- if value != '' %}
+                {{ (value | regex_findall_index(pattern)) if value is search(pattern) else null }}
+              {%- endif %}
+            {%- endif %}
+          {%- endif %}
+        source: >
+          {%- set rss = states.sensor.rss_search_result_norwegian.state %}
+          {%- if rss != 'unavailable' %}
+            {%- if rss | int > 0 %}
+              {%- set value = state_attr('sensor.rss_search_result_norwegian','titles')[0] %}
+              {%- if value != '' %}
+                {{- ' WEBDL' if 'WEBDL' in value -}}
+                {{- ' WEB-DL' if 'WEB-DL' in value -}}
+                {{- ' BluRay' if 'BluRay' in value -}}
+                {{- ' Blu-Ray' if 'Blu-Ray' in value -}}
+              {%- endif %}
+            {%- endif %}
+          {%- endif %}
+        quality: >
+          {%- set rss = states.sensor.rss_search_result_norwegian.state %}
+          {%- if rss != 'unavailable' %}
+            {%- if rss | int > 0 %}
+              {% set value = state_attr('sensor.rss_search_result_norwegian','titles')[0] %}
+              {% set pattern = "(?:REMUX)" %}
+              {%- if value != '' %}
+                {{ (value | regex_findall_index(pattern)) if value is search(pattern) else null }}
+              {%- endif %}
+            {%- endif %}
+          {%- endif %}
+        audio: >
+          {%- set rss = states.sensor.rss_search_result_norwegian.state %}
+          {%- if rss != 'unavailable' %}
+            {%- if rss | int > 0 %}
+              {%- set value = state_attr('sensor.rss_search_result_norwegian','titles')[0] %}
+              {%- if value != '' %}
+                {{- ' DTS-HD' if 'DTS-HD' in value or ' DTS' if 'DTS' in value -}}
+                {{- ' DDP' if 'DDP' in value -}}
+                {{- ' DD+' if 'DD+' in value -}}
+                {{- ' TrueHD' if 'TrueHD' in value -}}
+                {{- ' Atmos' if 'Atmos' in value -}}
+                {{- ' FLAC' if 'FLAC' in value -}}
+              {%- endif %}
+            {%- endif %}
+          {%- endif %}
+        audio_channels: >
+          {%- set rss = states.sensor.rss_search_result_norwegian.state %}
+          {%- if rss != 'unavailable' %}
+            {%- if rss | int > 0 %}
+              {%- set value = state_attr('sensor.rss_search_result_norwegian','titles')[0] %}
+              {%- if value != '' %}
+                {{- ' 5.1' if ' 5.1' in value -}}
+                {{- ' 7.1' if ' 7.1' in value -}}
+                {{- ' 2.0' if ' 2.0' in value -}}
+              {%- endif %}
+            {%- endif %}
+          {%- endif %}
+        link: >
+          {%- set rss = states.sensor.rss_search_result_norwegian.state %}
+          {%- if rss != 'unavailable' %}
+            {%- if rss | int > 0 %}
+              {% set torrents = namespace(search=[]) %}
+              {% set search = state_attr('sensor.torrents_norwegian', 'entries') %}
+              {% set input = state_attr('input_text.rss_search_norwegian', 'pattern') %}
+              {% for item in search %}
+                {%- if input in item.title %}
+                  {% set torrents.search = torrents.search + [item.link] %}
+                {%- endif %}
+              {% endfor %}
+              {{ torrents.search }}
+            {%- endif %}
+          {%- endif %}
+
+    # SENSOR - RADARR - Upcoming release
+    - unique_id: radarr_rss_search
+      name: 'Radarr RSS Search Result'
+      state: >
+        {% if state_attr('sensor.radarr_rss_search_result','titles') %}
+          {{ state_attr('sensor.radarr_rss_search_result','titles') | count }}
+        {% endif %}
+      attributes:
+        titles: >
+          {% set torrents = namespace(search=[]) %}
+          {% set search = state_attr('sensor.radarr_upcoming_media', 'data') %}
+          {% set options = state_attr('input_select.rss_search_list', 'options') %}
+          {% set first_choice = states.input_select.rss_search_list.state %}
+          {%- for option in options %}
+            {%- for torrent in search %}
+              {%- if torrent.title is defined %}
+                {%- if first_choice in torrent.title %}
+                  {% set torrents.search = [torrent.title] %}
+                {%- elif option in torrent.title %}
+                  {% set torrents.search = torrents.search + [torrent.title] %}
+                {%- endif %}
+              {%- endif %}
+            {%- endfor %}
+          {%- endfor %}
+          {{ torrents.search }}
+        year: >
+          {%- set radarr = states.sensor.radarr_rss_search_result.state %}
+          {%- if radarr != 'unavailable' and radarr != '' and radarr | length > 0 %}
+            {% set air = namespace(date=[]) %}
+            {% set value = state_attr('sensor.radarr_upcoming_media','data') %}
+            {%- if value != '' %}
+              {%- for search in value %}
+                {% set air.date = search.airdate | replace('T00:00:00Z', '') %}
+              {%- endfor %}
+            {%- endif %}
+            {{ air.date.split('-')[0] }}
+          {%- endif %}
+        release: >
+          {%- set radarr = states.sensor.radarr_rss_search_result.state %}
+          {%- if radarr != 'unavailable' and radarr != '' and radarr | length > 0 %}
+            {% set air = namespace(date=[]) %}
+            {% set value = state_attr('sensor.radarr_upcoming_media','data') %}
+            {%- if value != '' %}
+              {%- for search in value %}
+                {% set air.date = search.airdate | replace('T00:00:00Z', '') %}
+              {%- endfor %}
+            {%- endif %}
+            {{ ((now().timestamp() - as_timestamp(air.date)) / 86400) | int | replace('-', '') }}
+          {%- endif %}
+        rating: >
+          {%- set radarr = states.sensor.radarr_rss_search_result.state %}
+          {%- if radarr != 'unavailable' and radarr != '' and radarr | length > 0 %}
+            {% set ratings = namespace(search=[]) %}
+            {% set data = state_attr('sensor.radarr_upcoming_media','data') %}
+            {%- if data != '' %}
+              {%- for value in data %}
+                {%- if value.rating is defined %}
+                  {%- set ratings.search = [value.rating | replace('★ ', '') | round(1) ] %}
+                {%- endif %}
+              {%- endfor %}
+            {%- endif %}
+            {{ ratings.search }}
+          {%- endif %}
+
+    # SENSOR - SONARR - Upcoming Shows
+    - unique_id: radarr_rss_search
+      name: 'Sonarr RSS Search Result'
+      state: >
+        {% if state_attr('sensor.sonarr_rss_search_result','titles') %}
+          {{ state_attr('sensor.sonarr_rss_search_result','titles') | count }}
+        {% endif %}
+      attributes:
+        titles: >
+          {% set torrents = namespace(search=[]) %}
+          {% set search = state_attr('sensor.sonarr_upcoming_media', 'data') %}
+          {% set options = state_attr('input_select.rss_search_list_tv_shows', 'options') %}
+          {% set first_choice = states.input_select.rss_search_list_tv_shows.state %}
+          {%- for option in options %}
+            {%- for torrent in search %}
+              {%- if torrent.title is defined %}
+                {%- if first_choice in torrent.title %}
+                  {% set torrents.search = [torrent.title] %}
+                {%- elif option in torrent.title %}
+                  {% set torrents.search = torrents.search + [torrent.title] %}
+                {%- endif %}
+              {%- endif %}
+            {%- endfor %}
+          {%- endfor %}
+          {{ torrents.search }}
+        year: >
+          {%- set radarr = states.sensor.sonarr_rss_search_result.state %}
+          {%- if radarr != 'unavailable' and radarr != '' and radarr | length > 0 %}
+            {% set air = namespace(date=[]) %}
+            {% set value = state_attr('sensor.sonarr_upcoming_media','data') %}
+            {%- if value != '' %}
+              {%- for search in value %}
+                {% set air.date = search.airdate | replace('T00:00:00Z', '') %}
+              {%- endfor %}
+            {%- endif %}
+            {{ air.date.split('-')[0] }}
+          {%- endif %}
+        release: >
+          {%- set radarr = states.sensor.sonarr_rss_search_result.state %}
+          {%- if radarr != 'unavailable' and radarr != '' and radarr | length > 0 %}
+            {% set air = namespace(date=[]) %}
+            {% set value = state_attr('sensor.sonarr_upcoming_media','data') %}
+            {%- if value != '' %}
+              {%- for search in value %}
+                {% set air.date = search.airdate | replace('T00:00:00Z', '') %}
+              {%- endfor %}
+            {%- endif %}
+            {{ ((now().timestamp() - as_timestamp(air.date)) / 86400) | int | replace('-', '') }}
+          {%- endif %}
+        rating: >
+          {%- set radarr = states.sensor.sonarr_rss_search_result.state %}
+          {%- if radarr != 'unavailable' and radarr != '' and radarr | length > 0 %}
+            {% set ratings = namespace(search=[]) %}
+            {% set data = state_attr('sensor.sonarr_upcoming_media','data') %}
+            {%- if data != '' %}
+              {%- for value in data %}
+                {%- if value.rating %}
+                  {%- set ratings.search = [value.rating | replace('★ ', '')] %}
+                {%- endif %}
+              {%- endfor %}
+            {%- endif %}
+            {{ ratings.search }}
+          {%- endif %}
+
+
+
+    # SENSOR - PC Firewall Settings
+    - unique_id: pc_firewall_settings
+      name: 'PC Firewall Settings'
+      state: >
+        {% set session = states.sensor.sagasdesktop_sessionstate.state %}
+        {% set session_changed = states.sensor.sagasdesktop_sessionstate.last_changed %}
+        {% set power = states.switch.wake_on_lan.state %}
+        {%- if session == 'Unlocked' or session == 'Locked' %}
+          {%- if ((as_timestamp(now()) - as_timestamp(session_changed))) | round(0) > 60 %}
+            {{ 'open' if power == 'on' else 'blocked' }}
+          {%- else %}
+            wait
+          {%- endif %}
+        {%- else %}
+          off
+        {%- endif %}
+      icon: mdi:wall-fire
+
+    # SENSOR - Plex Server Firewall Settings
+    - unique_id: plex_firewall_settings
+      name: 'Plex Firewall Settings'
+      state: >
+        {% set session = states.sensor.hass_session_state_plex.state %}
+        {% set session_changed = states.sensor.hass_session_state_plex.last_changed %}
+        {% set power = states.switch.wol_plex.state %}
+        {%- if session == 'InUse' or session == 'Locked' %}
+          {%- if ((as_timestamp(now()) - as_timestamp(session_changed))) | round(0) > 60 %}
+            {{ 'open' if power == 'on' else 'blocked' }}
+          {%- else %}
+            wait
+          {%- endif %}
+        {%- else %}
+          off
+        {%- endif %}
+      icon: mdi:wall-fire
+
+    # SENSOR - Plex Issues
+    - unique_id: plex_issues
+      name: Plex Issues
+      state: >
+        {% if 'unavailable' in states.sensor.plex_sagaflix.state %}
+          {{ 'Offline' if not 'on' in states.binary_sensor.ping_rackstation.state else 'Service Unavailable' }}
+        {% elif not 'on' in states.binary_sensor.ping_rackstation.state %}
+          Offline
+        {% else %}
+          0 Issues
+        {% endif %}
+      icon: >
+        {% set state = states.sensor.plex_issues.state %}
+        {% if state == '0 Issues' %}
+          ios:arrow-up-heart-fill
+        {% else %}
+          mdi:alert-circle-outline
+        {%- endif %}
+
+
+    # SENSOR - Office PC, real Session State
+    - unique_id: office_pc_real_session_state
+      name: 'Office PC - Real Session State'
+      state: >
+        {% set session = states.sensor.sagasdesktop_sessionstate.state %}
+        {% set session_changed = states.sensor.sagasdesktop_lastactive.state %}
+        {% set lock_state = states.input_boolean.computer_lock.state %}
+        {% set active_window_state = states.sensor.sagasdesktop_activewindow.state %}
+        {% if lock_state == 'on' %}
+          Locked
+        {% elif active_window_state == 'Windows Default Lock Screen' %}
+          Locked
+        {% elif session == 'Locked' %}
+          Locked
+        {% elif ((as_timestamp(now()) - as_timestamp(session_changed))) | round(0) < 600 %}
+          Active
+        {% elif ((as_timestamp(now()) - as_timestamp(session_changed))) | round(0) > 600 %}
+          Idle
+        {% elif session == 'Unlocked' %}
+          Unlocked
+        {% else %}
+          Locked
+        {%- endif %}
+      icon: >
+        {% set state = states.sensor.office_pc_real_session_state.state %}
+        {% if state == 'Active' %}
+          custom:win11
+        {% elif state == 'InUse' %}
+          custom:win11-unlocked
+        {% else %}
+          custom:win11-locked
+        {%- endif %}
+
+    # SENSOR - Office Activity
+    - unique_id: office_activity
+      name: 'Office Activity'
+      state: >
+        {% set pc_state = states.switch.wake_on_lan.state %}
+        {% set pc_state_change = states.switch.wake_on_lan.last_changed %}
+        {% set lights_state = states.light.superman_symbol.state %}
+        {% set lights_state_change = states.light.superman_symbol.last_changed %}
+        {% if pc_state == 'off' %}
+          {% if not ((as_timestamp(now()) - as_timestamp(pc_state_change))) | round(0) < 600 %}
+            off
+          {%- else %}
+            on
+          {%- endif %}
+        {% elif lights_state == 'off' %}
+          {% if not ((as_timestamp(now()) - as_timestamp(lights_state_change))) | round(0) < 600 %}
+            off
+          {%- else %}
+            on
+          {%- endif %}
+        {% else %}
+          on
+        {%- endif %}
+      icon: >
+        {% set state = states.sensor.office_activity.state %}
+        {% if state == 'on' %}
+          ios:cursorarrow-motionlines
+        {% else %}
+          mdi:shield-lock
+        {%- endif %}
+
