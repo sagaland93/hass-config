@@ -39,7 +39,7 @@ Conditional media card. Displays currently active media player. If none is activ
 
 ![media-tilt](https://user-images.githubusercontent.com/93126880/187746806-00f313c0-fbc9-4904-882f-1ecf25f144b7.gif)
 
-Volume controls.
+Volume controls with [media_player-popup-card](https://github.com/DBuit/media_player-popup-card).
 
 ![image](https://user-images.githubusercontent.com/93126880/187842555-1fc1cdb0-3374-4ee3-afb8-d8e616404404.png)
 
@@ -47,7 +47,7 @@ Volume controls.
 
 #### Blinds
 
-Shader position controls.
+Shader position controls with [cover-popup-card](https://github.com/DBuit/cover-popup-card)
 
 ![blinds-control](https://user-images.githubusercontent.com/93126880/187845173-4da0fdb6-bb24-4528-8b2e-3b738a38b60a.gif)
 
