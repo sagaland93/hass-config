@@ -108,3 +108,11 @@ Single camera with live feed.
 | Climate | Electrical |
 | --- | --- |
 | ![image](https://user-images.githubusercontent.com/93126880/187849936-98bba209-2aa5-4aef-9640-08688a58970e.png) | ![image](https://user-images.githubusercontent.com/93126880/187849966-bb4b5cdb-bcbb-4b33-bd05-d0225a4c0ba1.png) |
+
+## Hardware
+
+| Vendor | Product | Integration | Description |
+|---|---|---|---|
+| Samsung | Galaxy Tab A7 | [custom](https://github.com/cgarwood/homeassistant-fullykiosk) | Wall-mounted tablet |
+| Ubiquiti | UniFi Dream Machine Pro | [unifi](https://www.home-assistant.io/integrations/unifi/) | Router, controller, firewall, switch |
+| Synology | DiskStation RS1221+ | [synology_dsm](https://www.home-assistant.io/integrations/synology_dsm/) | 55TB NAS |
