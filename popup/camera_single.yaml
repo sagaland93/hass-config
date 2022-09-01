@@ -3,7 +3,7 @@ browser_mod:
   command: popup
   #hide_header: true
   large: true
-  title: Cameras
+  title: '[[[ return entity.attributes.friendly_name; ]]]'
   style:
     .: |
       :host .main-title {
