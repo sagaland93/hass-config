@@ -22,7 +22,9 @@ My personal config - based on [Mattias's config](https://github.com/matt8707/has
 
 #### Home Modes
 
-The "home" is put into different modes throughout the day, based on what's happening - or not happening in the home.
+HA is put into different modes throughout the day, based on what's happening - or not happening in the home.
+
+Automations and scripts looks at the state of the Home Mode and takes actions based on that.
 
 ![image](https://user-images.githubusercontent.com/93126880/187847146-6289ec27-e0dd-427d-bd6e-2243af6035e2.png)
 
