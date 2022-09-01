@@ -90,7 +90,7 @@ Displays all cameras with static images.
 
 Single camera with live feed.
 
-![image](https://user-images.githubusercontent.com/93126880/187850626-22dd6c35-4919-4d12-acc3-d154f492434b.png)
+![image](https://user-images.githubusercontent.com/93126880/187851932-9b2521d7-3514-4e8a-84b3-1da9b5e5741d.png)
 
 
 ## Screenshots
