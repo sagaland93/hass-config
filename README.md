@@ -86,11 +86,11 @@ Cameras (Screenshots edited and blurred)
 
 Displays all cameras with static images.
 
-![image](https://user-images.githubusercontent.com/93126880/187850422-c4ada612-e49e-42ab-a41c-9624eab84708.png)
+![image](https://user-images.githubusercontent.com/93126880/187852782-e32aeb7b-368b-4520-97f1-9728dc9a2a42.png)
 
 Single camera with live feed.
 
-![image](https://user-images.githubusercontent.com/93126880/187851932-9b2521d7-3514-4e8a-84b3-1da9b5e5741d.png)
+![image](https://user-images.githubusercontent.com/93126880/187852631-e04fad27-f6d2-4a45-aa56-4c44dc55c58a.png)
 
 
 ## Screenshots
