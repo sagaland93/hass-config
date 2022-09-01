@@ -13,12 +13,12 @@ My personal config - based on [Mattias's config](https://github.com/matt8707/has
 
 #### Sidebar
 
-* Time and date with greeting based on time of day
-* Entities that are on
-* Temperature with emoji based on weather conditions
+* Time and date with greeting based on time of day.
+* Entities that are on.
+* Temperature with emoji based on weather conditions.
 * Waste notification. Displays what kind of waste is picked up, and when.
 * Occasions info. Shows important dates so you don't forget.
-* Other conditional alerts
+* Other conditional alerts.
 
 #### Home Modes
 
@@ -47,7 +47,7 @@ Volume controls with [media_player-popup-card](https://github.com/DBuit/media_pl
 
 #### Blinds
 
-Shader position controls with [cover-popup-card](https://github.com/DBuit/cover-popup-card)
+Shader position controls with [cover-popup-card](https://github.com/DBuit/cover-popup-card).
 
 ![blinds-control](https://user-images.githubusercontent.com/93126880/187845173-4da0fdb6-bb24-4528-8b2e-3b738a38b60a.gif)
 
