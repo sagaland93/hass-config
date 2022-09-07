@@ -65,9 +65,22 @@ browser_mod:
           - entity: sensor.electrical_daily_usage
             name: Todays total
 
-          - entity: sensor.electrical_daily_cost_rounded
-            name: Todays cost
+          - type: custom:template-entity-row
             icon: mdi:cash
+            name: Todays cost
+            state: "{{ (states('sensor.electrical_daily_cost_rounded')) }},-"
+
+          - type: custom:template-entity-row
+            icon: mdi:cash-clock
+            name: Current price
+            state: "{{ (states('sensor.nordpool_hvfoss') | round(2)) }},-"
+
+          - type: custom:template-entity-row
+            icon: mdi:cash-minus
+            name: Cheapest price
+            state: "{{ (states('sensor.cheapest_price') | round(2)) }},-"
+            secondary: "At {{ (states('sensor.cheapest_price_start')) }}:00"
+
 
         footer:
           type: custom:apexcharts-card
