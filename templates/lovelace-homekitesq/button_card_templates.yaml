@@ -561,11 +561,11 @@
       .badge--hdr {
         content: url("/local/svg/hdr.svg");
       }
+      .badge--dv {
+        content: url("/local/svg/dv.svg");
+      }
       .badge--dolby-atmos {
         content: url("/local/svg/atmos.svg");
-      }
-      .badge--dolby-vision {
-        content: url("/local/svg/dv.svg");
       }
       .badge--dolby-d {
         content: url("/local/svg/dd.svg");
@@ -647,7 +647,7 @@
           if (hdr == 'DV HDR' || hdr == 'HDR DV') { hdr_icon = 'badge badge--hdr'};
 
           var hdr_icon2 = '';
-          if (hdr == 'DV HDR' || hdr == 'HDR DV') { hdr_icon2 = 'badge badge--dolby-vision'};
+          if (hdr == 'DV HDR' || hdr == 'HDR DV') { hdr_icon2 = 'badge badge--dv'};
 
           var audio_icon = '';
           if (audio == 'DD') { audio_icon = 'badge badge--dd'};
@@ -706,7 +706,7 @@
           if (hdr == 'DV HDR' || hdr == 'HDR DV') { hdr_icon = 'badge badge--hdr'};
 
           var hdr_icon2 = '';
-          if (hdr == 'DV HDR' || hdr == 'HDR DV') { hdr_icon2 = 'badge badge--dolby-vision'};
+          if (hdr == 'DV HDR' || hdr == 'HDR DV') { hdr_icon2 = 'badge badge--dv'};
 
           var audio_icon = '';
           if (audio == 'DD') { audio_icon = 'badge badge--dd'};
