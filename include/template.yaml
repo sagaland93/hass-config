@@ -1023,7 +1023,7 @@ template:
                 {{- ' DTS-X' if ' DTS-X' in title -}}
                 {{- ' DD' if ' DD ' in title -}}
                 {{- ' DDP' if 'DDP' in title -}}
-                {{- ' DD+' if 'DD+' in title -}}
+                {{- ' DDP' if 'DD+' in title -}}
                 {{- ' TrueHD' if 'TrueHD' in title -}}
                 {{- ' Atmos' if 'Atmos' in title -}}
                 {{- ' FLAC' if 'FLAC' in title -}}
@@ -1182,7 +1182,7 @@ template:
             {% set pattern_year = "(.*?)[\{\(\[]?[0-9]{4}" %}
             {%- for title in titles %}
               {%- if loop.first and title is defined and title != '' %}
-                {% set temp = (title | regex_findall_index(pattern_s_e) | replace(" Of ", " of ") | replace(" With ", " with ") | replace(" In ", " in ") | replace(" The ", " the ") ) if title is search(pattern_s_e) else null %}
+                {% set temp = (title | regex_findall_index(pattern_s_e) | replace(" Of ", " of ") | replace(" With ", " with ") | replace(" In ", " in ") | replace(" The ", " the ") | replace(": the ", ": The ") ) if title is search(pattern_s_e) else null %}
                 {% set name.return = (temp | regex_findall_index(pattern_year) ) if temp is search(pattern_year) else temp %}
               {%- endif %}
             {%- endfor %}
@@ -1290,7 +1290,7 @@ template:
                 {{- ' DTS-HD' if ' DTS-HD ' in title -}}
                 {{- ' DD' if ' DD ' in title -}}
                 {{- ' DDP' if 'DDP' in title -}}
-                {{- ' DD+' if 'DD+' in title -}}
+                {{- ' DDP' if 'DD+' in title -}}
                 {{- ' TrueHD' if 'TrueHD' in title -}}
                 {{- ' Atmos' if 'Atmos' in title -}}
                 {{- ' FLAC' if 'FLAC' in title -}}
@@ -1488,7 +1488,7 @@ template:
               {%- if value != '' %}
                 {{- ' DTS-HD' if 'DTS-HD' in value or ' DTS' if 'DTS' in value -}}
                 {{- ' DDP' if 'DDP' in value -}}
-                {{- ' DD+' if 'DD+' in value -}}
+                {{- ' DDP' if 'DD+' in value -}}
                 {{- ' TrueHD' if 'TrueHD' in value -}}
                 {{- ' Atmos' if 'Atmos' in value -}}
                 {{- ' FLAC' if 'FLAC' in value -}}
