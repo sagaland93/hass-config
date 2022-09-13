@@ -654,7 +654,7 @@
           if (audio == 'DTS') { audio_icon = 'badge badge--dts'};
           if (audio == 'DTS-HD') { audio_icon = 'badge badge--dtshd'};
           if (audio == 'DTS-X') { audio_icon = 'badge badge--dtsx'};
-          if (audio == 'DDP' || audio == 'DD+') { audio_icon = 'badge badge--dolby-dp'};
+          if (audio == 'DDP') { audio_icon = 'badge badge--dolby-dp'};
           if (audio == 'DDP Atmos') { audio_icon = 'badge badge--dolby-dp'};
           if (audio == 'Atmos') { audio_icon = 'badge badge--dolby-atmos'};
           if (audio == 'TrueHD') { audio_icon = 'badge badge--truehd'};
@@ -681,7 +681,7 @@
               <span class="${audio_icon2}" role="img"></span>
             </div>
           `;
-        } else if (entity.state !== 'unavailable' && entity.state !== 'unknown' && entity.state !== '' && entity.state !== '0' ) {
+        } else if (entity.state !== 'unavailable' && entity.state !== 'unknown' && entity.state !== '' && entity.state !== '0' && states[variables.movie_downloaded].state !== 'Yes' ) {
           let movie = entity.attributes.name,
             year = entity.attributes.year,
             resolution = entity.attributes.resolution,
