@@ -922,6 +922,7 @@ views:
         variables:
           tv_show: sensor.rss_search_result_tv_shows
           tv_show_downloaded: sensor.torrent_tv_show_already_downloaded
+          movie_downloaded: sensor.torrent_movie_already_downloaded
           radarr: sensor.radarr_rss_search_result
         tap_action:
           !include popup/footer/rss.yaml
@@ -929,4 +930,5 @@ views:
           - sensor.rss_search_result_tv_shows
           - sensor.radarr_rss_search_result
           - sensor.torrent_tv_show_already_downloaded
+
 
