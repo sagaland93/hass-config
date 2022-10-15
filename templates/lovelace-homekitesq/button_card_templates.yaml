@@ -33,7 +33,7 @@
       - extra_styles
     variables:
       state_on: >
-        [[[ return ['on', 'home', 'cool', 'fan_only', 'heat', 'heat_cool', 'InUse', 'Locked', 'playing', 'cleaning', 'open', 'unlocked', '0', 'healthy', '0 Issues'].indexOf(entity === undefined || entity.state) !== -1; ]]]
+        [[[ return ['on', 'home', 'cool', 'fan_only', 'heat', 'heat_cool', 'InUse', 'Locked', 'playing', 'cleaning', 'open', 'opening', 'closing', 'unlocked', '0', 'healthy', '0 Issues', 'yes'].indexOf(entity === undefined || entity.state) !== -1; ]]]
       state_error: >
         [[[ return ['error', 'unavailable'].indexOf(entity === undefined || entity.state) !== -1; ]]]
       state: >
@@ -48,24 +48,6 @@
         [[[ return entity === undefined || entity.attributes.entity_picture; ]]]
       timeout: >
         [[[ return entity === undefined || Date.now() - Date.parse(entity.last_changed); ]]]
-      tilt_options: >
-        [[[
-          let options = {
-            max: 5,
-            scale: 1.06,
-            glare: true,
-            'max-glare': 0.15,
-            perspective: 800,
-            speed: 800,
-            parallax: '25px'
-          }
-          if (this._config.template.includes('conditional_media')) {
-            options.scale = options.scale % parseInt(options.scale) / 2 + parseInt(options.scale);
-            options.perspective = options.perspective * 2;
-            return options;
-          }
-          return options;
-        ]]]
     aspect_ratio: 1/1
     show_state: true
     show_icon: false
@@ -562,10 +544,13 @@
         content: url("/local/svg/hdr.svg");
       }
       .badge--dv {
-        content: url("/local/svg/dv.svg");
+        content: url("/local/svg/dv_v2.svg");
       }
       .badge--dolby-atmos {
-        content: url("/local/svg/atmos.svg");
+        content: url("/local/svg/atmos_v2.svg");
+      }
+      .badge--dv-atmos {
+        content: url("/local/svg/dv_atmos.svg");
       }
       .badge--dolby-d {
         content: url("/local/svg/dd.svg");
@@ -704,9 +689,11 @@
           if (hdr == 'HDR') { hdr_icon = 'badge badge--hdr'};
           if (hdr == 'DV') { hdr_icon = 'badge badge--dv'};
           if (hdr == 'DV HDR' || hdr == 'HDR DV') { hdr_icon = 'badge badge--hdr'};
+          if (hdr == 'DV' && audio == 'Atmos') { hdr_icon = 'badge badge--dv-atmos'};
+          if (hdr == 'DV' && audio == 'Atmos' || audio == 'TrueHD Atmos') { hdr_icon = 'badge badge--dv-atmos'};
 
           var hdr_icon2 = '';
-          if (hdr == 'DV HDR' || hdr == 'HDR DV') { hdr_icon2 = 'badge badge--dv'};
+          if (hdr == 'DV HDR' || hdr == 'HDR DV' && hdr_icon != 'badge badge--dv-atmos') { hdr_icon2 = 'badge badge--dv'};
 
           var audio_icon = '';
           if (audio == 'DD') { audio_icon = 'badge badge--dd'};
@@ -715,13 +702,13 @@
           if (audio == 'DTS-X') { audio_icon = 'badge badge--dtsx'};
           if (audio == 'DDP' || audio == 'DD+') { audio_icon = 'badge badge--dolby-dp'};
           if (audio == 'DDP Atmos') { audio_icon = 'badge badge--dolby-dp'};
-          if (audio == 'Atmos') { audio_icon = 'badge badge--dolby-atmos'};
+          if (audio == 'Atmos' && hdr_icon != 'badge badge--dv-atmos') { audio_icon = 'badge badge--dolby-atmos'};
           if (audio == 'TrueHD') { audio_icon = 'badge badge--truehd'};
           if (audio == 'TrueHD Atmos') { audio_icon = 'badge badge--truehd'};
           if (audio == 'FLAC') { audio_icon = 'badge badge--flac'};
 
           var audio_icon2 = '';
-          if (audio == 'TrueHD Atmos') { audio_icon2 = 'badge badge--dolby-atmos'};
+          if (audio == 'TrueHD Atmos' && hdr_icon != 'badge badge--dv-atmos') { audio_icon2 = 'badge badge--dolby-atmos'};
           if (audio == 'DDP Atmos') { audio_icon2 = 'badge badge--dolby-atmos'};
 
           return `
@@ -943,7 +930,7 @@
       tilt_enable: >
         [[[
           // enable only on this
-          if (window.navigator.userAgent.match(/Windows NT 10.0/i)) {
+          if (window.navigator.userAgent.match(/Windows NT/i)) {
               return true;
           }
           return false;
@@ -973,7 +960,6 @@
               let elt = this.shadowRoot,
                   card = elt.getElementById('card'),
                   tilt = typeof VanillaTilt === 'function';
-
               if (elt && card && tilt && variables.tilt_enable) {
                   VanillaTilt.init(card, variables.tilt_options);
               } else {
@@ -1000,6 +986,49 @@
           if (entity) {
             let input = variables.circle_input == null ? ' ' : `${parseInt(variables.circle_input)}<tspan font-size="10">°C</tspan>`,
               stroke_color = variables.state === 'on' || variables.state === 'cool' || variables.state === 'heat' || variables.state === 'heat_cool' || variables.state === 'fan_only' ? '#b2b2b2' : 'none',
+              fill_color = variables.state === 'off' ? 'rgba(255,255,255,0.04)' : 'none';
+            if (input) {
+              return `
+                <svg viewBox="0 0 50 50">
+                  <circle cx="25" cy="25" r="20.5" stroke="${stroke_color}" stroke-width="2.5" fill="${fill_color}" />
+                  <text x="50%" y="54%" fill="#8d8e90" font-size="14" text-anchor="middle" alignment-baseline="middle" dominant-baseline="middle">${input}</text>
+                </svg>
+              `;
+            }
+          }
+        ]]]
+    styles:
+      custom_fields:
+        circle:
+          - display: initial
+          - width: 90%
+          - letter-spacing: 0.03vw
+          - margin: -6% -6% 0 0
+          - justify-self: end
+          - opacity: 1
+
+  climate_ac:
+    state_display: >
+      [[[
+        if (variables.state == 'heat_cool') {
+          return 'Auto';
+        }
+      ]]]
+    styles:
+      custom_fields:
+        circle:
+          - display: initial
+          - width: 90%
+          - letter-spacing: 0.03vw
+          - margin: -6% -6% 0 0
+          - justify-self: end
+          - opacity: 1
+    custom_fields:
+      circle: >
+        [[[
+          if (entity) {
+            let input = variables.circle_input == null ? ' ' : `${parseInt(variables.circle_input)}<tspan font-size="10">°C</tspan>`,
+              stroke_color = variables.state === 'on' || variables.state === 'cool' || variables.state === 'heat' || variables.state === 'heat_cool' || variables.state === 'fan_only' ? '#b2b2b2' : 'none',
               fill_color = variables.state === 'off' ? 'rgba(255,255,255,0.04)' : 'none',
               filter_status = states['binary_sensor.kaiteki_6600_filter_clean_required'].state;
             if (filter_status == 'off') {
@@ -1020,24 +1049,15 @@
             }
           }
         ]]]
-    styles:
-      custom_fields:
-        circle:
-          - display: initial
-          - width: 90%
-          - letter-spacing: 0.03vw
-          - margin: -6% -6% 0 0
-          - justify-self: end
-          - opacity: 1
 
 
   #################################################
   #                                               #
-  #                    UPDATER                    #
+  #                    UPDATES                    #
   #                                               #
   #################################################
 
-  updater:
+  base_updates:
     show_state: true
     show_name: false
     show_icon: false
@@ -1087,135 +1107,145 @@
         background-color: var(--secondary-background-color);
       }
 
-  updater_hass:
+  updates_hass:
     template:
-      - updater
+      - base_updates
       - settings
     state_display: |
       [[[
         if (entity) {
-          let links = new RegExp('<a href="([^"]+)"', "g"),
-            installed = entity.state,
-            hass_version_latest = states['sensor.hass_version_latest'],
-            hass_version_latest_beta = states['sensor.hass_version_latest_beta'],
-            hass_release_notes = states['sensor.hass_release_notes'],
-            hass_release_notes_rc = states['sensor.hass_release_notes_rc'];
+            let available = states[variables.available].attributes.home_assistant;
 
-          let latest = installed.includes('b')
-            ? hass_version_latest_beta.state
-            : hass_version_latest.state;
+            let links = new RegExp('<a href="([^"]+)"', "g"),
+                installed = entity.state,
+                hass_version_latest = states[variables.latest],
+                hass_version_latest_beta = states[variables.latest_beta],
+                hass_release_notes = states[variables.release_notes],
+                hass_release_notes_beta = states[variables.release_notes_beta];
 
-          let release_notes = installed.includes('b')
-            ? marked.parse(hass_release_notes.attributes.body)
-            : marked.parse(hass_release_notes_rc.attributes.body);
+            let latest = installed.includes('b')
+                ? hass_version_latest_beta.state
+                : hass_version_latest.state;
 
-          let subtitle = installed === latest
-            ? `${variables.translate_no_updates} <b>&larr;</b> ${installed}`
-            : `${ !installed.includes('.') || !latest.includes('.')
+            let release_notes = installed.includes('b')
+                ? marked.parse(hass_release_notes.attributes.body)
+                : marked.parse(hass_release_notes_beta.attributes.body);
+
+            let subtitle = available === 0
                 ? `${variables.translate_no_updates} <b>&larr;</b> ${installed}`
-                : `${installed} <b>&rarr;</b> ${latest} ${variables.translate_available} ${String.fromCodePoint("0x1f389")}`
-              }`;
+                : `${installed} <b>&rarr;</b> ${latest} ${variables.translate_available} ${String.fromCodePoint("0x1f389")}`;
 
-          let output = installed === latest
-            ? '<ul></ul>'
-            : `${ !installed.includes('.') || !latest.includes('.')
+            let output = available === 0
                 ? '<ul></ul>'
-                : release_notes.replace(links, '<a href="#" onclick="window.open(\'$1\')"')
-              }`;
+                : release_notes.replace(links, '<a href="#" onclick="window.open(\'$1\')"');
 
-          return `
-            <ha-icon icon="mdi:home-assistant"></ha-icon> <span class="title">Home Assistant</span><br>
-            <p class="subtitle">${subtitle}</p>
-            ${output}
-          `;
-          }
-      ]]]
-
-  updater_hacs:
-    template:
-      - updater
-      - settings
-    state_display: |
-      [[[
-        if (entity) {
-          let output = '',
-            hacs_version = states['sensor.template_hacs_version'] || undefined;
-          var arr = entity.attributes.repositories === undefined
-            ? []
-            : entity.attributes.repositories;
-          for (var i = 0; i < arr.length; i++) {
-            output += `<li><b><a href="#" onclick="window.open('https://github.com/${arr[i].name}/releases');">
-              ${arr[i].display_name}</a></b> ${arr[i].installed_version} <b>&rarr;</b> ${arr[i].available_version}</li>`
-          }
-          let count = arr.length;
-          let subtitle = count === 0
-            ? `${variables.translate_no_updates} ${hacs_version === undefined || hacs_version.state === 'unknown' ? ' ' : `<b>&larr;</b> ${hacs_version.state}`}`
-            : `${count} ${count === 1 ? variables.translate_update_available : variables.translate_updates_available} ${String.fromCodePoint('0x1f389')}`;
-          return `
-            <ha-icon icon="hacs:hacs"></ha-icon> <span class="title">Community Store</span><br>
-            <p class="subtitle">${subtitle}</p>
-            <ul>${output}</ul>
-          `;
+            return `
+              <ha-icon icon="mdi:home-assistant"></ha-icon> <span class="title">Home Assistant</span><br>
+              <p class="subtitle">${subtitle}</p>
+              ${output}
+            `;
         }
       ]]]
 
-  updater_other:
+  updates_hass_icon_name:
+    template: icon_name
+    icon: mdi:update
+    styles:
+      card:
+        - opacity: >
+            [[[
+              return entity && (entity.state === states[variables.latest].state ||
+                entity.state === states[variables.latest_beta].state)
+                  ? '0.3'
+                  : '1';
+            ]]]
+        - display: >
+            [[[
+              return entity
+                ? 'flex'
+                : 'none';
+            ]]]
+
+  updates:
     template:
-      - updater
+      - base_updates
       - settings
     state_display: |
       [[[
-        if (entity) {
-          let output = '';
-          let attr = Object.fromEntries(
-            Object.entries(entity.attributes).filter(([, value]) => {
-              return value != false;
-            })
-          );
-          let count = Object.keys(attr).length;
-          for (const [, value] of Object.entries(attr)) {
-            output += `<li>${value}</li>`;
+        // variables
+        let output = '',
+            updates = states[variables.updates],
+            hacs_installed = states[variables.hacs_installed]?.attributes.repositories,
+            other_updates = states[variables.other_updates],
+            hacs_update = states['update.hacs_update']?.attributes.installed_version,
+            no_updates = variables.translate_no_updates,
+            update_available = variables.translate_update_available,
+            updates_available = variables.translate_updates_available;
+        // update entities
+        Object.keys(states).forEach(key => {
+          let s = states[key], e = s.entity_id, a = s.attributes;
+          if (e.includes('update.') && s.state === 'on') {
+              let rename_hacs = `${a.release_url.split('/')[3]}/${a.release_url.split('/')[4]}`,
+                  name = hacs_installed.includes(rename_hacs)
+                    ? rename_hacs
+                    : a.friendly_name;
+              output += `<li><b><a href="#" onclick="window.open('${a.release_url}');">
+              ${name}</a></b> ${a.installed_version} <b>&rarr;</b> ${a.latest_version}</li>`
           }
-          let subtitle = count == 0
-            ? variables.translate_no_updates
-            : `${count} ${count == 1 ? variables.translate_update_available : variables.translate_updates_available} ${String.fromCodePoint('0x1f389')}`;
-          return `
-            <ha-icon icon="mdi:update"></ha-icon> <span class="title">Other</span><br>
-            <p class="subtitle">${subtitle}</p>
-            <ul>${output}</ul>
-          `;
+        });
+        // other updates
+        let attr = Object.fromEntries(
+            Object.entries(other_updates?.attributes).filter(([, value]) => value != false));
+        for (const [, value] of Object.entries(attr)) {
+          output += `<li>${value}</li>`;
         }
+        // subtitle
+        let count = updates?.attributes.update_entities + updates?.attributes.other_updates,
+            subtitle = count === 0
+                ? `${no_updates} <b>&larr;</b> ${hacs_update || ''}`
+                : `${count} ${count === 1 ? update_available : updates_available} ${String.fromCodePoint('0x1f389')}`;
+        return `
+          <ha-icon icon="mdi:package-up"></ha-icon> <span class="title">Integrations</span><br>
+          <p class="subtitle">${subtitle}</p>
+          <ul>${output}</ul>
+        `;
       ]]]
+
+  updates_icon_name:
+    template: icon_name
+    icon: mdi:open-in-new
+    styles:
+      card:
+        - opacity: >
+            [[[
+              return entity?.attributes?.update_entities === 0
+                  ? '0.3'
+                  : '1';
+            ]]]
 
   hacs_iframe:
     tap_action:
       action: fire-dom-event
       browser_mod:
-        command: popup
-        title: HACS
-        style:
-          div: |
-            .content {
-              padding: 0;
-            }
-          hui-iframe-card$: |
-            ha-card {
-              margin-left: -58px;
-            }
-        large: true
-        card:
-          type: iframe
-          url: >
-            [[[ return `/${hass.panels.hacs.url_path}` ]]]
+        service: browser_mod.popup
+        data:
+          title: ' '
+          size: fullscreen
+          content:
+            type: iframe
+            aspect_ratio: 16x9.15
+            url: >
+              [[[ return `/${hass.panels.config.url_path}/updates` ]]]
     template: icon_name
 
   hacs_navigate_ios:
     tap_action:
-      close_popup: >
-        [[[ hass.callService('browser_mod', 'close_popup'); ]]]
-      action: navigate
-      navigation_path: >
-        [[[ return `/${hass.panels.hacs.url_path}` ]]]
+      action: fire-dom-event
+      browser_mod:
+        service: browser_mod.javascript
+        data:
+          code: >
+            window.location.href = `/${hass.panels.config.url_path}/updates`;
     template: icon_name
 
 
@@ -1229,83 +1259,87 @@
     template:
       - base
       - circle
+      - loader
     variables:
       circle_input: >
         [[[ return entity === undefined || Math.round(entity.attributes.brightness / 2.54); ]]]
-    hold_action:
+    double_tap_action:
       action: fire-dom-event
       browser_mod:
-        command: popup
-        #hide_header: true
-        title: >
-          [[[ return entity.attributes.friendly_name; ]]]
-        style:
-          $: |
-            .mdc-dialog__surface {
-              background: transparent !important;
-              border-style: none !important;
-              border: 0px !important;
-              box-shadow: none;
-            }
-        card:
-          type: custom:light-popup-card
-          entity: >
-            [[[ return entity.entity_id ]]]
-          icon: none
-          fullscreen: false
-          brightnessWidth: 130px
-          brightnessHeight: 360px
-          borderRadius: 1.7em
-          sliderColor: '#c7c7c7'
-          sliderTrackColor: rgba(25, 25, 25, 0.9)
-          displayType: slider
-          actionSize: 4.5em
-          actionsInARow: 2
-          actions:
-            - action: call-service
-              service: light.turn_on
-              color: '#d8d9e1'
-              service_data:
-                entity_id: >
-                  [[[ return entity.entity_id ]]]
-                color_temp: 153
-            - action: call-service
-              service: light.turn_on
-              color: '#d5b08d'
-              service_data:
-                entity_id: >
-                  [[[ return entity.entity_id ]]]
-                color_temp: 326
-            - action: call-service
-              service: light.turn_on
-              color: '#ce944b'
-              service_data:
-                entity_id: >
-                  [[[ return entity.entity_id ]]]
-                color_temp: 500
-            - action: fire-dom-event
-              image: >-
-                data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 
-                50 50"%3E%3Cstyle%3Esvg%7Bbackground:radial-gradient(circle,rgba(255,255,
-                255,1) 0%25,rgba(255,255,255,0) 80%25),conic-gradient(%237827e6,%23e622e7,
-                %23e40588,%23e41919,%23e5691e,%23e8e22e,%237de629,%2334e828,%2333e75c,
-                %2334e8e0,%23207de5,%231227e5,%237827e6)%7D%3C/style%3E%3C/svg%3E
-              browser_mod:
-                command: popup
-                title: >
-                  [[[ return entity.attributes.friendly_name ]]]
-                card:
-                  type: custom:light-entity-card
-                  entity: >
-                    [[[ return entity.entity_id ]]]
-                  brightness: true
-                  color_temp: true
-                  full_width_sliders: false
-                  hide_header: true
-                  show_slider_percent: true
-                  smooth_color_wheel: true
-                  persist_features: true
-                  consolidate_entities: false
+        service: browser_mod.popup
+        data:
+          title: >
+            [[[
+              return !entity || entity.attributes.friendly_name;
+            ]]]
+          style: >
+            --popup-background-color: transparent;
+          content:
+            type: custom:mod-card
+            card_mod:
+              style: |
+                #states {
+                  padding-top: 0.5em;
+                }
+            card:
+              type: custom:light-popup-card
+              entity: >
+                [[[ return entity.entity_id ]]]
+              icon: none
+              fullscreen: false
+              brightnessWidth: 130px
+              brightnessHeight: 360px
+              borderRadius: 1.7em
+              sliderColor: '#c7c7c7'
+              sliderTrackColor: rgba(25, 25, 25, 0.9)
+              displayType: slider
+              actionSize: 4.5em
+              actionsInARow: 2
+              actions:
+                - action: call-service
+                  service: light.turn_on
+                  color: '#d8d9e1'
+                  service_data:
+                    entity_id: >
+                      [[[ return entity.entity_id ]]]
+                    color_temp: 153
+                - action: call-service
+                  service: light.turn_on
+                  color: '#d5b08d'
+                  service_data:
+                    entity_id: >
+                      [[[ return entity.entity_id ]]]
+                    color_temp: 326
+                - action: call-service
+                  service: light.turn_on
+                  color: '#ce944b'
+                  service_data:
+                    entity_id: >
+                      [[[ return entity.entity_id ]]]
+                    color_temp: 500
+                - action: fire-dom-event
+                  image: >-
+                    data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 
+                    50 50"%3E%3Cstyle%3Esvg%7Bbackground:radial-gradient(circle,rgba(255,255,
+                    255,1) 0%25,rgba(255,255,255,0) 80%25),conic-gradient(%237827e6,%23e622e7,
+                    %23e40588,%23e41919,%23e5691e,%23e8e22e,%237de629,%2334e828,%2333e75c,
+                    %2334e8e0,%23207de5,%231227e5,%237827e6)%7D%3C/style%3E%3C/svg%3E
+                  browser_mod:
+                    command: popup
+                    title: >
+                      [[[ return entity.attributes.friendly_name ]]]
+                    card:
+                      type: custom:light-entity-card
+                      entity: >
+                        [[[ return entity.entity_id ]]]
+                      brightness: true
+                      color_temp: true
+                      full_width_sliders: false
+                      hide_header: true
+                      show_slider_percent: true
+                      smooth_color_wheel: true
+                      persist_features: true
+                      consolidate_entities: false
 
 
   #################################################
@@ -1320,7 +1354,15 @@
     variables:
       circle_input: >
         [[[ return entity === undefined || Math.round(entity.attributes.brightness / 2.54); ]]]
-
+    state_display: >
+      [[[
+        if (variables.state == 'no') {
+          return 'Off';
+        }
+        else if (variables.state == 'yes') {
+          return 'On';
+        }
+      ]]]
 
 
   #################################################
@@ -1344,51 +1386,48 @@
     tap_action:
       action: fire-dom-event
       browser_mod:
-        command: popup
-        #hide_header: true
-        title: >
-          [[[ return entity.attributes.friendly_name; ]]]
-        style:
-          $: |
-            .mdc-dialog__surface {
-              background: transparent !important;
-              border-style: none !important;
-              border: 0px !important;
-              box-shadow: none;
-            }
-        card:
-          type: custom:cover-popup-card
-          entity: >
-            [[[ return entity.entity_id ]]]
-          icon: none
-          fullscreen: false
-          sliderWidth: 130px
-          sliderHeight: 360px
-          borderRadius: 1.7em
-          sliderColor: '#c7c7c7'
-          sliderTrackColor: rgba(25, 25, 25, 0.9)
-          displayType: slider
-          sliderService: cover.set_cover_position
-          actionsInARow: 3
-          actions:
-            - service: cover.open_cover
-              service_data:
-                entity_id: >
-                  [[[ return entity.entity_id ]]]
-              #name: open
-              icon: mdi:arrow-up
-            - service: cover.stop_cover
-              service_data:
-                entity_id: >
-                  [[[ return entity.entity_id ]]]
-              #name: stop
-              icon: mdi:stop
-            - service: cover.close_cover
-              service_data:
-                entity_id: >
-                  [[[ return entity.entity_id ]]]
-              #name: close
-              icon: mdi:arrow-down
+        service: browser_mod.popup
+        data:
+          timeout: 120000
+          title: >
+            [[[ return entity.attributes.friendly_name; ]]]
+          style: >
+            --popup-background-color: transparent;
+          content:
+            type: custom:mod-card
+            card:
+              type: custom:cover-popup-card
+              entity: >
+                [[[ return entity.entity_id ]]]
+              icon: none
+              fullscreen: false
+              sliderWidth: 130px
+              sliderHeight: 360px
+              borderRadius: 1.7em
+              sliderColor: '#c7c7c7'
+              sliderTrackColor: rgba(25, 25, 25, 0.9)
+              displayType: slider
+              sliderService: cover.set_cover_position
+              actionsInARow: 3
+              actions:
+                - service: cover.open_cover
+                  service_data:
+                    entity_id: >
+                      [[[ return entity.entity_id ]]]
+                  #name: open
+                  icon: mdi:arrow-up
+                - service: cover.stop_cover
+                  service_data:
+                    entity_id: >
+                      [[[ return entity.entity_id ]]]
+                  #name: stop
+                  icon: mdi:stop
+                - service: cover.close_cover
+                  service_data:
+                    entity_id: >
+                      [[[ return entity.entity_id ]]]
+                  #name: close
+                  icon: mdi:arrow-down
 
 
 
@@ -1402,7 +1441,7 @@
     variables:
       player: >
         [[[
-          if (variables.player == '') {
+          if (variables.player) {
             return entity.entity_id;
           }
           else {
@@ -1412,46 +1451,44 @@
     tap_action:
       action: fire-dom-event
       browser_mod:
-        command: popup
-        title: >
-          [[[ return entity.attributes.friendly_name; ]]]
-        style:
-          $: |
-            .mdc-dialog__surface {
-              background: transparent !important;
-              border-style: none !important;
-              border: 0px !important;
-              box-shadow: none;
-            }
-        card:
-          type: custom:media_player-popup-card
-          entity: media_player.denon_receiver
-          #entity: '[[[ return entity.entity_id ]]]' # IF something, then receiver, else current entity
-          icon: none
-          fullscreen: false
-          sliderWidth: 130px
-          sliderHeight: 360px
-          borderRadius: 1.7em
-          sliderColor: '#c7c7c7'
-          sliderTrackColor: rgba(25, 25, 25, 0.9)
-          displayType: slider
-          actionsInARow: 3
-          actions:
-            - service: media_player.media_previous_track
-              service_data:
-                entity_id: '[[[ return variables.player; ]]]'
-              #name: previous
-              icon: mdi:skip-previous
-            - service: media_player.media_play_pause
-              service_data:
-                entity_id: '[[[ return variables.player; ]]]'
-              #name: play/pause
-              icon: mdi:play-pause
-            - service: media_player.media_next_track
-              service_data:
-                entity_id: '[[[ return variables.player; ]]]'
-              #name: next
-              icon: mdi:skip-next
+        service: browser_mod.popup
+        data:
+          timeout: 120000
+          title: >
+            [[[ return entity.attributes.friendly_name; ]]]
+          style: >
+            --popup-background-color: transparent;
+          content:
+            type: custom:mod-card
+            card:
+              type: custom:media_player-popup-card
+              #entity: media_player.denon_receiver
+              entity: '[[[ return entity.entity_id ]]]' # IF something, then receiver, else current entity
+              icon: none
+              fullscreen: false
+              sliderWidth: 130px
+              sliderHeight: 360px
+              borderRadius: 1.7em
+              sliderColor: '#c7c7c7'
+              sliderTrackColor: rgba(25, 25, 25, 0.9)
+              displayType: slider
+              actionsInARow: 3
+              actions:
+                - service: media_player.media_previous_track
+                  service_data:
+                    entity_id: '[[[ return variables.player; ]]]'
+                  #name: previous
+                  icon: mdi:skip-previous
+                - service: media_player.media_play_pause
+                  service_data:
+                    entity_id: '[[[ return variables.player; ]]]'
+                  #name: play/pause
+                  icon: mdi:play-pause
+                - service: media_player.media_next_track
+                  service_data:
+                    entity_id: '[[[ return variables.player; ]]]'
+                  #name: next
+                  icon: mdi:skip-next
               
 
 
@@ -1538,6 +1575,34 @@
         if (entity) {
           return `
             <ha-icon icon="custom:motion-sensor"></ha-icon> <span class="title">Motion Sensors</span><br>
+          `;
+        }
+      ]]]
+
+  running_processes:
+    template:
+      - sensors
+      - sensors_popup
+      - settings
+    state_display: |
+      [[[
+        if (entity) {
+          return `
+            <ha-icon icon="custom:ai"></ha-icon> <span class="title">Running Processes</span><br>
+          `;
+        }
+      ]]]
+
+  favorite_automations:
+    template:
+      - sensors
+      - sensors_popup
+      - settings
+    state_display: |
+      [[[
+        if (entity) {
+          return `
+            <ha-icon icon="mdi:robot-excited"></ha-icon> <span class="title">Automations</span><br>
           `;
         }
       ]]]
@@ -1862,47 +1927,41 @@
   #################################################
 
   base_media:
+    variables:
+      media_on: >
+        [[[ return !entity || ['playing', 'paused'].indexOf(entity.state) !== -1; ]]]
+      media_off: >
+        [[[ return !entity || ['off', 'idle', 'standby', 'unknown', 'unavailable'].indexOf(entity.state) !== -1; ]]]
     tap_action:
       action: >
         [[[
-          return !(variables.state === 'off' || variables.state === 'idle' || variables.state === 'standby') ? 'call-service' : 'none';
+          return variables.media_on
+              ? 'call-service'
+              : 'none';
         ]]]
       service: media_player.media_play_pause
       service_data:
         entity_id: >
-          [[[ return entity === undefined || entity.entity_id; ]]]
+          [[[
+            return variables.entity_id;
+          ]]]
     double_tap_action:
-      action: call-service
-      service: >
-        [[[ return variables.state === 'off' || variables.state === 'idle' || variables.state === 'standby' ? 'media_player.turn_on' : 'media_player.turn_off'; ]]]
-      service_data:
-        entity_id: >
-          [[[ return entity === undefined || entity.entity_id; ]]]
-    hold_action:
-      action: call-service
-      service: >
-        [[[ return variables.state === 'off' || variables.state === 'idle' || variables.state === 'standby' ? 'media_player.turn_on' : 'media_player.turn_off'; ]]]
-      service_data:
-        entity_id: >
-          [[[ return entity === undefined || entity.entity_id; ]]]
+      action: more-info
     styles:
       card:
         - color: >
             [[[
-              let entity_picture = entity === undefined || entity.attributes.entity_picture;
-              if (variables.state === 'off' || variables.state === 'idle' || variables.state === 'standby' ||
-                variables.state === 'unknown' || variables.state === 'unavailable' || entity === undefined) {
-                return 'rgba(255, 255, 255, 0.3)';
-              }
-              return (variables.state != 'off' && variables.state != 'idle' && variables.state != 'standby') && (entity_picture == null) ? 'rgba(0, 0, 0, 0.6)' : '#efefef';
+              return variables.media_on && variables.entity_picture === undefined
+                  ? 'rgba(0, 0, 0, 0.6)'
+                  : variables.media_off
+                      ? '#97989c'
+                      : '#efefef';
             ]]]
         - text-shadow: >
             [[[
-              let entity_picture = entity === undefined ? null : entity.attributes.entity_picture;
-              if (variables.state === 'off' || variables.state === 'idle' || variables.state === 'standby' || variables.state === 'unknown' || variables.state === 'unavailable') {
-                return entity_picture == null ? 'none' : '1px 1px 5px rgba(18, 22, 23, 0)';
-              }
-              return entity_picture == null ? 'none' : '1px 1px 5px rgba(18, 22, 23, 0.9)';
+              return variables.media_off || variables.entity_picture === undefined
+                  ? 'none'
+                  : '1px 1px 5px rgba(18, 22, 23, 0.9)';
             ]]]
 
   #################################################
@@ -1919,30 +1978,28 @@
       custom_fields:
         icon:
           - width: 70%
+          - margin-left: 2%
           - fill: '#9da0a2'
-          - opacity: >
+          - display: >
               [[[
-                let entity_picture = entity === undefined ? null : entity.attributes.entity_picture;
-                if (entity.state !== 'off' && entity.state !== 'idle' && entity.state !== 'unavailable' && entity.state !== 'standby') {
-                  return entity_picture == null ? 1 : 0;
-                }
+                return variables.media_off || variables.entity_picture === undefined
+                    ? 'initial'
+                    : 'none';
               ]]]
       card:
         - background-color: none
         - background-size: cover
+        - background-position: center
         - background-image: >
             [[[
-              let entity_picture = entity === undefined || entity.attributes.entity_picture;
-              if (variables.state === 'off' || variables.state === 'idle' || variables.state === 'standby' ||
-                variables.state === 'unknown' || variables.state === 'unavailable' || entity === undefined) {
-                return 'linear-gradient(0deg, rgba(115, 115, 115, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)';
-              }
-              return (variables.state != 'off' && variables.state != 'idle' && variables.state != 'standby') && (entity_picture == null) ? 
-                'linear-gradient(0deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.8) 100%)' : 
-                'linear-gradient(0deg, rgba(0,0,0,.8) 0%, rgba(0,0,0,0) 100%), url(' + entity_picture + ')';
+              return variables.media_on && variables.entity_picture === undefined
+                  ? 'linear-gradient(0deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.8) 100%)'
+                  : variables.media_off
+                      ? 'linear-gradient(0deg, rgba(115, 115, 115, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)'
+                      : `linear-gradient(0deg, rgba(0,0,0,.8) 0%, rgba(0,0,0,0) 100%), url(${variables.entity_picture})`;
             ]]]
 
-
+  # APPLE TV
   atv:
     state_display: >
       [[[ 
@@ -1951,7 +2008,7 @@
         }
       ]]]
 
-
+  # SONOS
   sonos:
     template:
       - base
@@ -2026,71 +2083,66 @@
     aspect_ratio: 1000/996
     template:
       - base
-      #- media_youtube
+      - base_media
       - icon_play_pause
     variables:
-      entity_picture: ''
       i: >
         [[[
-          let data = entity.attributes.data;
-          if (entity && data) {
-            return Math.floor(Math.random() * (data.length - 1)) + 1;
+          if (entity) {
+              let data = entity.attributes.data;
+              return data === undefined || Math.floor(Math.random() * (data.length - 1)) + 1;
           }
         ]]]
     state_display: >
       [[[
         if (entity) {
-          let elt = this.shadowRoot,
-            await = setTimeout(marquee,0),
-            data = entity.attributes.data,
-            artist = entity.attributes.media_artist,
-            title = entity.attributes.media_title;
-
-            if (data !== undefined) {
-              var number = data[variables.i].number === undefined && data[variables.i].aired !== undefined
-                ? `(${data[variables.i].aired.split("-")[0]})`
-                : data[variables.i].number === undefined && data[variables.i].aired === undefined
-                  ? ' '
-                  : data[variables.i].number,
-                output = `${data[variables.i].title} ${number}`;
-            } else {
-              var output = artist === undefined || artist === '' && title !== undefined
-                ? title
-                : title === undefined && artist !== undefined || artist !== ''
-                  ? artist
-                  : title !== undefined || title !== '' && artist !== undefined || artist !== ''
-                    ? `${artist} - ${title}`
-                    : variables.translate_idle;
-            }
-
-          function marquee() {
-            let state = elt.getElementById("state"),
-              container = elt.getElementById("container");
-
-            if (state && container) {
-              state.innerHTML = output;
-              let ro = new ResizeObserver(entries => {
-                let spacer = "&nbsp;".repeat(3),
-                  s = entries[0],
-                  c = entries[1],
-                  r = s && s.contentRect &&
-                      c && c.contentRect &&
-                      s.contentRect.width !== 0 &&
-                      c.contentRect.width !== 0;
-
-                if (r && s.contentRect.width < c.contentRect.width) {
-                  state.classList.remove("marquee");
+            let elt = this.shadowRoot,
+                await = setTimeout(marquee, 100),
+                data = entity.attributes.data,
+                artist = entity.attributes.media_artist,
+                title = entity.attributes.media_title;
+              if (data !== undefined) {
+                  var number = data[variables.i].number === undefined && data[variables.i].aired !== undefined
+                      ? `(${data[variables.i].aired.split("-")[0]})`
+                      : data[variables.i].number === undefined && data[variables.i].aired === undefined
+                          ? ' '
+                          : data[variables.i].number,
+                  output = `${data[variables.i].title} ${number}`;
+              } else {
+                  var output = artist === undefined && title !== undefined
+                      ? title
+                      : title === undefined && artist !== undefined
+                          ? artist
+                          : title !== undefined && artist !== undefined
+                              ? `${artist} - ${title}`
+                              : variables.translate_idle;
+              }
+            function marquee() {
+                let state = elt.getElementById("state"),
+                    container = elt.getElementById("container");
+                if (state && container) {
+                    state.innerHTML = output;
+                    let ro = new ResizeObserver(entries => {
+                        let spacer = "&nbsp;".repeat(3),
+                            s = entries[0],
+                            c = entries[1],
+                            r = s && s.contentRect &&
+                                c && c.contentRect &&
+                                s.contentRect.width !== 0 &&
+                                c.contentRect.width !== 0;
+                        if (r && s.contentRect.width < c.contentRect.width) {
+                            state.classList.remove("marquee");
+                        }
+                        else if (r && s.contentRect.width >= c.contentRect.width) {
+                            state.innerHTML = `${output} ${spacer} ${output} ${spacer}&nbsp;`;
+                            state.classList.add("marquee");
+                        }
+                    });
+                    ro.observe(state);
+                    ro.observe(container);
                 }
-                else if (r && s.contentRect.width >= c.contentRect.width) {
-                  state.innerHTML = `${output} ${spacer} ${output} ${spacer}&nbsp;`;
-                  state.classList.add("marquee");
-                }
-              });
-              ro.observe(state);
-              ro.observe(container);
             }
-          }
-          return output;
+            return output;
         }
         return variables.translate_unknown;
       ]]]
@@ -2106,32 +2158,38 @@
       name:
         - padding: 0.2vw
         - margin: -0.2vw
-        - width: 100%
       state:
         - padding-bottom: 5.25%
         - max-width: unset
         - overflow: visible
       card:
         - padding: 5.75% 5.25% 0 5.75%
-        - border-radius: calc(var(--custom-button-card-border-radius) / 2)
+        - border-radius: calc(var(--button-card-border-radius) / 2)
         - background: rgba(115, 115, 115, 0.2) center center/cover no-repeat
         - background-image: &media_background_image >
             [[[
-              return entity.attributes.data !== undefined
-                ? `url("${entity.attributes.data[variables.i].fanart}"), url("${entity.attributes.data[variables.i].poster}")`
-                : `url("${states[variables.entity_picture].attributes.entity_picture}")`;
+              if (entity) {
+                if (variables.is_youtube) {
+                    return `url(${states[this._config?.triggers_update].state})`;
+                } else {
+                  let data = entity.attributes.data;
+                  return data && (data[variables.i].fanart || data[variables.i].poster)
+                      ? `url("${data[variables.i].fanart}"), url("${data[variables.i].poster}")`
+                      : `url("${variables.entity_picture}")`;
+                }
+              }
             ]]]
         - color: >
             [[[
               return entity === undefined
-                ? 'rgba(255, 255, 255, 0.3)'
-                : '#efefef';
+                  ? '#97989c'
+                  : '#efefef';
             ]]]
         - text-shadow: >
             [[[
               return entity === undefined
-                ? 'none'
-                : '1px 1px 5px rgba(18, 22, 23, 0.9)';
+                  ? 'none'
+                  : '1px 1px 5px rgba(18, 22, 23, 0.9)';
             ]]]
       custom_fields:
         icon:
@@ -2139,17 +2197,17 @@
           - fill: >
               [[[
                 return entity && variables.media_on
-                  ? 'rgba(255, 255, 255, 0.8)'
-                  : '#9da0a2';
+                    ? 'rgba(255, 255, 255, 0.8)'
+                    : '#9da0a2';
               ]]]
         blur_overlay:
           - display: block
           - position: absolute
-          - width: 103.1%
+          - width: 102.9%
           - height: 103.1%
           - filter: var(--blur-intensity)
           - clip-path: >
-              inset(74.5% 1.45% 1.45% 1.45% round 0 0 calc(var(--custom-button-card-border-radius) / 2) calc(var(--custom-button-card-border-radius) / 2))
+              inset(74.5% 1.45% 1.45% 1.45% round 0 0 calc(var(--button-card-border-radius) / 2) calc(var(--button-card-border-radius) / 2))
           - background: center center/cover no-repeat
           - background-image: *media_background_image
           - left: -1.5%
@@ -2158,135 +2216,14 @@
       blur_overlay: >
         [[[
           setTimeout(() => {
-            let elt = this.shadowRoot,
-              card = elt.getElementById('card'),
-              container = elt.getElementById('container'),
-              blur_overlay = elt.getElementById('blur_overlay');
-
-            if (elt && card && container && blur_overlay) {
-              card.insertBefore(blur_overlay, container);
-            }
-          }, 0);
-          return ' ';
-        ]]]
-
-
-  #################################################
-  #                                               #
-  #              RECENTLY DOWNLOADED              #
-  #                                               #
-  #################################################
-
-  recently_downloaded:
-    name: Recent Download
-    variables:
-      i: >
-        [[[
-          if (entity) {
-            let max = states[entity.entity_id].attributes.data.length - 1;
-            return Math.floor(Math.random() * max) + 1;
-          }
-        ]]]
-    state_display: >
-      [[[
-        if (entity) {
-          let elt = this.shadowRoot,
-            await = setTimeout(marquee,0),
-            data = entity.attributes.data,
-            artist = entity.attributes.media_artist,
-            title = entity.attributes.media_title;
-
-            if (data !== undefined) {
-              var number = data[variables.i].number === undefined && data[variables.i].aired !== undefined
-                ? `(${data[variables.i].aired.split("-")[0]})`
-                : data[variables.i].number === undefined && data[variables.i].aired === undefined
-                  ? ' '
-                  : data[variables.i].number,
-                output = `${data[variables.i].title} ${number}`;
-            } else {
-              var output = artist === undefined && title !== undefined
-                ? title
-                : title === undefined && artist !== undefined
-                  ? artist
-                  : title !== undefined && artist !== undefined
-                    ? `${artist} - ${title}`
-                    : variables.translate_idle;
-            }
-
-          function marquee() {
-            let state = elt.getElementById("state"),
-              container = elt.getElementById("container");
-
-            if (state && container) {
-              state.innerHTML = output;
-              let ro = new ResizeObserver(entries => {
-                let spacer = "&nbsp;".repeat(3),
-                  s = entries[0],
-                  c = entries[1],
-                  r = s && s.contentRect &&
-                      c && c.contentRect &&
-                      s.contentRect.width !== 0 &&
-                      c.contentRect.width !== 0;
-
-                if (r && s.contentRect.width < c.contentRect.width) {
-                  state.classList.remove("marquee");
-                }
-                else if (r && s.contentRect.width >= c.contentRect.width) {
-                  state.innerHTML = `${output} ${spacer} ${output} ${spacer}&nbsp;`;
-                  state.classList.add("marquee");
-                }
-              });
-              ro.observe(state);
-              ro.observe(container);
-            }
-          }
-          return output;
-        }
-        return variables.translate_unknown;
-      ]]]
-    styles:
-      grid:
-        - gap: 0.65%
-      name:
-        - padding: 0.2vw
-        - margin: -0.2vw
-        - width: 100%
-      state:
-        - padding-bottom: 5.25%
-        - max-width: unset
-        - overflow: visible
-
-      custom_fields:
-        media_image:
-          - background-position: center center
-          - background-image: >
-              [[[ return entity === undefined || `url(${states[entity.entity_id].attributes.data[variables.i].fanart})`; ]]]
-        blur:
-          - display: >
-              [[[ return entity === undefined ? 'none' : 'initial'; ]]]
-        overlay:
-          - display: none
-      card:
-        - padding: 5.75% 5.25% 0 5.75%
-        - border-radius: calc(var(--custom-button-card-border-radius) / 2)
-        - background: rgba(115, 115, 115, 0.2) center center/cover no-repeat
-        - color: >
-            [[[ return entity === undefined ? 'rgba(255, 255, 255, 0.3)' : '#efefef'; ]]]
-        - text-shadow: >
-            [[[ return entity === undefined ? 'none' : '1px 1px 5px rgba(18, 22, 23, 0.9)'; ]]]
-    custom_fields:
-      blur_overlay: >
-        [[[
-          setTimeout(() => {
-            let elt = this.shadowRoot,
-              card = elt.getElementById('card'),
-              container = elt.getElementById('container'),
-              blur_overlay = elt.getElementById('blur_overlay');
-
-            if (elt && card && container && blur_overlay) {
-              card.insertBefore(blur_overlay, container);
-            }
-          }, 0);
+              let elt = this.shadowRoot,
+                  card = elt.getElementById('card'),
+                  container = elt.getElementById('container'),
+                  blur_overlay = elt.getElementById('blur_overlay');
+              if (elt && card && container && blur_overlay) {
+                  card.insertBefore(blur_overlay, container);
+              }
+            }, 0);
           return ' ';
         ]]]
 
@@ -2661,6 +2598,23 @@
   #                                               #
   #################################################
 
+  icon_ai:
+    styles:
+      custom_fields:
+        icon:
+          - width: 80%
+          #- margin-left: -5%
+          - margin-top: -10%
+          - fill: >
+              [[[
+                return variables.state === 'on' ? '#616161' : '#9da0a2';
+              ]]]
+    custom_fields:
+      icon: >
+        <svg viewBox="0 0 50 50">
+          <path d="M20.664 7.805a1.821 1.821 0 0 0-1.713 1.92 1.821 1.821 0 1 0 1.713-1.92zm12.308 1.021a3.301 3.301 0 0 0-5.942 2.526c-.761 1.108-1.809 1.776-3.053 2.136l-.017.009a2.539 2.539 0 0 0-1.159-.208 2.548 2.548 0 1 0 2.681 2.396v-.009c.8-1.259 1.845-1.932 3.062-2.154a3.301 3.301 0 0 0 4.429-4.697zm-18.605 1.661a3.323 3.323 0 0 0-3.131 3.503 3.323 3.323 0 1 0 3.131-3.503zm23.908 1.963a2.548 2.548 0 0 0-2.405 2.69l.009.035a6.871 6.871 0 0 1-3.339 2.301l-.017.009a3.242 3.242 0 0 0-1.86-.458 3.258 3.258 0 1 0 3.382 2.621c.855-1.163 1.941-1.974 3.33-2.301l.017-.017a2.548 2.548 0 1 0 .882-4.878zM6.807 14.82a2.743 2.743 0 0 0-2.586 2.898 2.743 2.743 0 1 0 2.586-2.898zm37.262 2.777a1.821 1.821 0 0 0-1.713 1.929 1.821 1.821 0 1 0 1.713-1.929zm-24.669 2.95a3.55 3.55 0 0 0 4.031 5.691l.035.026a11.827 11.827 0 0 1 3.624 3.192 3.517 3.517 0 0 0 3.391 4.991l.346-.035a10.104 10.104 0 0 1 1.739 3.572 2.861 2.861 0 1 0 2.162-1.124 9.387 9.387 0 0 1-1.963-3.434 3.521 3.521 0 0 0 .813-3.711c1.309-1.437 2.788-2.666 4.55-3.538l.017-.017a2.663 2.663 0 1 0-1.73-2.353 2.707 2.707 0 0 0 .035.294 12.703 12.703 0 0 1-4.316 3.849 3.52 3.52 0 0 0-3.477-.13c-1.394-.947-2.554-2.079-3.373-3.494l-.017-.017a3.55 3.55 0 0 0-5.864-3.763zm-8.978 1.444a3.299 3.299 0 0 0 3.443 5.458c1.357.712 2.421 1.659 2.932 3.027v.017a2.964 2.964 0 1 0 2.638-1.998 2.963 2.963 0 0 0-.709.13l-.043-.026a6.146 6.146 0 0 1-2.915-2.993 3.299 3.299 0 0 0-5.345-3.616zM4.8 23.167a2.743 2.743 0 0 0-2.586 2.898A2.743 2.743 0 1 0 4.8 23.167zm40.904 1.289a2.047 2.047 0 0 0-2.033 2.015l-.017.009c-.673 1.447-1.973 2.481-3.806 3.157l-.017.017a2.517 2.517 0 0 0-.951-.121 2.527 2.527 0 1 0 2.673 2.379c-.004-.067-.017-.133-.026-.199l.009-.009a8.182 8.182 0 0 1 3.832-3.174l.009-.009a2.076 2.076 0 0 0 .458.026 2.047 2.047 0 0 0-.13-4.091zm-34.036 4.956a1.821 1.821 0 0 0-1.713 1.92 1.821 1.821 0 1 0 1.713-1.92z"/>
+        </svg>
+
   icon_plex:
     custom_fields:
       icon: >
@@ -2708,6 +2662,13 @@
       icon: >
         <svg viewBox="0 0 50 50">
           <path d="M27.5.301L11 .4c-.5 0-.9 0-1.4.1-1.8.3-3.399 1.099-4.799 2.199C1.901 4.999.5 7.9.4 11.5v26.699l.299 3C1.399 43.799 3 45.8 5 47.4c1.9 1.4 4.1 2.199 6.5 2.199l13.699.1 13.4-.199c.7 0 1.3-.099 1.9-.199 2.8-.6 5.101-2.2 6.801-4.4 1.3-1.7 2.099-3.7 2.199-5.9l.1-6.699-.1-20.5-.199-2.4c-.5-2.7-2.101-4.9-4.201-6.6C43.2 1.201 41 .4 38.4.4l-10.9-.1zM15.021 20.793v.002A4.145 4.145 0 0 1 19.229 25a4.145 4.145 0 0 1-4.207 4.207c-2.266 0-4.205-1.942-4.205-4.207a4.145 4.145 0 0 1 4.205-4.207zm-8.736.002a3.7 3.7 0 0 1 2.588 1.076l.107.109-1.186.863-.107-.107c-.216-.108-.754-.434-1.402-.434-.755 0-1.295.433-1.295.865 0 .214-.001.646 1.51 1.078.753.214 1.294.43 1.727.754.541.539.865 1.078.865 1.727s-.325 1.294-.865 1.727-1.294.646-2.051.646c-1.618 0-2.588-1.078-2.588-1.078l-.107-.107 1.186-.863.107.107c.216.106.755.432 1.402.432.755 0 1.295-.433 1.295-.863 0-.216.001-.645-1.51-1.076-.755-.216-1.292-.433-1.725-.758-.539-.431-.863-1.076-.863-1.725s.323-1.294.863-1.727 1.294-.646 2.049-.646zm28.693 0A4.212 4.212 0 0 1 39.184 25a4.145 4.145 0 0 1-4.205 4.207A4.212 4.212 0 0 1 30.771 25a4.145 4.145 0 0 1 4.207-4.205zm-13.268.107l5.07 4.748v-4.426h1.508v7.98l-5.07-4.744v4.424h-1.508v-7.982zm22.113 0a3.7 3.7 0 0 1 2.588 1.078l.107.107-1.186.863-.107-.107c-.216-.106-.755-.432-1.402-.432-.755 0-1.295.431-1.295.861 0 .216-.001.647 1.51 1.078.755.216 1.292.433 1.725.758.539.431.863 1.076.863 1.725s-.324 1.296-.863 1.727-1.294.646-2.049.646c-1.618 0-2.588-1.078-2.588-1.078l-.107-.107 1.186-.863h.107c.216.106.754.432 1.402.432.755 0 1.295-.433 1.295-.863 0-.216.001-.645-1.51-1.076-.753-.216-1.294-.434-1.727-.758h-.002c-.648-.431-.97-.971-.863-1.619 0-.647.325-1.292.865-1.725s1.294-.646 2.051-.646zm-28.803 1.402c-1.51 0-2.695 1.185-2.695 2.695a2.671 2.671 0 0 0 2.695 2.697A2.67 2.67 0 0 0 17.719 25a2.67 2.67 0 0 0-2.697-2.695zm19.957 0A2.67 2.67 0 0 0 32.281 25a2.671 2.671 0 0 0 2.697 2.697c1.402 0 2.695-1.187 2.695-2.697s-1.185-2.695-2.695-2.695z"/>
+        </svg>
+
+  icon_sonos_arc:
+    custom_fields:
+      icon: >
+        <svg viewBox="0 0 50 50">
+          <path d="M9.924 4.252c-.277-.001-1.11.065-2.031.196-.999.143-1.635.662-1.635.662s-.753.454-1.22 1.778.389 2.881.389 2.881l26.998 32.879c-.154-.619-.285-1.49-.094-2.33.345-1.515 1.417-2.509 1.417-2.509s.942-1.135 3.104-1.667c0 0 2.313-.412 4.408-.301.392.021 1.02.22 1.348.324L12.902 5.072c-.104-.247-1.064-.701-1.583-.766s-1.142-.039-1.337-.052l-.058-.002zm31.169 32.251h-.055c-2.362.026-3.919.337-3.919.337-1.899.457-2.726 1.433-2.726 1.433s-.973.899-1.276 2.202-.055 2.303-.055 2.303.229.863.505 1.257.578.661 1.184 1.129 1.918.606 2.689.578 2.184-.193 2.45-.202a11.17 11.17 0 0 0 2.248-.514c.78-.284 1.6-1.14 1.6-1.14s1.064-.895 1.324-2.803-.805-3.115-.805-3.115-.843-1.469-3.163-1.467z"/>
         </svg>
 
   icon_spotify:
@@ -2922,7 +2883,7 @@
           - margin-left: 1%
           - margin-top: -5%
     variables:
-      tv: ''
+      tv_screen: ''
     custom_fields:
       icon: >
         [[[
@@ -2957,7 +2918,7 @@
             paths = `
               <path fill="#9da0a2" d="M.303 11.082c-.063 0-.113.05-.113.111v27.615c0 .062.051.109.113.109h49.395c.063 0 .113-.047.113-.109V11.193c0-.062-.051-.111-.113-.111zm25.098 4.18c.241-.008.44.186.439.428v.846c0 .231-.183.42-.414.426l-.697.02c-.74.02-1.173.082-1.85.262-2.563.682-4.673 2.67-5.52 5.205-.301.9-.414 1.595-.414 2.578 0 1.401.307 2.625.945 3.799a8.09 8.09 0 0 0 6.227 4.191 12.45 12.45 0 0 0 2.244-.068c3.091-.549 5.599-2.842 6.396-5.84.097-.365.178-.864.223-1.25H27.67c-.235-.001-.426-.191-.426-.426v-.406-.406c0-.235.191-.425.426-.426h6.639c.241-.001.436.198.428.439l-.021.66c-.054 1.704-.496 3.245-1.34 4.658-1.621 2.714-4.379 4.463-7.5 4.752a10.84 10.84 0 0 1-1.92-.016c-3.83-.419-7.042-3.023-8.232-6.674-.155-.476-.277-.997-.363-1.547-.118-.749-.129-2.074-.018-2.793.179-1.154.5-2.155 1.006-3.127 1.191-2.289 3.202-3.992 5.664-4.797.884-.289 1.732-.434 2.727-.467zm-.834 4.453h.848c.236 0 .426.192.426.428V28.6h1.795c.236 0 .426.192.426.428v.846c0 .236-.19.428-.426.428h-3.068c-.236 0-.426-.192-.426-.428v-9.73c0-.236.19-.428.426-.428zm-3.129.004c.958 0 1.734.777 1.734 1.734s-.777 1.734-1.734 1.734-1.734-.777-1.734-1.734.777-1.734 1.734-1.734z"/>
             `;
-          if (variables.state === 'on' && states[variables.tv].state === 'on' && variables.timeout < 2000) {
+          if (variables.state === 'on' && states[variables.tv_screen].state === 'on' && variables.timeout < 2000) {
           return `
             <svg viewBox="0 0 50 50" >
               ${style}
@@ -2966,7 +2927,7 @@
             </svg>
           `;
           }
-          return variables.state === 'on' && states[variables.tv].state === 'on' && variables.timeout > 2000 ? `
+          return variables.state === 'on' && states[variables.tv_screen].state === 'on' && variables.timeout > 2000 ? `
             <svg viewBox="0 0 50 50">
               ${paths}
               <path fill="#ff0101" d="M25 13.861c-6.162 0-11.148 4.986-11.148 11.141A11.14 11.14 0 0 0 25 36.139c6.153 0 11.148-4.982 11.148-11.137A11.15 11.15 0 0 0 25 13.861zm.4 1.4c.241-.008.44.186.439.428v.846c0 .231-.183.42-.414.426l-.697.02c-.74.02-1.173.082-1.85.262-2.563.682-4.673 2.67-5.52 5.205-.301.9-.414 1.595-.414 2.578 0 1.401.307 2.625.945 3.799a8.09 8.09 0 0 0 6.227 4.191 12.45 12.45 0 0 0 2.244-.07c3.091-.549 5.599-2.84 6.396-5.838.097-.365.178-.864.223-1.25H27.67c-.235-.001-.426-.191-.426-.426v-.812c0-.235.191-.425.426-.426h6.639c.241-.001.436.198.428.439l-.021.66c-.054 1.704-.496 3.245-1.34 4.658-1.621 2.714-4.379 4.463-7.5 4.752a10.84 10.84 0 0 1-1.92-.016c-3.83-.419-7.042-3.023-8.232-6.674a10.04 10.04 0 0 1-.363-1.547c-.118-.749-.129-2.074-.018-2.793.179-1.154.5-2.155 1.006-3.127 1.191-2.289 3.202-3.992 5.664-4.797.884-.289 1.732-.434 2.727-.467zm-.834 4.453h.848c.236 0 .426.192.426.428V28.6h1.795c.236 0 .426.192.426.428v.846c0 .236-.19.428-.426.428h-3.068c-.236 0-.426-.192-.426-.428v-9.73c0-.236.19-.428.426-.428zm-3.129.004c.958 0 1.734.777 1.734 1.734s-.777 1.734-1.734 1.734-1.734-.777-1.734-1.734.777-1.734 1.734-1.734z"/>
@@ -2985,7 +2946,7 @@
         icon:
           - width: 95%
           - margin-left: 1%
-          - margin-top: -5%
+          - margin-top: -15%
     custom_fields:
       icon: >
         [[[
@@ -3784,7 +3745,7 @@
           let path = `
               <path id="back" fill="#9da0a2" d="M 12.128906 8.0117188 C 7.510127 8.0117188 4.4082031 10.700165 4.4082031 14.703125 L 4.4082031 18.640625 C 11.147289 18.573765 12.086705 19.589933 12.529297 24.763672 L 24.269531 24.763672 L 24.261719 8.0117188 L 12.128906 8.0117188 z M 25.839844 8.0117188 L 25.839844 24.763672 L 37.421875 24.763672 C 37.654133 20.501188 38.980505 18.157129 45.59375 18.775391 L 45.59375 14.703125 C 45.593658 10.700165 42.489873 8.0117188 37.871094 8.0117188 L 25.839844 8.0117188 z"/>
             `;
-          if (variables.state === 'on') {
+          if (variables.state === 'yes') {
             return `
               <svg viewBox="0 0 50 50">
                 <path id="back" fill="#968f8f" d="M 12.128906 8.0117188 C 7.510127 8.0117188 4.4082031 10.700165 4.4082031 14.703125 L 4.4082031 18.640625 C 11.147289 18.573765 12.086705 19.589933 12.529297 24.763672 L 24.269531 24.763672 L 24.261719 8.0117188 L 12.128906 8.0117188 z M 25.839844 8.0117188 L 25.839844 24.763672 L 37.421875 24.763672 C 37.654133 20.501188 38.980505 18.157129 45.59375 18.775391 L 45.59375 14.703125 C 45.593658 10.700165 42.489873 8.0117188 37.871094 8.0117188 L 25.839844 8.0117188 z"/>
@@ -3792,7 +3753,7 @@
               </svg>
             `;
           }
-          if (variables.state === 'off') {
+          if (variables.state === 'no') {
             return `
               <svg viewBox="0 0 50 50">
                 ${path}
@@ -3847,7 +3808,7 @@
         ]]]
 
 
-  icon_vitrineskap:
+  icon_display_cabinet:
     styles:
       custom_fields:
         icon:
@@ -4277,6 +4238,8 @@
               [[[
                 return variables.state === 'on' || variables.state === 'playing' ? '#616161' : '#9da0a2';
               ]]]
+    variables:
+      tv_screen: ''
     custom_fields:
       icon: >
         [[[
@@ -4319,7 +4282,7 @@
                 <stop offset="1" stop-color="#7fdbe9"/>
               </linearGradient>
             `;
-          if (variables.state === 'on' && variables.timeout < 2000 || variables.state === 'playing' && variables.timeout < 2000) {
+          if (variables.state === 'on' && states[variables.tv_screen].state === 'on' && variables.timeout < 2000 || variables.state === 'playing' && variables.timeout < 2000) {
             return `
               <svg viewBox="0 0 50 50"> ${style} ${gradient} 
                 <path d="M2.9,8h44.3v29.9H2.9V8z" fill="#20262890"/>
@@ -4327,7 +4290,7 @@
               </svg>
             `;
           }
-          if (variables.state === 'on' && variables.timeout > 2000 || variables.state === 'playing' && variables.timeout > 2000) {
+          if (variables.state === 'on' && states[variables.tv_screen].state === 'on' && variables.timeout > 2000 || variables.state === 'playing' && variables.timeout > 2000) {
             return `
               <svg viewBox="0 0 50 50"> ${gradient} 
                 <path d="M2.9,8h44.3v29.9H2.9V8z" fill="#20262890"/>
@@ -4335,7 +4298,7 @@
               </svg>
             `;
           }
-          if (variables.state === 'off' && variables.timeout < 2000) {
+          if (variables.state === 'off' && variables.timeout < 2000 || states[variables.tv_screen].state === 'off' && variables.timeout < 2000) {
             return `
               <svg viewBox="0 0 50 50"> ${style} ${gradient} 
                 <path class="off" d="M2.9,8h44.3v29.9H2.9V8z" fill="url(#A)"/> ${path} 
@@ -4908,14 +4871,13 @@
         ]]]
 
 
-  icon_climate:
+  icon_ac:
     styles:
       custom_fields:
         icon:
           - width: 90%
-          - margin-top: -5%
-          #- margin-left: -12%
-          
+          - margin-top: -6%
+          - margin-left: 1%
     custom_fields:
       icon: >
         [[[
@@ -5203,22 +5165,15 @@
     styles:
       custom_fields:
         play_pause:
-          - top: 0
+          - top: -10%
           - right: 0
           - bottom: 0
           - left: 0
           - margin: auto
-          - width: 21%
-          - height: 21%
+          - width: 25%
+          - height: 25%
           - position: absolute
           - fill: '#dedede'
-          - overflow: visible
-          - filter: >
-              [[[
-                return entity && variables.entity_picture
-                  ? 'drop-shadow(0 0 1.3vw rgba(0,0,0,0.7))'
-                  : 'none';
-              ]]]
     custom_fields:
       play_pause: >
         [[[
@@ -5250,18 +5205,18 @@
             </style>
           `;
           if (variables.state === 'paused' && variables.timeout < 2000) {
-            return `
-              <svg viewBox="0 0 166 166">${style}
-                <path class="scale-up" d="M0 0h59.9v166H0zm106.1 0H166v166h-59.9z"/>
-              </svg>
-            `;
+              return `
+                <svg viewBox="0 0 166 166">${style}
+                  <path class="scale-up" d="M0 0h59.9v166H0zm106.1 0H166v166h-59.9z"/>
+                </svg>
+              `;
           }
           if (variables.state === 'playing' && variables.timeout < 2000) {
-            return `
-              <svg viewBox="0 0 166 166">${style}
-                <path class="scale-up" d="M0 0l166 83L0 166z"/>
-              </svg>
-            `;
+              return `
+                <svg viewBox="0 0 166 166">${style}
+                  <path class="scale-up" d="M0 0l166 83L0 166z"/>
+                </svg>
+              `;
           }
         ]]]
 
