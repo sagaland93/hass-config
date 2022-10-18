@@ -405,6 +405,7 @@
         ]]]
       tilt_options: >
         [[[ return { max: 5, scale: 1.1, glare: true, 'max-glare': 0.07, perspective: 1000, speed: 800, parallax: '10px' }; ]]]
+    show_icon: false
     size: 2vw
     color: '#9da0a2'
     custom_fields:
@@ -523,13 +524,13 @@
         margin-right: 0.6em;
       }
       .badge--new {
-        content: url("/local/svg/new.svg");
+        content: url("/local/svg/new2.svg");
       }
       .badge--netflix {
         content: url("/local/svg/netflix.svg");
       }
       .badge--bluray {
-        content: url("/local/svg/bluray.svg");
+        content: url("/local/svg/blu-ray.svg");
       }
       .badge--webdl {
         content: url("/local/svg/webdl.svg");
@@ -617,8 +618,7 @@
           if ( season_episode.includes('E') ) { season_split = season_episode.split('E').join(' · E') } else { season_split = season_episode };
 
           var source_icon = '';
-          if (source == 'BluRay') { source_icon = 'badge badge--bluray'};
-          if (source == 'WEB-DL') { source_icon = 'badge badge--webdl'};
+          if (source == 'Blu-Ray') { source_icon = 'badge badge--bluray'};
           if (source == 'Netflix') { source_icon = 'badge badge--netflix'};
           if (source == 'Netflix WEB-DL') { source_icon = 'badge badge--netflix'};
           if (source == 'Netflix WEBRip') { source_icon = 'badge badge--netflix'};
@@ -630,25 +630,25 @@
           if (hdr == 'HDR') { hdr_icon = 'badge badge--hdr'};
           if (hdr == 'DV') { hdr_icon = 'badge badge--dv'};
           if (hdr == 'DV HDR' || hdr == 'HDR DV') { hdr_icon = 'badge badge--hdr'};
+          if (hdr == 'DV' && audio == 'Atmos') { hdr_icon = 'badge badge--dv-atmos'};
+          if (hdr == 'DV' && audio == 'Atmos' || hdr == 'DV' && audio == 'TrueHD Atmos' || hdr == 'DV' && audio == 'DDP Atmos') { hdr_icon = 'badge badge--dv-atmos'};
 
           var hdr_icon2 = '';
-          if (hdr == 'DV HDR' || hdr == 'HDR DV') { hdr_icon2 = 'badge badge--dv'};
+          if (hdr == 'DV HDR' || hdr == 'HDR DV' && hdr_icon != 'badge badge--dv-atmos') { hdr_icon2 = 'badge badge--dv'};
 
           var audio_icon = '';
           if (audio == 'DD') { audio_icon = 'badge badge--dd'};
           if (audio == 'DTS') { audio_icon = 'badge badge--dts'};
           if (audio == 'DTS-HD') { audio_icon = 'badge badge--dtshd'};
           if (audio == 'DTS-X') { audio_icon = 'badge badge--dtsx'};
-          if (audio == 'DDP') { audio_icon = 'badge badge--dolby-dp'};
-          if (audio == 'DDP Atmos') { audio_icon = 'badge badge--dolby-dp'};
+          if (audio == 'DDP Atmos' && hdr_icon != 'badge badge--dv-atmos') { audio_icon = 'badge badge--dolby-atmos'};
           if (audio == 'Atmos') { audio_icon = 'badge badge--dolby-atmos'};
           if (audio == 'TrueHD') { audio_icon = 'badge badge--truehd'};
           if (audio == 'TrueHD Atmos') { audio_icon = 'badge badge--truehd'};
           if (audio == 'FLAC') { audio_icon = 'badge badge--flac'};
 
           var audio_icon2 = '';
-          if (audio == 'TrueHD Atmos') { audio_icon2 = 'badge badge--dolby-atmos'};
-          if (audio == 'DDP Atmos') { audio_icon2 = 'badge badge--dolby-atmos'};
+          if (audio == 'TrueHD Atmos' && hdr_icon != 'badge badge--dv-atmos') { audio_icon2 = 'badge badge--dolby-atmos'};
 
           return `
             <div id="rss_container">
@@ -676,7 +676,7 @@
             channels = entity.attributes.audio_channels;
 
           var source_icon = '';
-          if (source == 'BluRay') { source_icon = 'badge badge--bluray'};
+          if (source == 'Blu-Ray') { source_icon = 'badge badge--bluray'};
           if (source == 'WEB-DL') { source_icon = 'badge badge--webdl'};
           if (source == 'Netflix') { source_icon = 'badge badge--netflix'};
           if (source == 'Netflix WEB-DL') { source_icon = 'badge badge--netflix'};
@@ -1433,21 +1433,13 @@
 
   #################################################
   #                                               #
-  #                 MEDIA PLAYER                  #
+  #                 MEDIA VOLUME                  #
   #                                               #
   #################################################
 
   media_volume:
     variables:
-      player: >
-        [[[
-          if (variables.player) {
-            return entity.entity_id;
-          }
-          else {
-            return variables.player;
-          }
-        ]]]
+      volume_control: ''
     tap_action:
       action: fire-dom-event
       browser_mod:
@@ -1463,7 +1455,7 @@
             card:
               type: custom:media_player-popup-card
               #entity: media_player.denon_receiver
-              entity: '[[[ return entity.entity_id ]]]' # IF something, then receiver, else current entity
+              entity: '[[[ return variables.volume_control; ]]]' # IF something, then receiver, else current entity
               icon: none
               fullscreen: false
               sliderWidth: 130px
@@ -1476,17 +1468,17 @@
               actions:
                 - service: media_player.media_previous_track
                   service_data:
-                    entity_id: '[[[ return variables.player; ]]]'
+                    entity_id: '[[[ return variables.volume_control; ]]]'
                   #name: previous
                   icon: mdi:skip-previous
                 - service: media_player.media_play_pause
                   service_data:
-                    entity_id: '[[[ return variables.player; ]]]'
+                    entity_id: '[[[ return variables.volume_control; ]]]'
                   #name: play/pause
                   icon: mdi:play-pause
                 - service: media_player.media_next_track
                   service_data:
-                    entity_id: '[[[ return variables.player; ]]]'
+                    entity_id: '[[[ return variables.volume_control; ]]]'
                   #name: next
                   icon: mdi:skip-next
               
@@ -1951,18 +1943,22 @@
       card:
         - color: >
             [[[
-              return variables.media_on && variables.entity_picture === undefined
-                  ? 'rgba(0, 0, 0, 0.6)'
-                  : variables.media_off
-                      ? '#97989c'
-                      : '#efefef';
+              let entity_picture = entity === undefined || entity.attributes.entity_picture;
+              if (variables.state === 'off' || variables.state === 'idle' || variables.state === 'standby' ||
+                variables.state === 'unknown' || variables.state === 'unavailable' || entity === undefined) {
+                return 'rgba(255, 255, 255, 0.3)';
+              }
+              return (variables.state != 'off' && variables.state != 'idle' && variables.state != 'standby') && (entity_picture == null) ? 'rgba(0, 0, 0, 0.6)' : '#efefef';
             ]]]
         - text-shadow: >
             [[[
-              return variables.media_off || variables.entity_picture === undefined
-                  ? 'none'
-                  : '1px 1px 5px rgba(18, 22, 23, 0.9)';
+              let entity_picture = entity === undefined ? null : entity.attributes.entity_picture;
+              if (variables.state === 'off' || variables.state === 'idle' || variables.state === 'standby' || variables.state === 'unknown' || variables.state === 'unavailable') {
+                return entity_picture == null ? 'none' : '1px 1px 5px rgba(18, 22, 23, 0)';
+              }
+              return entity_picture == null ? 'none' : '1px 1px 5px rgba(18, 22, 23, 0.9)';
             ]]]
+
 
   #################################################
   #                                               #
@@ -1992,12 +1988,16 @@
         - background-position: center
         - background-image: >
             [[[
-              return variables.media_on && variables.entity_picture === undefined
-                  ? 'linear-gradient(0deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.8) 100%)'
-                  : variables.media_off
-                      ? 'linear-gradient(0deg, rgba(115, 115, 115, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)'
-                      : `linear-gradient(0deg, rgba(0,0,0,.8) 0%, rgba(0,0,0,0) 100%), url(${variables.entity_picture})`;
+              let entity_picture = entity === undefined || entity.attributes.entity_picture;
+              if (variables.state === 'off' || variables.state === 'idle' || variables.state === 'standby' ||
+                variables.state === 'unknown' || variables.state === 'unavailable' || entity === undefined) {
+                return 'linear-gradient(0deg, rgba(115, 115, 115, 0.2) 0%, rgba(115, 115, 115, 0.2) 100%)';
+              }
+              return (variables.state != 'off' && variables.state != 'idle' && variables.state != 'standby') && (entity_picture == null) ? 
+                'linear-gradient(0deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.8) 100%)' : 
+                'linear-gradient(0deg, rgba(0,0,0,.8) 0%, rgba(0,0,0,0) 100%), url(' + entity_picture + ')';
             ]]]
+
 
   # APPLE TV
   atv:
@@ -2013,6 +2013,11 @@
     template:
       - base
       - base_media
+    variables:
+      media_on: >
+        [[[ return !entity || ['playing'].indexOf(entity.state) !== -1; ]]]
+      media_off: >
+        [[[ return !entity || ['paused', 'off', 'idle', 'standby', 'unknown', 'unavailable'].indexOf(entity.state) !== -1; ]]]
     tap_action:
       action: >
         [[[
@@ -2086,11 +2091,12 @@
       - base_media
       - icon_play_pause
     variables:
+      entity_picture: ''
       i: >
         [[[
           if (entity) {
-              let data = entity.attributes.data;
-              return data === undefined || Math.floor(Math.random() * (data.length - 1)) + 1;
+            let data = entity.attributes.data;
+            return data === undefined || Math.floor(Math.random() * (data.length - 1)) + 1;
           }
         ]]]
     state_display: >
@@ -2169,14 +2175,9 @@
         - background-image: &media_background_image >
             [[[
               if (entity) {
-                if (variables.is_youtube) {
-                    return `url(${states[this._config?.triggers_update].state})`;
-                } else {
-                  let data = entity.attributes.data;
-                  return data && (data[variables.i].fanart || data[variables.i].poster)
-                      ? `url("${data[variables.i].fanart}"), url("${data[variables.i].poster}")`
-                      : `url("${variables.entity_picture}")`;
-                }
+                return entity.attributes.data !== undefined
+                  ? `url("${entity.attributes.data[variables.i].fanart}"), url("${entity.attributes.data[variables.i].poster}")`
+                  : `url("${states[variables.entity_picture].attributes.entity_picture}")`;
               }
             ]]]
         - color: >
@@ -2227,43 +2228,6 @@
           return ' ';
         ]]]
 
-
-  #################################################
-  #                                               #
-  #                 MEDIA YOUTUBE                 #
-  #                                               #
-  #################################################
-
-  media_youtube:
-    #variables:
-      #token:
-        #!include .youtube_token.txt
-    custom_fields:
-      youtube: >
-        [[[
-          let elt = this.shadowRoot;
-          if (entity && elt && entity.attributes.app_name === 'YouTube') {
-            let api = 'https://www.googleapis.com/youtube/v3/search',
-              artist = entity.attributes.media_artist,
-              title = entity.attributes.media_title,
-              options = 'type=video&part=snippet&maxResults=1',
-              token = variables.token.split('|'),
-              random = Math.floor(Math.random() * token.length),
-              url = `${api}?q="${artist}%20${title}"&${options}&key=${token[random]}`;
-            fetch(url).then(e => e.json()).then(e => {
-              let json = e.items[0].snippet.thumbnails,
-                hq = json[Object.keys(json).pop()].url,
-                card = elt.getElementById('card'),
-                blur_overlay = elt.getElementById('blur_overlay');
-              if (entity.state !== 'idle' && artist !== undefined && title !== undefined) {
-                card.style.backgroundImage = `url("${hq}")`;
-                blur_overlay.style.backgroundImage = `url("${hq}")`;
-                card.style.backgroundSize = '178%';
-                blur_overlay.style.backgroundSize = '178%';
-              }
-            });
-          }
-        ]]]
 
 
   #################################################
