@@ -417,7 +417,7 @@ template:
         update_entities: >
           {{ states.update | selectattr('state','eq','on') | list | count }}
         other_updates: >
-          {{ states('sensor.template_other_updates') | int }}
+          {{ states('sensor.template_other_updates') | int(0) }}
 
     - unique_id: other_updates
       state: >
@@ -1343,7 +1343,7 @@ template:
           {%- endif %}
 
 
-    # SENSOR - RSS - PrivateHD Movies
+    # SENSOR - RSS - Movies
     - unique_id: torrent_movie_downloaded
       name: 'Torrent - Movie - Already Downloaded'
       state: >
@@ -1368,17 +1368,16 @@ template:
         {{ state.return }}
       attributes:
         title: >
-          {%- set state = states('sensor.torrent_movie_already_downloaded') %}
-          {%- if state == 'Yes' %}
+          {%- if states('sensor.torrent_movie_already_downloaded') == 'Yes' %}
+            {% set state = namespace(return=[]) %}
             {% set title = state_attr('sensor.rss_search_result','name') %}
             {% set recent = state_attr('sensor.recently_added_movies', 'data') %}
-            {% for download in recent %}
-              {%- if not loop.first %}
-                {% if title in download.title %}
-                  {{- download.title }}
-                {% endif %}
-              {% endif %}
-            {% endfor %}
+            {% for download in recent -%}
+              {%- if not loop.first and download.title in title %}
+                {% set state.return = state.return + [download.title] %}
+              {%- endif %}
+            {%- endfor %}
+            {{ state.return }}
           {%- endif %}
 
 
@@ -1603,7 +1602,7 @@ template:
           {%- endif %}
 
 
-    # SENSOR - RSS - PrivateHD TV Shows
+    # SENSOR - RSS - TV Shows
     - unique_id: torrent_tv_show_downloaded
       name: 'Torrent - TV Show - Already Downloaded'
       state: >
@@ -1630,22 +1629,22 @@ template:
       attributes:
         title: >
           {%- if states('sensor.torrent_tv_show_already_downloaded') == 'Yes' %}
+            {% set state = namespace(return=[]) %}
             {% set title = state_attr('sensor.rss_search_result_tv_shows','name') %}
             {% set season_episode = state_attr('sensor.rss_search_result_tv_shows','season_episode') %}
             {% set recent = state_attr('sensor.recently_added_tv_shows', 'data') %}
-            {% for download in recent %}
-              {%- if not loop.first %}
-                {%- if download.title in title %}
-                  {%- if season_episode in download.number %}
-                    {{- download.title }} {{download.number}}
-                  {%- endif %}
+            {% for download in recent -%}
+              {%- if not loop.first and download.title in title %}
+                {%- if season_episode in download.number %}
+                  {% set state.return = state.return + [download.title + " " + download.number] %}
                 {%- endif %}
               {%- endif %}
-            {% endfor %}
+            {%- endfor %}
+            {{ state.return }}
           {%- endif %}
 
 
-    # SENSOR - RSS - Norwegian
+    # SENSOR - RSS - (Norwegian)
     - unique_id: rss_search_result_norwegian
       name: 'RSS Search Result - Norwegian'
       state: >
