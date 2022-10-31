@@ -509,6 +509,7 @@ template:
           {{ cost | round }}
         {% endif %}
 
+
     # SENSOR - WEATHER
     - unique_id: weather_min_temp
       name: 'Weather Min Temp'
@@ -516,20 +517,19 @@ template:
         {% set today = states.sensor.date.state %}
         {% set forecasts = state_attr('weather.pirateweather', 'forecast') %}
         {% for forecast in forecasts %}
-          {%- set date = forecast.datetime | replace('T22:00:00+00:00', '') %}
+          {%- set date = forecast.datetime | replace('T23:00:00+00:00', '') %}
           {%- if date == today %}
             {{ forecast.templow }}
           {% endif %}
         {% endfor %}
 
-    # SENSOR - WEATHER
     - unique_id: weather_max_temp
       name: 'Weather Max Temp'
       state: >-
         {% set today = states.sensor.date.state %}
         {% set forecasts = state_attr('weather.pirateweather', 'forecast') %}
         {% for forecast in forecasts %}
-          {%- set date = forecast.datetime | replace('T22:00:00+00:00', '') %}
+          {%- set date = forecast.datetime | replace('T23:00:00+00:00', '') %}
           {%- if date == today %}
             {{ forecast.temperature }}
           {% endif %}
