@@ -51,6 +51,7 @@ template:
           option: >
             {{ option }}
 
+
     # SELECT - VACUUM SPEED
     - name: vacuum_speed
       state: >
@@ -415,7 +416,7 @@ template:
           {% set latest = states('sensor.hass_version_latest_beta') if version(installed).beta else states('sensor.hass_version_latest') %}
           {{ iif(version(latest) > version(installed) and '.' in installed and '.' in latest, 1, 0) }}
         update_entities: >
-          {{ states.update | selectattr('state','eq','on') | list | count }}
+          {{ states.update | selectattr('state','eq','on') | rejectattr('entity_id', 'match', 'update.home_assistant_core_update') | list | count }}
         other_updates: >
           {{ states('sensor.template_other_updates') | int(0) }}
 
@@ -434,13 +435,7 @@ template:
           {% if is_state('update.router_rack', 'on') %}
             <b><a href="#" onclick="window.open('{{ url }}');">UniFi Dream Machine {{ installed + ' <b>&rarr;</b> ' + latest }}
           {% endif %}
-        synology: >
-          {% set installed = state_attr('update.rackstation_dsm_update', 'installed_version') %}
-          {% set latest = state_attr('update.rackstation_dsm_update', 'latest_version') %}
-          {% set url = state_attr('update.rackstation_dsm_update', 'release_url') %}
-          {% if is_state('update.rackstation_dsm_update', 'on') %}
-            <b><a href="#" onclick="window.open('{{ url }}');">Synology DSM - RackStation</a></b> {{ installed + ' <b>&rarr;</b> ' + latest }}
-          {% endif %}
+
 
     - unique_id: hass_next_release
       state: >
@@ -508,7 +503,6 @@ template:
         {% if cost not in ['unavailable', 'null', 'undefined', 'none'] %}
           {{ cost | round }}
         {% endif %}
-
 
     # SENSOR - WEATHER
     - unique_id: weather_min_temp
@@ -766,7 +760,29 @@ template:
         {% set kitchen = states('sensor.lumi_illuminance_kitchen') | int %}
         {{ (plant + kitchen) / 2 }}
       icon: >
-        {% if states('sensor.illuminance_upstairs') | int <= 2 %}
+        {% if states('sensor.illuminance_upstairs') | int <= 8 %}
+          mdi:brightness-1
+        {% else %}
+          mdi:brightness-5
+        {%- endif %}
+
+    # SENSOR - UPSTAIRS IS DARK
+    - unique_id: upstairs_dark
+      name: 'Upstairs Dark'
+      state: >
+        {% set lux = states('sensor.illuminance_upstairs') | int(0) %}
+        {% set lights = states('light.ecodim_dimmer_downlights_hallway') %}
+        {% set sun = states('sun.sun') %}
+        {% set day = states('binary_sensor.day') %}
+        {% set blind = states('cover.blind_living_room') %}
+        {% if lights == 'on' %} No
+        {% elif day == 'on' and blind != 'closed' %} No
+        {% elif lux < 10 and lights == 'off' %} Yes
+        {% elif sun == 'below_horizon' and lights == 'off' %} Yes
+        {% else %} No
+        {% endif %}
+      icon: >
+        {% if states('sensor.upstairs_dark') == 'Yes' %}
           mdi:brightness-1
         {% else %}
           mdi:brightness-5
@@ -864,7 +880,7 @@ template:
       name: 'Home Mood Lighting'
       state: >
         {%- set time = now().hour | int %}
-        {%- set offset = 1 | int %}
+        {%- set offset = 0 | int %}
         {%- set sunset = as_timestamp(states.sun.sun.attributes.next_setting) | timestamp_custom ('%H') | int %}
         {%- set sunrise = as_timestamp(states.sun.sun.attributes.next_rising) | timestamp_custom ('%H') | int %}
         {% if is_state('sensor.home_state', 'evening') %} yes
@@ -995,7 +1011,7 @@ template:
             {% if players[0] is defined %}
               {% if 'plex' in players[0] %}
                 {% if state_attr(players[0], 'media_content_type') == 'tvshow' %}
-                  {{state_attr(players[0], 'media_series_title')}}
+                  {{state_attr(players[0], 'media_series_title')}} - {{state_attr(players[0], 'media_title')}}
                 {% else %}
                   {{state_attr(players[0], 'media_title')}}
                 {% endif %}
