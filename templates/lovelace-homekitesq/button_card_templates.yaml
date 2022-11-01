@@ -16,8 +16,8 @@
       translate_not_home: 'No'
       translate_available: Available
       translate_no_updates: No Updates
-      translate_update_available: Update available
-      translate_updates_available: Updates available
+      translate_update_available: Available
+      translate_updates_available: Available
 
 
   #################################################
@@ -1208,7 +1208,7 @@
                 ? `${no_updates} <b>&larr;</b> ${hacs_update || ''}`
                 : `${count} ${count === 1 ? update_available : updates_available} ${String.fromCodePoint('0x1f389')}`;
         return `
-          <ha-icon icon="mdi:package-up"></ha-icon> <span class="title">Integrations</span><br>
+          <ha-icon icon="mdi:package-up"></ha-icon> <span class="title">Updates</span><br>
           <p class="subtitle">${subtitle}</p>
           <ul>${output}</ul>
         `;
@@ -2118,11 +2118,11 @@
                           : data[variables.i].number,
                   output = `${data[variables.i].title} ${number}`;
               } else {
-                  var output = artist === undefined && title !== undefined
+                  var output = artist === undefined && title !== undefined && title !== ''
                       ? title
-                      : title === undefined && artist !== undefined
+                      : title === undefined && artist !== undefined && artist !== ''
                           ? artist
-                          : title !== undefined && artist !== undefined
+                          : title !== undefined && artist !== undefined && artist !== ''
                               ? `${artist} - ${title}`
                               : variables.translate_idle;
               }
@@ -2757,13 +2757,14 @@
         </svg>
 
 
+  # STAIRS
   icon_staircase:
     styles:
       custom_fields:
         icon:
-          - width: 80%
-          - margin-left: -5%
-          - margin-top: -5%
+          - width: 75%
+          - margin-left: -2%
+          - margin-top: -2%
           - fill: >
               [[[
                 return variables.state === 'on' ? '#616161' : '#9da0a2';
@@ -2772,6 +2773,40 @@
       icon: >
         <svg viewBox="0 0 50 50">
           <path d="M5.698 46.057h27.35L3.943 16.953v27.35c0 .97.784 1.755 1.755 1.755zm7.019-42.114H3.943v8.047L38.01 46.057h8.047v-8.774c0-.97-.784-1.755-1.755-1.755h-8.774v-8.774c0-.97-.784-1.755-1.755-1.755H25v-8.774c0-.97-.784-1.755-1.755-1.755h-8.774V5.698c0-.97-.784-1.755-1.755-1.755z"/>
+        </svg>
+
+  icon_stairs_up:
+    styles:
+      custom_fields:
+        icon:
+          - width: 75%
+          - margin-left: -2%
+          - margin-top: -2%
+          - fill: >
+              [[[
+                return variables.state === 'on' ? '#616161' : '#9da0a2';
+              ]]]
+    custom_fields:
+      icon: >
+        <svg viewBox="0 0 50 50">
+          <path d="M 3.9433594 3.9433594 L 3.9433594 11.990234 L 38.009766 46.056641 L 46.056641 46.056641 L 46.056641 37.283203 C 46.056641 36.313203 45.273734 35.527344 44.302734 35.527344 L 35.527344 35.527344 L 35.527344 26.753906 C 35.527344 25.783906 34.744438 24.998047 33.773438 24.998047 L 25 24.998047 L 25 16.224609 C 25 15.254609 24.215141 14.470703 23.244141 14.470703 L 14.470703 14.470703 L 14.470703 5.6972656 C 14.470703 4.7272656 13.687797 3.9433594 12.716797 3.9433594 L 3.9433594 3.9433594 z M 3.9433594 16.953125 L 3.9433594 44.302734 C 3.9433594 45.272734 4.7262656 46.058594 5.6972656 46.058594 L 5.6972656 46.056641 L 33.048828 46.056641 L 3.9433594 16.953125 z M 8.9863281 34.429688 L 14.929688 34.429688 C 15.217099 34.429688 15.450748 34.661383 15.449219 34.947266 L 15.449219 35.626953 C 15.449218 35.917422 15.208404 36.150611 14.917969 36.144531 L 11.320312 36.058594 L 15.714844 40.451172 C 15.918173 40.654501 15.918172 40.982219 15.714844 41.185547 L 15.226562 41.675781 C 15.023234 41.879109 14.695518 41.87911 14.492188 41.675781 L 10.097656 37.28125 L 10.185547 40.878906 C 10.193147 41.170905 9.9580476 41.409766 9.6660156 41.408203 L 8.9882812 41.408203 C 8.7008702 41.408202 8.4691751 41.176508 8.4707031 40.890625 L 8.46875 34.947266 C 8.468749 34.659854 8.7004441 34.428157 8.9863281 34.429688 z"/>
+        </svg>
+
+  icon_stairs_down:
+    styles:
+      custom_fields:
+        icon:
+          - width: 75%
+          - margin-left: -2%
+          - margin-top: -2%
+          - fill: >
+              [[[
+                return variables.state === 'on' ? '#616161' : '#9da0a2';
+              ]]]
+    custom_fields:
+      icon: >
+        <svg viewBox="0 0 50 50">
+          <path d="M 3.9433594 3.9433594 L 3.9433594 11.990234 L 38.009766 46.056641 L 46.056641 46.056641 L 46.056641 37.283203 C 46.056641 36.313203 45.273734 35.527344 44.302734 35.527344 L 35.527344 35.527344 L 35.527344 26.753906 C 35.527344 25.783906 34.744438 24.998047 33.773438 24.998047 L 25 24.998047 L 25 16.224609 C 25 15.254609 24.215141 14.470703 23.244141 14.470703 L 14.470703 14.470703 L 14.470703 5.6972656 C 14.470703 4.7272656 13.687797 3.9433594 12.716797 3.9433594 L 3.9433594 3.9433594 z M 3.9433594 16.953125 L 3.9433594 44.302734 C 3.9433594 45.272734 4.7262656 46.058594 5.6972656 46.058594 L 5.6972656 46.056641 L 33.048828 46.056641 L 3.9433594 16.953125 z M 9.4765625 34.429688 C 9.6091847 34.429688 9.7420854 34.480367 9.84375 34.582031 L 14.238281 38.976562 L 14.150391 35.378906 C 14.142791 35.086907 14.375937 34.846093 14.667969 34.847656 L 15.347656 34.847656 C 15.635067 34.847657 15.866762 35.081305 15.865234 35.367188 L 15.867188 41.308594 C 15.867188 41.596006 15.635493 41.829655 15.349609 41.828125 L 9.4042969 41.828125 C 9.1168847 41.828125 8.8851898 41.594477 8.8867188 41.308594 L 8.8867188 40.630859 C 8.8867194 40.34039 9.1275339 40.105248 9.4179688 40.111328 L 13.013672 40.199219 L 8.6210938 35.804688 C 8.4177644 35.601359 8.4177652 35.275594 8.6210938 35.072266 L 9.109375 34.582031 C 9.2110393 34.480367 9.3439403 34.429687 9.4765625 34.429688 z"/>
         </svg>
 
 
@@ -3341,6 +3376,19 @@
         ]]]
 
 
+  icon_hue_resonate:
+    styles:
+      custom_fields:
+        icon:
+          - width: 70%
+          - margin-left: -10%
+          - color: >
+              [[[ return variables.state === 'on' ? '#000000' : '#9da0a2'; ]]]
+    custom_fields:
+      icon: >
+        <ha-icon icon="hue:wall-resonate"></ha-icon>
+
+
   icon_hue:
     styles:
       custom_fields:
@@ -3496,9 +3544,9 @@
     styles:
       custom_fields:
         icon:
-          - width: 77%
-          #- margin-top: -3%
-          #- margin-left: -3%
+          - width: 70%
+          - margin-top: 1%
+          - margin-left: 5%
     custom_fields:
       icon: >
         [[[
@@ -3668,6 +3716,7 @@
       custom_fields:
         icon:
           - width: 77%
+          - margin-top: -4%
     custom_fields:
       icon: >
         [[[
@@ -3706,6 +3755,8 @@
       custom_fields:
         icon:
           - width: 77%
+          - margin-top: -8%
+          - margin-left: 1%
     custom_fields:
       icon: >
         [[[
@@ -4126,9 +4177,9 @@
     styles:
       custom_fields:
         icon:
-          #- width: 95%
-          - margin-left: -7%
-          - margin-top: -15%
+          - width: 95%
+          - margin-left: -5%
+          - margin-top: -18%
     custom_fields:
       icon: >
         [[[
@@ -5585,8 +5636,7 @@
     styles:
       custom_fields:
         icon:
-          - width: 85%
-          - margin-top: 1%
+          - width: 81%
           - margin-left: -12%
     custom_fields:
       icon: >
@@ -5990,7 +6040,7 @@
     styles:
       custom_fields:
         icon:
-          - width: 90%
+          - width: 85%
           - margin-left: -20%
           - margin-top: 1%
     custom_fields:
@@ -6614,6 +6664,51 @@
             </svg>
           `;
         ]]]
+
+
+  icon_bolt:
+    styles:
+      custom_fields:
+        icon:
+          - width: 70%
+          - margin-left: -10%
+          - color: >
+              [[[ return variables.state === 'on' ? '#000000' : '#9da0a2'; ]]]
+    custom_fields:
+      icon: >
+        <ha-icon icon="custom:electric-bolt"></ha-icon>
+
+
+  icon_tree:
+    styles:
+      custom_fields:
+        icon:
+          - width: 70%
+          - margin-top: -5%
+          - margin-left: -5%
+          - color: >
+              [[[ return variables.state === 'on' ? '#000000' : '#9da0a2'; ]]]
+    custom_fields:
+      icon: >
+        <ha-icon icon="custom:tree-flat"></ha-icon>
+
+
+  icon_shield:
+    styles:
+      custom_fields:
+        icon:
+          - width: 70%
+          - margin-top: -5%
+          - margin-left: -5%
+          - color: >
+              [[[ return variables.state === 'on' ? '#000000' : '#9da0a2'; ]]]
+    custom_fields:
+      icon: >
+        [[[ 
+          return variables.state === 'on' ? '<ha-icon icon="mdi:shield-lock-open"></ha-icon>' : '<ha-icon icon="mdi:shield-lock"></ha-icon>'; 
+        ]]]
+        
+
 
   icon_away:
     #state_display: Auto
