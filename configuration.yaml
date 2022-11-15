@@ -19,9 +19,8 @@ homeassistant:
         - REDACTED
         - REDACTED
       trusted_users:
-        REDACTED
-        REDACTED
-        REDACTED
+        REDACTED: !secret ha_user_id
+
   customize:
     sensor.matavfall:
       friendly_name: food
@@ -29,6 +28,8 @@ homeassistant:
       friendly_name: paper
     sensor.restavfall:
       friendly_name: residual
+    sensor.nordpool_hvfoss:
+      unit_of_measurement: NOK
 
 
 default_config:
@@ -53,8 +54,8 @@ lovelace:
 
 # HTTP
 http:
-  ssl_certificate: REDACTED
-  ssl_key: REDACTED
+  ssl_certificate: ssl/fullchain.pem
+  ssl_key: ssl/privkey.pem
   login_attempts_threshold: -1 #5
   ip_ban_enabled: false
 
@@ -70,7 +71,7 @@ recorder:
 
 # LOGGING
 logger:
-  default: warning
+  default: warning #notset
   logs:
     homeassistant.core: fatal
     homeassistant.components.mqtt: warning
@@ -114,11 +115,6 @@ tts:
   - platform: google_translate
 
 
-# BrowserMod
-browser_mod:
-  prefix: browser_
-
-
 # LOCK
 lock:
   - platform: template
@@ -135,29 +131,59 @@ lock:
 
 # NOTIFY
 notify: 
-  name: REDACTED
+  name: "SAGASDESKTOP"
   platform: hass_agent_notifier
-  resource: REDACTED
+  resource: http://REDACTED
 
 
 # PYTHON
 python_script:
 
 
+# CAMERA
+camera:
+  - platform: local_file
+    name: driveway_snapshot
+    file_path: /config/www/images/cameras/driveway.jpg
+  - platform: local_file
+    name: doorbell_snapshot
+    file_path: /config/www/images/cameras/doorbell.jpg
+  - platform: local_file
+    name: living_room_snapshot
+    file_path: /config/www/images/cameras/living_room.jpg
+  - platform: local_file
+    name: terrace_snapshot
+    file_path: /config/www/images/cameras/terrace.jpg
+    
+
 # MIN RENOVASJON
 min_renovasjon:
-  street_name: REDACTED
-  house_no: REDACTED
-  street_code: REDACTED
-  county_id: REDACTED
+  street_name: "REDACTED"
+  house_no: "REDACTED"
+  street_code: "REDACTED"
+  county_id: "REDACTED"
+
+
+# MQTT
+mqtt:
+  sensor:
+    # PERSON PERSISTENCE
+    - name: "andre_last_changed"
+      state_topic: "homeassistant/persistence/andre"
+      value_template: "{{ value | replace(' ', 'T') }}"
+
+    - name: "siri_last_changed"
+      state_topic: "homeassistant/persistence/siri"
+      value_template: "{{ value | replace(' ', 'T') }}"
 
 
 # WEATHER
 weather:
   - platform: pirateweather
     api_key: REDACTED
+    # Additional optional values:
     latitude: "REDACTED"
     longitude: "REDACTED"
     mode: daily
     name: pirateweather
-
+    
