@@ -76,6 +76,7 @@
         - line-height: 115%
       card:
         - border-radius: var(--custom-button-card-border-radius)
+        - border-width: 0
         - -webkit-tap-highlight-color: rgba(0,0,0,0)
         - transition: none
         - padding: 11.5% 10.5% 10.5% 11.5%
@@ -317,6 +318,7 @@
     extra_styles: |
       #card {
         padding: 0;
+        border-width: 0;
         font-family: Roboto, system-ui;
       }
       #container {
@@ -481,6 +483,9 @@
     #tap_action:
     #  href:
     extra_styles: |
+      #card {
+        border-width: 0;
+      }
       #ripple {
         display: none;
       }
@@ -554,10 +559,10 @@
         content: url("/local/svg/dv_atmos.svg");
       }
       .badge--dolby-d {
-        content: url("/local/svg/dd.svg");
+        content: url("/local/svg/dd2.svg");
       }
       .badge--dolby-dp {
-        content: url("/local/svg/ddp.svg");
+        content: url("/local/svg/ddp2.svg");
       }
       .badge--dts {
         content: url("/local/svg/dts.svg");
@@ -575,7 +580,7 @@
         content: url("/local/svg/tmdb.svg");
       }
       .badge--soon {
-        content: url("/local/svg/soon.svg");
+        content: url("/local/svg/soon2.svg");
       }
       #rss_container {
         align-items: center;
@@ -637,10 +642,11 @@
           if (hdr == 'DV HDR' || hdr == 'HDR DV' && hdr_icon != 'badge badge--dv-atmos') { hdr_icon2 = 'badge badge--dv'};
 
           var audio_icon = '';
-          if (audio == 'DD') { audio_icon = 'badge badge--dd'};
+          if (audio == 'DD') { audio_icon = 'badge badge--dolby-d'};
           if (audio == 'DTS') { audio_icon = 'badge badge--dts'};
           if (audio == 'DTS-HD') { audio_icon = 'badge badge--dtshd'};
           if (audio == 'DTS-X') { audio_icon = 'badge badge--dtsx'};
+          if (audio == 'DDP') { audio_icon = 'badge badge--dolby-dp'};
           if (audio == 'DDP Atmos' && hdr_icon != 'badge badge--dv-atmos') { audio_icon = 'badge badge--dolby-atmos'};
           if (audio == 'Atmos') { audio_icon = 'badge badge--dolby-atmos'};
           if (audio == 'TrueHD') { audio_icon = 'badge badge--truehd'};
@@ -696,11 +702,11 @@
           if (hdr == 'DV HDR' || hdr == 'HDR DV' && hdr_icon != 'badge badge--dv-atmos') { hdr_icon2 = 'badge badge--dv'};
 
           var audio_icon = '';
-          if (audio == 'DD') { audio_icon = 'badge badge--dd'};
+          if (audio == 'DD') { audio_icon = 'badge badge--dolby-d'};
           if (audio == 'DTS') { audio_icon = 'badge badge--dts'};
           if (audio == 'DTS-HD') { audio_icon = 'badge badge--dtshd'};
           if (audio == 'DTS-X') { audio_icon = 'badge badge--dtsx'};
-          if (audio == 'DDP' || audio == 'DD+') { audio_icon = 'badge badge--dolby-dp'};
+          if (audio == 'DDP') { audio_icon = 'badge badge--dolby-dp'};
           if (audio == 'DDP Atmos') { audio_icon = 'badge badge--dolby-dp'};
           if (audio == 'Atmos' && hdr_icon != 'badge badge--dv-atmos') { audio_icon = 'badge badge--dolby-atmos'};
           if (audio == 'TrueHD') { audio_icon = 'badge badge--truehd'};
@@ -737,7 +743,7 @@
             spacer = '<span style="padding-left:68px;"></span>';
 
           var tmdb_icon = '';
-          if (rating != '') { tmdb_icon = '<span class="badge badge--tmdb" role="img"></span>' + rating + '<span style="padding-left:1.5em;"></span>' };
+          if (rating != '') { tmdb_icon = '<span class="badge badge--tmdb" role="img"></span><b>' + rating + '</b><span style="padding-left:1.5em;"></span>' };
 
           let time = release == '1' ? 'day' : 'days';
 
@@ -745,12 +751,12 @@
             <div id="rss_container">
               <span class="badge badge--soon" role="img"></span>
               <div>
-                <span style="padding-left:0.75em;"></span>
+                <span style="padding-left:1em;"></span>
                 <b>${movie}</b> <b><font color='#393e40'>(${year})</font></b>
                 <span style="padding-left:1.5em;"></span>
               </div>
               ${tmdb_icon}
-              <b>T- ${release}</b> <span style="padding-left:4px;"></span> ${time}
+              <b><font color='#393e40'>Release in ${release} ${time}</font></b>
             </div>
           `;
         } else {
@@ -3724,7 +3730,7 @@
             <path id="back" fill="#9da0a2" d="M3.735 21.368s1.939-1.654 4.589-2.546l.032-3.923c.01-1.218 1.569-2.75 7.743-2.609 0 0 7.636-.459 7.987 2.525l.024 2.068 1.8.008.042-2.05c.015-.718.647-2.912 9.152-2.52 0 0 6.317-.179 6.577 2.526l-.001 3.945c3.079 1.017 4.625 2.552 4.625 2.552l-.013-12.992s-.111-2.362-2.757-2.55l-37.341.025c-.955.007-2.331 1.078-2.461 2.411z"/>
             <rect id="frame" fill="#9da0a2" width="46.298" height="10.179" x="1.859" y="32.647" rx=".246" ry=".247"/>
             `;
-          if (variables.state === 'on') {
+          if (variables.state === 'yes') {
             return `
               <svg viewBox="0 0 50 50">
                 ${path}
@@ -3732,7 +3738,7 @@
               </svg>
             `;
           }
-          if (variables.state === 'off') {
+          if (variables.state === 'no') {
             return `
               <svg viewBox="0 0 50 50">
                 ${path}
@@ -4979,69 +4985,14 @@
     styles:
       custom_fields:
         icon:
-          #- width: 95%
-          - margin-top: -8%
-          - margin-left: 2%
+          - width: 75%
+          - margin-top: -5%
+          - margin-left: -8%
+          - color: >
+              [[[ return variables.state === 'yes' ? '#e56601' : '#9da0a2'; ]]]
     custom_fields:
       icon: >
-        [[[
-          let style = `
-            <style>
-              @keyframes on {
-                10% {
-                    transform: scale(0.9);
-                }
-                20% {
-                    transform: scale(1.1);
-                }
-                30% {
-                    transform: scale(1.1);
-                }
-                40% {
-                    transform: scale(1);
-                }
-                50% {
-                    transform: scale(0.9);
-                }
-                60% {
-                    transform: scale(1);
-                }
-                70% {
-                    transform: scale(1.1);
-                }
-                100% {
-                    transform: scale(1);
-                }
-              }
-              .on{
-                  animation: on 1s;
-                  transform-origin: center;
-              }
-            </style>
-          `,
-            paths = `
-              <g fill="#9da0a2">
-                <path d="M1.859 15.67c-.635 0-1.145.512-1.145 1.146v15.598c0 .635.51 1.146 1.145 1.146h46.258c.635 0 1.145-.512 1.145-1.146V16.816c0-.635-.51-1.146-1.145-1.146H1.859zm.438 1.174h2.24a.47.47 0 0 1 .471.473v2.238a.47.47 0 0 1-.471.473h-2.24c-.261 0-.473-.211-.473-.473v-2.238c0-.261.211-.473.473-.473zm4.088.002h2.24a.47.47 0 0 1 .471.471v2.24a.47.47 0 0 1-.471.471h-2.24a.47.47 0 0 1-.473-.471v-2.24a.47.47 0 0 1 .473-.471zm4.094.002h2.24a.47.47 0 0 1 .471.471v2.24a.47.47 0 0 1-.471.471h-2.24a.47.47 0 0 1-.471-.471v-2.24a.47.47 0 0 1 .471-.471zm4.086.014h2.24a.47.47 0 0 1 .471.473v2.24a.47.47 0 0 1-.471.471h-2.24a.47.47 0 0 1-.471-.471v-2.24a.47.47 0 0 1 .471-.473zm4.088.018h2.24a.47.47 0 0 1 .471.473v2.238a.47.47 0 0 1-.471.473h-2.24a.47.47 0 0 1-.471-.473v-2.238a.47.47 0 0 1 .471-.473zm4.084 0h2.24a.47.47 0 0 1 .471.473v2.238a.47.47 0 0 1-.471.473h-2.24c-.261 0-.473-.211-.473-.473v-2.238c0-.261.211-.473.473-.473zm4.072.006h2.24a.47.47 0 0 1 .471.473v2.24a.47.47 0 0 1-.471.471h-2.24a.47.47 0 0 1-.471-.471v-2.24a.47.47 0 0 1 .471-.473zm4.078.016h2.24a.47.47 0 0 1 .473.471v2.24a.47.47 0 0 1-.473.471h-2.24a.47.47 0 0 1-.471-.471v-2.24a.47.47 0 0 1 .471-.471zm4.086.014h2.24c.261 0 .473.211.473.473v2.24a.47.47 0 0 1-.473.471h-2.24a.47.47 0 0 1-.471-.471v-2.24a.47.47 0 0 1 .471-.473zm4.211 0h8.461c.281 0 .508.227.508.508v2.168c0 .281-.227.508-.508.508h-8.461c-.281 0-.508-.227-.508-.508v-2.168c0-.281.227-.508.508-.508zM2.277 20.951h5.229a.44.44 0 0 1 .441.441v2.301a.44.44 0 0 1-.441.441H2.277a.44.44 0 0 1-.439-.441v-2.301a.44.44 0 0 1 .439-.441zm7.076 0h2.24c.261 0 .473.211.473.473v2.24a.47.47 0 0 1-.473.471h-2.24a.47.47 0 0 1-.471-.471v-2.24a.47.47 0 0 1 .471-.473zm4.084.016h2.238c.261 0 .473.211.473.473v2.238c0 .261-.211.473-.473.473h-2.238c-.261 0-.473-.211-.473-.473v-2.238c0-.261.211-.473.473-.473zm4.096.008h2.238a.47.47 0 0 1 .473.471v2.24c0 .261-.211.473-.473.473h-2.238c-.261 0-.473-.211-.473-.473v-2.24a.47.47 0 0 1 .473-.471zm4.086.012h2.24a.47.47 0 0 1 .471.471v2.24a.47.47 0 0 1-.471.471h-2.24a.47.47 0 0 1-.471-.471v-2.24a.47.47 0 0 1 .471-.471zm4.092.004h2.24a.47.47 0 0 1 .471.473v2.238a.47.47 0 0 1-.471.473h-2.24a.47.47 0 0 1-.471-.473v-2.238a.47.47 0 0 1 .471-.473zm4.09.014h2.238c.261 0 .473.211.473.473v2.238c0 .261-.211.473-.473.473h-2.238c-.261 0-.473-.211-.473-.473v-2.238c0-.261.211-.473.473-.473zm4.078.004h2.238a.47.47 0 0 1 .473.471v2.24a.47.47 0 0 1-.473.471h-2.238a.47.47 0 0 1-.473-.471v-2.24a.47.47 0 0 1 .473-.471zm4.066.002h2.24a.47.47 0 0 1 .471.471v2.24a.47.47 0 0 1-.471.471h-2.24a.47.47 0 0 1-.471-.471v-2.24a.47.47 0 0 1 .471-.471zm4.174 0h5.525a.5.5 0 0 1 .502.5v2.182a.5.5 0 0 1-.502.5h-5.525a.5.5 0 0 1-.502-.5V21.51a.5.5 0 0 1 .502-.5zM2.307 25.086h6.982a.48.48 0 0 1 .482.482v2.219a.48.48 0 0 1-.482.482H2.307a.48.48 0 0 1-.482-.482v-2.219a.48.48 0 0 1 .482-.482zm8.893 0h2.24c.261 0 .473.211.473.473v2.238c0 .261-.211.473-.473.473h-2.24a.47.47 0 0 1-.471-.473v-2.238a.47.47 0 0 1 .471-.473zm8.172.008h2.24a.47.47 0 0 1 .471.473v2.238a.47.47 0 0 1-.471.473h-2.24c-.261 0-.473-.211-.473-.473v-2.238c0-.261.211-.473.473-.473zm-4.082.004h2.238a.47.47 0 0 1 .473.471v2.24a.47.47 0 0 1-.473.471h-2.238a.47.47 0 0 1-.473-.471v-2.24a.47.47 0 0 1 .473-.471zm8.178.004h2.24a.47.47 0 0 1 .471.473v2.238a.47.47 0 0 1-.471.473h-2.24a.47.47 0 0 1-.471-.473v-2.238a.47.47 0 0 1 .471-.473zm4.074.01h2.238c.261 0 .473.211.473.473v2.24a.47.47 0 0 1-.473.471h-2.238a.47.47 0 0 1-.473-.471v-2.24c0-.261.211-.473.473-.473zm4.066.018h2.24c.261 0 .473.211.473.473v2.238c0 .261-.211.473-.473.473h-2.24a.47.47 0 0 1-.471-.473v-2.238a.47.47 0 0 1 .471-.473zm4.102.004h2.24a.47.47 0 0 1 .471.473v2.238a.47.47 0 0 1-.471.473h-2.24a.47.47 0 0 1-.471-.473v-2.238a.47.47 0 0 1 .471-.473zm4.137 0h7.787c.274 0 .494.22.494.494v2.195c0 .274-.22.494-.494.494h-7.787c-.274 0-.494-.22-.494-.494v-2.195c0-.274.22-.494.494-.494zM2.41 29.203h4.254c.284 0 .514.229.514.514v2.156c0 .284-.229.514-.514.514H2.41a.51.51 0 0 1-.512-.514v-2.156a.51.51 0 0 1 .512-.514zm6.125 0h3.01c.284 0 .514.229.514.514v2.156c0 .284-.229.514-.514.514h-3.01c-.284 0-.514-.229-.514-.514v-2.156c0-.284.229-.514.514-.514zm4.906 0H36.5a.49.49 0 0 1 .492.492v2.199a.49.49 0 0 1-.492.492H13.441a.49.49 0 0 1-.492-.492v-2.199a.49.49 0 0 1 .492-.492zm24.945 0h3.012a.51.51 0 0 1 .512.514v2.156a.51.51 0 0 1-.512.514h-3.012c-.284 0-.514-.229-.514-.514v-2.156c0-.284.229-.514.514-.514zm4.955 0h4.254a.51.51 0 0 1 .512.514v2.156a.51.51 0 0 1-.512.514h-4.254c-.284 0-.514-.229-.514-.514v-2.156c0-.284.229-.514.514-.514z" paint-order="markers fill stroke"/>
-              </g>
-            `;
-          if (variables.state !== 'off' && variables.timeout < 2000) {
-          return `
-            <svg viewBox="0 0 50 50">
-              ${style}
-              ${paths}
-            </svg>
-          `;
-          }
-          return variables.state !== 'off' && variables.timeout > 2000 ? `
-            <svg viewBox="0 0 50 50">
-              ${paths}
-            </svg>
-          ` : `
-            <svg viewBox="0 0 50 50">
-              ${paths}            
-            </svg>
-          `;
-        ]]]
+          <ha-icon icon="mdi:microsoft-office"></ha-icon>
 
 
   icon_keyboard:
@@ -6691,6 +6642,20 @@
     custom_fields:
       icon: >
         <ha-icon icon="custom:tree-flat"></ha-icon>
+
+
+  icon_christmas_tree:
+    styles:
+      custom_fields:
+        icon:
+          - width: 77%
+          - margin-left: -14%
+          - margin-top: -1%
+          - color: >
+              [[[ return variables.state === 'on' ? '#50a873' : '#9da0a2'; ]]]
+    custom_fields:
+      icon: >
+        <ha-icon icon="custom:christmas-tree"></ha-icon>
 
 
   icon_shield:
