@@ -67,18 +67,7 @@ template:
         data:
           fan_speed: >
             {{ option }}
-  
 
-  # BINARY SENSORS
-  binary_sensor:
-
-    - unique_id: sidebar_update_color
-      state: >
-        {% set installed = states('sensor.hass_version_installed') %}
-        {% set latest = states('sensor.hass_version_latest') 
-        if not installed | regex_search('b') else states('sensor.hass_version_latest_beta') %}
-        {{ (installed != latest and installed != 'unknown' and latest != 'unknown')
-        or (states('sensor.hacs') != 'unknown' and states('sensor.hacs') | int(default=0) > 0) }}
 
 
   # SENSORS
@@ -176,6 +165,15 @@ template:
           mdi:leaf-maple
         {% endif %}
 
+    # SENSOR - DARK MONTHS
+    - unique_id: dark_month
+      name: 'Dark Month'
+      state: >
+        {% set month = now().month %}
+        {% if month in [1, 2, 3, 11, 12] %} yes
+        {% else %} no
+        {% endif %}
+
 
     # SENSOR - SYSTEM - SPECIAL OCCASIONS
     - unique_id: special_occasions
@@ -233,9 +231,9 @@ template:
       name: 'Renovasjon Tracker'
       state: >
         {% set date = now().strftime('%d/%m/%Y') %}
-        {% set food = states.sensor.matavfall.state %}
-        {% set paper = states.sensor.papir.state %}
-        {% set rest = states.sensor.restavfall.state %}
+        {% set food = states('sensor.matavfall') %}
+        {% set paper = states('sensor.papir') %}
+        {% set rest = states('sensor.restavfall') %}
         {% if food in date or paper in date or rest in date %}
           on
         {% else %}
@@ -756,14 +754,10 @@ template:
     - unique_id: upstairs_illuminance
       name: 'Illuminance Upstairs'
       state: >
-        {% set plant = states('sensor.lumi_illuminance_plant') | int %}
-        {% set kitchen = states('sensor.lumi_illuminance_kitchen') | int %}
-        {{ (plant + kitchen) / 2 }}
+        {{ ((states('sensor.lumi_illuminance_plant') | int(0) + states('sensor.lumi_illuminance_kitchen') | int(0)) / 2) }}
       icon: >
-        {% if states('sensor.illuminance_upstairs') | int <= 8 %}
-          mdi:brightness-1
-        {% else %}
-          mdi:brightness-5
+        {% if (this.state | int(0) <= 8) %} mdi:brightness-1
+        {% else %} mdi:brightness-5
         {%- endif %}
 
     # SENSOR - UPSTAIRS IS DARK
@@ -777,7 +771,7 @@ template:
         {% set blind = states('cover.blind_living_room') %}
         {% if lights == 'on' %} No
         {% elif day == 'on' and blind != 'closed' %} No
-        {% elif lux < 10 and lights == 'off' %} Yes
+        {% elif lux <= 12 and lights == 'off' %} Yes
         {% elif sun == 'below_horizon' and lights == 'off' %} Yes
         {% else %} No
         {% endif %}
@@ -862,18 +856,21 @@ template:
         {%- endif %}
 
 
-    # SENSOR - HOME WINDING DOWN
-    - unique_id: home_winding_down
-      name: 'Home Winding Down'
+    # SENSOR - HOME COMFORT LIGHTING
+    - unique_id: home_comfort_lighting
+      name: 'Home Comfort Lighting'
       state: >
-        {% set state = 'yes' %}
-        {% if not is_state('sensor.home_state', 'evening') %}
-          {% if not is_state('sensor.home_state', 'night') %}
-              {% set state = 'no' %}
-          {% endif %}
+        {%- set time = now().hour | int %}
+        {%- set offset = 0 | int %}
+        {%- set sunset = as_timestamp(states.sun.sun.attributes.next_setting) | timestamp_custom ('%H') | int %}
+        {%- set sunrise = as_timestamp(states.sun.sun.attributes.next_rising) | timestamp_custom ('%H') | int %}
+        {% if is_state('sensor.home_state', 'evening') %} yes
+        {% elif is_state('sensor.home_state', 'night') %} yes
+        {% elif is_state('sensor.home_state', 'morning') %} yes
+        {% elif time >= sunset + offset %} yes
+        {% elif time <= sunrise + offset %} yes
+        {% else %} no
         {% endif %}
-        {{ state }}
-
 
     # SENSOR - HOME MOOD LIGHTING
     - unique_id: home_mood_lighting
@@ -886,9 +883,40 @@ template:
         {% if is_state('sensor.home_state', 'evening') %} yes
         {% elif is_state('sensor.home_state', 'night') %} yes
         {% elif is_state('sensor.home_state', 'morning') %} yes
+        {% elif is_state('sensor.dark_month', 'yes') %} yes
         {% elif time >= sunset + offset %} yes
         {% elif time <= sunrise + offset %} yes
         {% else %} no
+        {% endif %}
+
+    # SENSOR - DOWNLIGHT BRIGHTNESS
+    - unique_id: downlight_brightness
+      name: 'Downlight Brightness'
+      state: >
+        {% if is_state('sensor.home_comfort_lighting', 'yes') %}
+          input_number.light_downlight_comfort_level
+        {% else %}
+          input_number.light_downlight_regular_level
+        {% endif %}
+
+    # SENSOR - LAMP BRIGHTNESS
+    - unique_id: lamp_brightness
+      name: 'Lamp Brightness'
+      state: >
+        {% if is_state('sensor.home_comfort_lighting', 'yes') %}
+          input_number.light_lamp_comfort_level
+        {% else %}
+          input_number.light_lamp_regular_level
+        {% endif %}
+
+    # SENSOR - LIGHT BRIGHTNESS
+    - unique_id: cabinet_brightness
+      name: 'Cabinet Brightness'
+      state: >
+        {% if is_state('sensor.home_comfort_lighting', 'yes') %}
+          input_number.light_cabinets_regular_level
+        {% else %}
+          input_number.light_cabinets_high_level
         {% endif %}
 
 
@@ -913,7 +941,18 @@ template:
       state: >
         {% set party_time = as_timestamp(state_attr('automation.stua_party_time','last_triggered'))|timestamp_custom('%-d') | int %} 
         {% if party_time == as_timestamp(now())|timestamp_custom('%-d') | int or party_time == as_timestamp(now())|timestamp_custom('%-d') | int + 1 %} 
-          {% if is_state('media_player.denon_receiver', 'on') and is_state('media_player.sonos_connect_stua', 'playing') %} on
+          {% if is_state('media_player.denon_receiver', 'on') and is_state('media_player.sonos_connect_living_room', 'playing') %} on
+          {% else %} off
+          {% endif %}
+        {% else %} off
+        {% endif %}
+
+    # SENSOR - MUTE
+    - unique_id: home_mute_mode
+      name: 'Home Mute Mode'
+      state: >
+        {% if is_state('input_boolean.doorbell_chime_mute', 'on') %} 
+          {% if is_state('media_player.denon_receiver', 'on') and is_state('media_player.sonos_connect_living_room', 'playing') %} on
           {% else %} off
           {% endif %}
         {% else %} off
@@ -925,8 +964,7 @@ template:
       name: 'Home Mode'
       state: >
         {% set sleep = states('sensor.home_sleep_mode') %}
-        {% set mood = states('sensor.home_mood_lighting') %}
-        {% set winding_down = states('sensor.home_winding_down') %}
+        {% set mood = states('sensor.home_comfort_lighting') %}
         {% set occupied = states('sensor.home_occupied') %}
         {% set playing = states('sensor.active_media_players') %}
         {% set party = states('sensor.home_party_mode') %}
@@ -935,12 +973,11 @@ template:
         {% elif sleep == 'on' %} Sleep
         {% elif playing != '0' %} Mute
         {% elif mood == 'yes' %} Comfort
-        {% elif winding_down == 'on' %} Comfort
         {% else %} Occupied
         {% endif %}
       icon: >
         {% set state = states.sensor.home_mode.state %}
-        {% if state not in ['unknown','unavailable','none','off'] %}
+        {% if this.state not in ['unknown','unavailable','none','off'] %}
           {% if state == 'Empty' %} mdi:shield-lock
           {% elif state == 'Sleep' %} mdi:sleep
           {% elif state == 'Comfort' %} hue:scene-relax
@@ -951,6 +988,33 @@ template:
           {% endif %}
         {% else %} mdi:alert-circle-outline
         {% endif %}
+
+    # SENSOR - CHRISTMAS
+    - unique_id: christmas_mode
+      name: 'Christmas Mode'
+      state: >
+        {% if states('light.christmas_tree') | lower not in ['unavailable', 'undefined', 'none', 'null'] %} on
+        {% else %} off
+        {% endif %}
+
+    # SENSOR - CHRISTMAS MOVIE
+    - unique_id: christmas_movie
+      name: 'Christmas Movie'
+      state: >
+        {% set result = '' %}
+        {% if states('sensor.active_media_players') != '0' %}
+          {% if states('sensor.christmas_mode') | lower not in ['unavailable', 'undefined', 'none', 'null', 'off'] %}
+            {% set movies = ['christmas', 'die hard', 'home alone', 'harry potter', 'santa clause', 'narnia'] %}
+            {% for movie in movies %}
+              {% if movie in state_attr('sensor.active_media_players', 'media_title') | lower %} yes
+                {% set result = 'yes' %}
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            {% set result = 'Christmas Mode is off' %}
+          {% endif %}
+        {% endif %}
+        {{result}}
 
 
     # SENSOR - CONDITIONAL MEDIA BACKGROUND
@@ -985,8 +1049,7 @@ template:
             {{ media_player_id_paused }}
           {%- endif -%}
         app: >
-          {%- set active_players = states('sensor.active_media_players') %}
-          {%- if active_players not in ['unavailable','undefined','unknown','none','null', '0'] %}
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null', '0'] %}
             {% set players = (state_attr('sensor.active_media_players', 'active')).split(', ') %}
             {% if players[0] is defined %}
               {% if 'plex' in players[0] %}
@@ -1005,11 +1068,10 @@ template:
             {% endif %}
           {% endif %}
         media_title: >
-          {%- set active_players = states('sensor.active_media_players') %}
-          {%- if active_players not in ['unavailable','undefined','unknown','none','null', '0'] %}
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null', '0'] %}
             {% set players = (state_attr('sensor.active_media_players', 'active')).split(', ') %}
             {% if players[0] is defined %}
-              {% if 'plex' in players[0] %}
+              {% if 'plex' in players[0] or state_attr('sensor.active_media_players', 'app') == 'plex' %}
                 {% if state_attr(players[0], 'media_content_type') == 'tvshow' %}
                   {{state_attr(players[0], 'media_series_title')}} - {{state_attr(players[0], 'media_title')}}
                 {% else %}
@@ -1018,35 +1080,44 @@ template:
               {% endif %}
             {% endif %}
           {% endif %}
+        media_content_type: >
+          {% if this.state not in ['unavailable','undefined','unknown','none','null', '0'] %}
+            {% set players = (state_attr('sensor.active_media_players', 'active')).split(', ') %}
+            {% if players[0] is defined %}
+              {% if 'plex' in players[0] or state_attr('sensor.active_media_players', 'app') == 'plex' %}
+                {% if state_attr(players[0], 'media_content_type') %}
+                  {{ state_attr(players[0], 'media_content_type') }}
+                {% endif %}
+              {% endif %}
+            {% endif %}
+          {% endif %}
         entity_picture: >
-          {%- set active_players = states('sensor.active_media_players') %}
-          {%- if active_players not in ['unavailable','undefined','unknown','none','null', '0'] %}
-            {%- if active_players | int > 0 %}
-              {%- set players = (state_attr('sensor.active_media_players', 'active')).split(', ') %}
-              {% if players[0] is defined %}
-                {%- set entitypic = state_attr(players[0],'entity_picture') %}
-                {%- set app = state_attr('sensor.active_media_players','app') | lower %}
-                {%- if app is defined %}
-                  {% if 'plex' in app %} /local/images/Plex_bg.png
-                  {% elif 'infuse' in app %} /local/images/Plex_bg.png
-                  {% elif 'com.apple.tvwatchlist' in app %} /local/images/ATVPlus_bg.jpg
-                  {% elif 'airplay' in app %} /local/images/AirPlay_bg.jpg
-                  {% elif 'com.amazon' in app %} /local/images/AmazonPrime_bg.jpg
-                  {% elif 'disneyplus' in app %} /local/images/dp_bg.jpg
-                  {% elif 'youtube' in app %} /local/images/yt_bg.jpg
-                  {% elif 'tv2' in app %} /local/images/tv2play_bg.jpg
-                  {% elif 'hbo' in app %} /local/images/HBOMax_bg.jpg
-                  {% elif 'netflix' in app %} /local/images/netflix_bg.jpg
-                  {% elif 'nrk' in app %} /local/images/nrk_bg.jpg
-                  {% elif 'viasat' in app %} /local/images/ViaPlay_bg.jpg
-                  {% elif 'viaplay' in app %} /local/images/ViaPlay_bg.jpg
-                  {% elif 'viafree' in app %} /local/images/ViaFree_bg.jpg
-                  {% elif 'kanal5' in app %} /local/images/discovery_bg.jpg
-                  {% else %} null
-                  {% endif %}
-                {%- elif 'plex' in players %}
-                  {{ '/local/images/Plex_bg.png' }}
-                {%- endif %}
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null', '0'] %}
+            {%- set players = (state_attr('sensor.active_media_players', 'active')).split(', ') %}
+            {% if players[0] is defined %}
+              {%- set entitypic = state_attr(players[0],'entity_picture') %}
+              {%- set app = state_attr('sensor.active_media_players','app') | lower %}
+              {%- if app is defined %}
+                {% if 'plex' in app %} /local/images/Plex_bg.png
+                {% elif 'infuse' in app %} /local/images/Plex_bg.png
+                {% elif 'com.apple.tvwatchlist' in app %} /local/images/ATVPlus_bg.jpg
+                {% elif 'airplay' in app %} /local/images/AirPlay_bg.jpg
+                {% elif 'com.amazon' in app %} /local/images/AmazonPrime_bg.jpg
+                {% elif 'disneyplus' in app %} /local/images/dp_bg.jpg
+                {% elif 'youtube' in app %} /local/images/yt_bg.jpg
+                {% elif 'tv2' in app %} /local/images/tv2play_bg.jpg
+                {% elif 'hbo' in app %} /local/images/HBOMax_bg.jpg
+                {% elif 'netflix' in app %} /local/images/netflix_bg.jpg
+                {% elif 'nrk' in app %} /local/images/nrk_bg.jpg
+                {% elif 'viasat' in app %} /local/images/ViaPlay_bg.jpg
+                {% elif 'viaplay' in app %} /local/images/ViaPlay_bg.jpg
+                {% elif 'viafree' in app %} /local/images/ViaFree_bg.jpg
+                {% elif 'kanal5' in app %} /local/images/discovery_bg.jpg
+                {% elif 'twitch' in app %} /local/images/twitch_bg.jpg
+                {% else %} null
+                {% endif %}
+              {%- elif 'plex' in players %}
+                {{ '/local/images/Plex_bg.png' }}
               {%- endif %}
             {%- endif %}
           {%- endif %}
@@ -1082,10 +1153,10 @@ template:
             {% set app = states.media_player.shield.attributes.app_name %}
             {%- if app is defined %}
               {%- if app != '' and app not in ['unknown','unavailable','none','off'] %}
-                {{ app }}
+                {{ app | lower }}
               {% endif %}
             {% else %}
-              Plex
+              plex
             {% endif %}
           {% endif %}
         app_id: >
@@ -1096,7 +1167,7 @@ template:
                 {{ app }}
               {% endif %}
             {% else %}
-              Plex
+              plex
             {% endif %}
           {% endif %}
         entity_picture: >
@@ -1105,8 +1176,8 @@ template:
             {% set picture = states.media_player.plex_plex_for_android_tv_shield_android_tv.attributes.entity_picture %}
             {%- if picture is defined %}
               {%- if picture != '' and picture not in ['unknown','unavailable','none'] %}
-                {%- if current_app is defined and current_app == 'Plex' %}
-                  {{- '/local/images/Plex_bg.png' if current_app == 'Plex' else picture -}}
+                {%- if current_app is defined and current_app == 'plex' %}
+                  {{- '/local/images/Plex_bg.png' if current_app == 'plex' else picture -}}
                 {% endif %}
               {% endif %}
             {% endif %}
@@ -1126,6 +1197,15 @@ template:
             {%- if media_title is defined %}
               {%- if media_title != '' and media_title not in ['unknown','unavailable','none'] %}
                 {{ media_title }}
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        media_content_type: >
+          {% if this.state not in ['unavailable','undefined','unknown','none','null', '0'] %}
+            {% set app = state_attr('sensor.shield_real_state', 'app_name') %}
+            {% if app is defined and app == 'plex' %}
+              {% if state_attr('media_player.plex_plex_for_android_tv_shield_android_tv', 'media_content_type') %}
+                {{ state_attr('media_player.plex_plex_for_android_tv_shield_android_tv', 'media_content_type') }}
               {% endif %}
             {% endif %}
           {% endif %}
@@ -1789,6 +1869,69 @@ template:
           {%- endif %}
 
 
+    # SENSOR - RADARR - Upcoming release
+    - unique_id: radarr_rss_search
+      name: 'Radarr RSS Search Result'
+      state: >
+        {% if state_attr('sensor.radarr_rss_search_result','titles') %}
+          {{ state_attr('sensor.radarr_rss_search_result','titles') | count }}
+        {% endif %}
+      attributes:
+        titles: >
+          {% set torrents = namespace(search=[]) %}
+          {% set search = state_attr('sensor.radarr_upcoming_media', 'data') %}
+          {% set options = state_attr('input_select.rss_search_list', 'options') %}
+          {% set first_choice = states('input_select.rss_search_list') %}
+          {%- for option in options %}
+            {%- for torrent in search %}
+              {%- if torrent.title is defined %}
+                {%- if first_choice in torrent.title %}
+                  {% set torrents.search = [torrent.title] %}
+                {%- elif option in torrent.title %}
+                  {% set torrents.search = torrents.search + [torrent.title] %}
+                {%- endif %}
+              {%- endif %}
+            {%- endfor %}
+          {%- endfor %}
+          {{ torrents.search }}
+        year: >
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null','0'] %}
+            {% set air = namespace(date=[]) %}
+            {% set value = state_attr('sensor.radarr_upcoming_media','data') %}
+            {%- if value != '' %}
+              {%- for search in value %}
+                {% set air.date = search.airdate | replace('T00:00:00Z', '') %}
+              {%- endfor %}
+            {%- endif %}
+            {{ air.date.split('-')[0] }}
+          {%- endif %}
+        release: >
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null','0'] %}
+            {% set air = namespace(date=[]) %}
+            {% set value = state_attr('sensor.radarr_upcoming_media','data') %}
+            {%- if value != '' %}
+              {%- for search in value %}
+                {% set air.date = search.airdate | replace('T00:00:00Z', '') %}
+              {%- endfor %}
+            {%- endif %}
+            {{ ((now().timestamp() - as_timestamp(air.date)) / 86400) | int | replace('-', '') }}
+          {%- endif %}
+        rating: >
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null','0'] %}
+            {% set ratings = namespace(search=[]) %}
+            {% set data = state_attr('sensor.radarr_upcoming_media','data') %}
+            {%- if data != '' %}
+              {%- for value in data %}
+                {%- if value.rating %}
+                  {%- set ratings.search = [value.rating | replace('★ ', '')] %}
+                {%- endif %}
+              {%- endfor %}
+            {%- endif %}
+            {{ ratings.search }}
+          {%- endif %}
+
+
+
     # SENSOR - PC Firewall Settings
     - unique_id: pc_firewall_settings
       name: 'PC Firewall Settings'
@@ -1849,34 +1992,24 @@ template:
     - unique_id: office_pc_real_session_state
       name: 'Office PC - Real Session State'
       state: >
-        {% set session = states.sensor.sagasdesktop_sessionstate.state %}
-        {% set session_changed = states.sensor.sagasdesktop_lastactive.state %}
-        {% set lock_state = states.input_boolean.computer_lock.state %}
-        {% set active_window_state = states.sensor.sagasdesktop_activewindow.state %}
-        {% if lock_state == 'on' %}
-          Locked
-        {% elif active_window_state == 'Windows Default Lock Screen' %}
-          Locked
-        {% elif session == 'Locked' %}
-          Locked
-        {% elif ((as_timestamp(now()) - as_timestamp(session_changed))) | round(0) < 600 %}
-          Active
-        {% elif ((as_timestamp(now()) - as_timestamp(session_changed))) | round(0) > 600 %}
-          Idle
-        {% elif session == 'Unlocked' %}
-          Unlocked
-        {% else %}
-          Locked
-        {%- endif %}
+        {% set session = states('sensor.sagasdesktop_sessionstate') %}
+        {% set session_changed = states('sensor.sagasdesktop_lastactive') %}
+        {% set lock_state = states('input_boolean.computer_lock') %}
+        {% set active_window_state = states('sensor.sagasdesktop_activewindow') %}
+        {% if lock_state == 'on' %} Locked
+        {% elif active_window_state == 'Windows Default Lock Screen' %} Locked
+        {% elif session == 'Locked' %} Locked
+        {% elif ((as_timestamp(now()) - as_timestamp(session_changed))) | round(0) < 600 %} Active
+        {% elif ((as_timestamp(now()) - as_timestamp(session_changed))) | round(0) > 600 %} Idle
+        {% elif session == 'Unlocked' %} Unlocked
+        {% else %} Locked
+        {% endif %}
       icon: >
         {% set state = states.sensor.office_pc_real_session_state.state %}
-        {% if state == 'Active' %}
-          custom:win11
-        {% elif state == 'InUse' %}
-          custom:win11-unlocked
-        {% else %}
-          custom:win11-locked
-        {%- endif %}
+        {% if state == 'Active' %} custom:win11
+        {% elif state == 'InUse' %} custom:win11-unlocked
+        {% else %} custom:win11-locked
+        {% endif %}
 
     # SENSOR - Office Activity
     - unique_id: office_activity
@@ -1902,9 +2035,7 @@ template:
           on
         {%- endif %}
       icon: >
-        {% if states('sensor.office_activity') == 'on' %}
-          ios:cursorarrow-motionlines
-        {% else %}
-          mdi:shield-lock
-        {%- endif %}
+        {% if states('sensor.office_activity') == 'on' %} ios:cursorarrow-motionlines
+        {% else %} mdi:shield-lock
+        {% endif %}
 
