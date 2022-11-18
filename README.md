@@ -26,7 +26,7 @@ HA is put into different modes throughout the day, based on what's happening - o
 
 Automations and scripts looks at the state of the Home Mode and takes actions based on that.
 
-![image](https://user-images.githubusercontent.com/93126880/187847146-6289ec27-e0dd-427d-bd6e-2243af6035e2.png)
+![image](https://user-images.githubusercontent.com/93126880/202784186-b1abc968-6366-446a-955a-30fa6ab87199.png)
 
 Mode | Purpose
 --- | ---
@@ -58,7 +58,7 @@ Shader position controls with [cover-popup-card](https://github.com/DBuit/cover-
 
 Room entities are grouped under one card.
 
-![rooms2-short](https://user-images.githubusercontent.com/93126880/187751467-eb873846-452c-4334-acda-2f9a05e6d7ba.gif)
+![image](https://user-images.githubusercontent.com/93126880/202784390-46e0f1df-f8a6-4474-a3e9-265d5dbb2f72.png)
 
 Example: All the Office entities are displayed as a popup with new button cards.
 
