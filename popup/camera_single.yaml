@@ -1,66 +1,59 @@
 action: fire-dom-event
 browser_mod:
-  command: popup
-  #hide_header: true
-  large: true
-  title: '[[[ return entity.attributes.friendly_name; ]]]'
-  style:
-    .: |
-      :host .main-title {
-        pointer-events: none;
-      }
-    $: |
-      .mdc-dialog__surface {
-        background: transparent !important;
-        border-style: none !important;
-        border: 0px !important;
-        box-shadow: none;
-      }
-      
-  card:
-    type: vertical-stack
-    cards:
-      - type: custom:layout-card
-        layout_type: grid
-        layout:
-          grid-gap: 0.4vw
-          #grid-template-columns: 860px 860px
-          grid-template-rows: 1000px
-          grid-template-areas: |
-            "cam"
+  service: browser_mod.popup
+  data:
+    title: '[[[ return entity.attributes.friendly_name; ]]]'
+    size: wide
+    style: >
+      --popup-background-color: transparent;
+    content:
+      type: custom:mod-card
+      card_mod:
+        style:
+          layout-card$grid-layout:
+            $: |
+              #root {
+                justify-content: center !important;
+              }
 
-          mediaquery:
-            #hide_header: false
-            #phone
-            "(max-width: 800px)":
-              grid-gap: 1.5vw
-              grid-template-columns: auto
-              grid-template-rows: auto
-              grid-template-areas: |
-                "cam"
-
-            #tablet
-            "(max-width: 2000px)":
-              grid-gap: 0.5vw
-              #grid-template-rows: 23vw 23vw
-              grid-template-areas: |
-                "cam"
-
+      card:
+        type: vertical-stack
         cards:
-          - type: picture-entity
-            entity: >
-              [[[ return entity.entity_id ]]]
-            image: >
-              [[[ return entity.attributes.entity_picture ]]]
-            show_info: false
-            show_state: false
-            show_name: false
-            camera_view: live
-            view_layout:
-              grid-area: cam
-            #tap_action:
-            #  action: call-service
-            #  service: select.select_option
-            #  service_data:
-            #    entity_id: select.inngangen_infrared
-            #    option: 'Always Enable'
+          - type: custom:layout-card
+            layout_type: grid
+            layout:
+              grid-gap: 0.5vw
+              grid-template-columns: 5vw 160vh 5vw
+              grid-template-rows: 75em
+              grid-template-areas: |
+                ". cam. "
+
+              mediaquery:
+                #phone
+                "(max-width: 800px)":
+                  grid-gap: 1.5vw
+                  grid-template-columns: auto
+                  grid-template-rows: auto
+                  grid-template-areas: |
+                    "cam"
+
+                #tablet with 2000x1200 res
+                "(max-width: 2000px)":
+                  grid-gap: 0.5vw
+                  grid-template-columns: 10px 1750px 10px
+                  grid-template-rows: 48vw
+                  grid-template-areas: |
+                    ". cam ."
+
+            cards:
+              - type: picture-entity
+                entity: >
+                  [[[ return entity.entity_id ]]]
+                image: >
+                  [[[ return entity.attributes.entity_picture ]]]
+                show_info: false
+                show_state: false
+                show_name: false
+                camera_view: live
+                view_layout:
+                  grid-area: cam
