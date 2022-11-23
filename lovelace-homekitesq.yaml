@@ -95,17 +95,16 @@ views:
             template: person
 
           - type: custom:button-card
-            entity: person.siri
-            name: Siri
-            triggers_update:
-              - sensor.siri_last_changed
+            entity: sensor.home_mode
+            name: Overview
+            state_display: " "
             tap_action:
-              !include popup/Home_Siri.yaml
+              !include popup/overview.yaml
             hold_action:
               action: none
-            variables:
-              retain: sensor.siri_last_changed
-            template: person
+            template:
+              - base
+              - icon_ai
 
           - type: custom:button-card
             entity: sensor.home_occupation_scripts
@@ -121,7 +120,7 @@ views:
                 entity_id: automation.house_house_empty
             double_tap_action:
               action: call-service
-              service: script.home_arrive
+              service: script.home_leave
             hold_action:
               action: call-service
               service: script.home_leave
@@ -137,7 +136,7 @@ views:
 
           - type: custom:button-card
             entity: sensor.home_mode
-            name: Home
+            name: Mode
             hold_action:
               action: none
             template:
@@ -160,31 +159,32 @@ views:
         cards:
 
           - type: custom:button-card
-            entity: binary_sensor.contact_sensor_entrance
-            name: Door
+            entity: input_boolean.alarm
+            name: Alarm
             tap_action:
-              !include popup/security_sensors.yaml
+              action: call-service
+              service: input_boolean.toggle
+              service_data:
+                entity_id: input_boolean.alarm
             template:
-              - icon_aqara_lock
+              - icon_shield
               - circle_state
-              - sensors
-            state_display: >
-              [[[
-                if (variables.state == 'off') {
-                  return 'Closed';
-                }
-                else {
-                  return 'Open';
-                }
-              ]]]
+              - alarm
 
           - type: custom:button-card
-            entity: cover.porten
-            name: Garage
+            entity: sensor.doors_state
             template:
-              - icon_garage
+              - doors
               - circle_state
               - loader
+              - icon_lock
+            tap_action:
+              !include popup/doors.yaml
+            double_tap_action:
+              action: call-service
+              service: cover.toggle
+              service_data:
+                entity_id: cover.garage_door
 
           - type: custom:button-card
             entity: sensor.surveillance_cameras
@@ -204,7 +204,7 @@ views:
               ]]]
 
           - type: custom:button-card
-            entity: group.sensors_security
+            entity: group.motion_sensors
             name: Sensors
             tap_action:
               !include popup/security_sensors.yaml
@@ -232,14 +232,12 @@ views:
             name: AC
             tap_action:
               !include popup/climate.yaml
-            hold_action:
-              !include popup/climate.yaml
             triggers_update:
               - binary_sensor.kaiteki_6600_filter_clean_required
             template:
               - base
+              - climate_ac
               - icon_climate
-              - climate
             variables:
               circle_input: >
                 [[[
@@ -249,11 +247,12 @@ views:
                 ]]]
 
           - type: custom:button-card
-            entity: cover.gardin_1
+            entity: cover.blind_living_room
             name: Blinds
             template:
               - blinds
               - icon_blinds
+              #- loader
 
           - type: custom:button-card
             entity: weather.pirateweather
@@ -307,13 +306,13 @@ views:
               action: call-service
               service: light.toggle
               service_data:
-                entity_id: light.hallway_lights
+                entity_id: light.all_hallway_lights
             template:
               - room_group
               - icon_hallway
 
           - type: custom:button-card
-            entity: media_player.denon_receiver
+            entity: sensor.living_room_active
             name: Living
             tap_action:
               !include popup/living_room.yaml
@@ -327,7 +326,7 @@ views:
               - icon_sofa
 
           - type: custom:button-card
-            entity: light.dining_room_lights
+            entity: sensor.dining_room_active
             name: Dining
             tap_action:
               !include popup/dining_room.yaml
@@ -351,109 +350,64 @@ views:
         title: "Rooms"
         view_layout:
           grid-area: rooms2
-        columns: 1
+        columns: 2
         cards:
+          - type: custom:button-card
+            entity: light.ecodim_dimmer_downlights_bathroom
+            name: Bathroom
+            tap_action:
+              !include popup/bathroom.yaml
+            hold_action:
+              action: call-service
+              service: light.toggle
+              service_data:
+                entity_id: light.ecodim_dimmer_downlights_bathroom
+            template:
+              - room_group
+              - icon_colgate
 
-          - type: custom:swipe-card
-            start_card: 1
-            parameters:
-              roundLengths: true
-              effect: coverflow
-              speed: 650
-              spaceBetween: 20
-              threshold: 7
-              coverflowEffect:
-                rotate: 80
-                depth: 300
-            cards:
+          - type: custom:button-card
+            entity: light.kitchen_lights
+            name: Kitchen
+            tap_action:
+              !include popup/kitchen.yaml
+            hold_action:
+              action: call-service
+              service: light.toggle
+              service_data:
+                entity_id: light.kitchen_lights
+            template:
+              - room_group
+              - icon_kitchen
 
-              - type: grid
-                columns: 2
-                cards:
+          - type: custom:button-card
+            entity: sensor.bedroom_active
+            name: Bedroom
+            tap_action:
+              !include popup/bedroom.yaml
+            hold_action:
+              action: call-service
+              service: light.toggle
+              service_data:
+                entity_id: light.bedroom_lights
+            template:
+              - room_group
+              - icon_bed
 
-                  - type: custom:button-card
-                    entity: light.ecodim_dimmer_downlights_bathroom
-                    name: Bathroom
-                    tap_action:
-                      !include popup/bathroom.yaml
-                    hold_action:
-                      action: call-service
-                      service: light.toggle
-                      service_data:
-                        entity_id: light.ecodim_dimmer_downlights_bathroom
-                    template:
-                      - room_group
-                      - icon_colgate
-
-                  - type: custom:button-card
-                    entity: light.kitchen_lights
-                    name: Kitchen
-                    tap_action:
-                      !include popup/kitchen.yaml
-                    hold_action:
-                      action: call-service
-                      service: light.toggle
-                      service_data:
-                        entity_id: light.kitchen_lights
-                    template:
-                      - room_group
-                      - icon_kitchen
-
-                  - type: custom:button-card
-                    entity: light.bedroom_lights
-                    name: Bedroom
-                    tap_action:
-                      !include popup/bedroom.yaml
-                    hold_action:
-                      action: call-service
-                      service: light.toggle
-                      service_data:
-                        entity_id: light.bedroom_lights
-                    template:
-                      - room_group
-                      - icon_bed
-
-                  - type: custom:button-card
-                    entity: light.office_lights
-                    name: Office
-                    tap_action:
-                      action: none
-                      #!include popup/office.yaml
-                    double_tap_action:
-                      !include popup/office.yaml
-                    hold_action:
-                      action: call-service
-                      service: light.toggle
-                      service_data:
-                        entity_id: light.office_lights
-                    template:
-                      - room_group
-                      - icon_keyboard
-
-              - type: grid
-                columns: 2
-                cards:
-
-                  - type: custom:button-card
-                    entity: light.ecodim_dimmer_downlights_stairs
-                    name: Stairs
-                    template:
-                      - light
-                      - icon_staircase
-
-                  - type: custom:button-card
-                    entity: light.kitchen_lights
-                    name: Basement
-                    tap_action:
-                      !include popup/kitchen.yaml
-                    hold_action:
-                      action: call-service
-                      service: light.toggle
-                      service_data:
-                        entity_id: light.kitchen_lights
-                    template:
-                      - room_group
-                      - icon_kitchen
+          - type: custom:button-card
+            entity: sensor.office_active
+            name: Office
+            tap_action:
+              #action: none
+              !include popup/office.yaml
+            hold_action:
+              action: call-service
+              service: light.toggle
+              service_data:
+                entity_id: light.office_lights
+            template:
+              - room_group
+              - icon_office
 
 
 
@@ -471,16 +425,10 @@ views:
         cards:
 
           - type: custom:swipe-card
-            start_card: 1
             parameters:
-              roundLengths: true
-              effect: coverflow
-              speed: 650
-              spaceBetween: 20
-              threshold: 7
-              coverflowEffect:
-                rotate: 80
-                depth: 300
+              speed: 550
+              spaceBetween: 40
+              threshold: 5
             cards:
 
               - type: horizontal-stack
@@ -494,15 +442,15 @@ views:
                         state_not: Apple TV 2
                       - entity: select.conditional_media
                         state_not: SHIELD
+                      - entity: select.conditional_media
+                        state_not: Saga's Desktop
 
                     card:
                       type: custom:button-card
-                      entity: sensor.recently_added
-                      tap_action:
-                        !include popup/media_controls.yaml
+                      entity: sensor.recently_added_mix
+                      name: Recently Added
                       template:
                         - conditional_media
-                        - recently_downloaded
                         - icon_plex
 
                   - type: conditional
@@ -512,13 +460,15 @@ views:
                     card:
                       type: custom:button-card
                       entity: media_player.apple_tv_1
-                      tap_action:
-                        !include popup/media_controls.yaml
                       template:
                         - conditional_media
                         - icon_apple_tv
+                        - media_volume
                       variables:
                         entity_picture: sensor.active_media_players
+                        volume_control: media_player.denon_receiver
+                      triggers_update:
+                        - sensor.active_media_players
 
                   - type: conditional
                     conditions:
@@ -530,8 +480,12 @@ views:
                       template:
                         - conditional_media
                         - icon_apple_tv
+                        - media_volume
                       variables:
                         entity_picture: sensor.active_media_players
+                        volume_control: media_player.sonos_arc
+                      triggers_update:
+                        - sensor.active_media_players
 
                   - type: conditional
                     conditions:
@@ -539,7 +493,7 @@ views:
                         state: SONOS Stua
                     card:
                       type: custom:button-card
-                      entity: media_player.sonos_connect_stua
+                      entity: media_player.sonos_connect_living_room
                       template:
                         - conditional_media
                         - icon_sonos
@@ -554,8 +508,26 @@ views:
                       template:
                         - conditional_media
                         - icon_nvidia_shield
+                        - media_volume
                       variables:
                         player: '[[[ return entity.attributes.player; ]]]'
+                        entity_picture: sensor.active_media_players
+                        volume_control: media_player.denon_receiver
+                      triggers_update:
+                        - sensor.active_media_players
+
+                  - type: conditional
+                    conditions:
+                      - entity: select.conditional_media
+                        state: Saga's Desktop
+                    card:
+                      type: custom:button-card
+                      entity: sensor.active_media_players
+                      name: Saga's Desktop
+                      template:
+                        - conditional_media
+                        - icon_plex
+                      variables:
                         entity_picture: sensor.active_media_players
 
 
@@ -571,6 +543,10 @@ views:
                       - media
                       - icon_apple_tv
                       - atv
+                      - media_volume
+                    variables:
+                      player: '[[[ return states["sensor.active_media_players"].attributes.active; ]]]'
+                      volume_control: media_player.denon_receiver
 
                   - type: custom:button-card
                     entity: media_player.apple_tv_2
@@ -579,13 +555,19 @@ views:
                       - media
                       - icon_apple_tv
                       - atv
+                      - media_volume
+                    variables:
+                      volume_control: media_player.apple_tv_2
 
                   - type: custom:button-card
-                    entity: media_player.sonos_connect_stua
+                    entity: media_player.sonos_connect_living_room
                     name: SONOS
                     template:
                       - sonos
                       - icon_sonos
+                      - media_volume
+                    variables:
+                      volume_control: media_player.denon_receiver
 
                   - type: custom:button-card
                     entity: sensor.shield_real_state
@@ -593,6 +575,11 @@ views:
                     template:
                       - media
                       - icon_nvidia_shield
+                      - media_volume
+                    variables:
+                      player: '[[[ return states["sensor.active_media_players"].attributes.active; ]]]'
+                      volume_control: media_player.denon_receiver
+
 
 
       #################################################
@@ -609,16 +596,10 @@ views:
         cards:
 
           - type: custom:swipe-card
-            start_card: 1
             parameters:
-              roundLengths: true
-              effect: coverflow
-              speed: 650
-              spaceBetween: 20
-              threshold: 7
-              coverflowEffect:
-                rotate: 80
-                depth: 300
+              speed: 550
+              spaceBetween: 40
+              threshold: 5
             cards:
 
               - type: grid
@@ -723,49 +704,49 @@ views:
       #################################################
 
       - type: grid
-        title: Systems
+        title: Sections
         view_layout:
           grid-area: outside
         columns: 2
         cards:
 
           - type: custom:button-card
-            entity: sensor.unifi_switch_health
-            name: Network
+            entity: light.ecodim_dimmer_downlights_entrance
+            name: Outside
             template:
-              - systems
-              - icon_eth
+              - base
+              - icon_tree
 
           - type: custom:button-card
-            entity: sensor.plex_issues
-            name: Plex
+            entity: light.ecodim_dimmer_downlights_entrance
+            name: Upstairs
             template:
-              - systems
-              - icon_plex_service
-            state_display: >
-              [[[
-                if (variables.state == '0 Issues') {
-                  return 'Online';
-                }
-              ]]]
+              - base
+              - icon_stairs_up
 
           - type: custom:button-card
-            entity: binary_sensor.ping_rackstation
-            name: RS
+            entity: light.ecodim_dimmer_downlights_entrance
+            name: Garage
             template:
-              - systems
-              - icon_synology_rs
+              - base
+              - loader
+              - icon_garage
             tap_action:
-              !include popup/rs_info.yaml
+              !include popup/garage.yaml
+            double_tap_action:
+              action: call-service
+              service: cover.toggle
+              service_data:
+                entity_id: cover.garage_door
+
 
           - type: custom:button-card
-            entity: binary_sensor.ping_diskstation
-            name: DS
+            entity: light.ecodim_dimmer_downlights_entrance
+            name: Basement
             template:
-              - systems
-              - icon_synology_ds
-            tap_action:
-              !include popup/ds_info.yaml
+              - base
+              - icon_stairs_down
+
 
 
       #################################################
@@ -779,6 +760,7 @@ views:
           grid-area: footer1
         cards:
 
+          # HOME ASSISTANT
           - type: custom:button-card
             name: >
               <ha-icon icon="mdi:home"></ha-icon> Home Assistant
@@ -786,6 +768,7 @@ views:
               !include popup/footer/hass.yaml
             template: footer
 
+          # TABLET
           - type: custom:button-card
             name: >
               <ha-icon icon="mdi:tablet"></ha-icon> Tablet
@@ -801,7 +784,9 @@ views:
                 ]]]
             template: footer
 
+          # UPDATES
           - type: custom:button-card
+            entity: sensor.template_updates
             name: >
               <ha-icon icon="mdi:arrow-up-bold-circle-outline"></ha-icon> Updates
             tap_action:
@@ -809,23 +794,11 @@ views:
             variables:
               notify: >
                 [[[
-                  let hass_installed = hass.config.version,
-                    hass_version_latest = states['sensor.hass_version_latest'],
-                    hass_version_latest_beta = states['sensor.hass_version_latest_beta'],
-                    hacs = states['sensor.hacs'];
-                  if (hass_version_latest && hass_version_latest.state.includes('.')
-                    && hass_version_latest_beta && hass_version_latest_beta.state.includes('.')
-                    && hacs && Number.isInteger(parseInt(hacs.state))) {
-                    let hass_latest = hass_installed.includes('b')
-                        ? hass_version_latest_beta.state
-                        : hass_version_latest.state,
-                      hass_count = hass_installed !== hass_latest ? 1 : 0;
-                    return hass_count + parseInt(hacs.state);
-                  }
-                  return 0;
+                  return parseInt(entity?.state);
                 ]]]
             template: footer
 
+          # ELECTRICAL
           - type: custom:button-card
             name: >
               <ha-icon icon="mdi:transmission-tower"></ha-icon> Electrical
@@ -833,30 +806,33 @@ views:
               !include popup/footer/power.yaml
             template: footer
 
+          # NAS
           - type: custom:button-card
             name: >
               <ha-icon icon="mdi:server-network"></ha-icon> NAS
             tap_action:
               !include popup/footer/nas.yaml
+            triggers_update:
+              - binary_sensor.ping_rackstation
+              - sensor.rackstation_volume_1_status
+              - update.rackstation_dsm_update
+              - sensor.rackstation_volume_used
+              - sensor.diskstation_volume_1_status
+              - sensor.diskstation_volume_1_volume_used
             variables: # return upgradable.state === 'on'
               notify: >
                 [[[
-                  let ping = states['binary_sensor.ping_rackstation'],
-                    status = states['sensor.rackstation_status'],
-                    security = states['binary_sensor.rackstation_security_status'],
-                    disk_use = states['sensor.rackstation_volume_used'],
-                    nas_update = states['binary_sensor.rackstation_update_available'];
-                  if (ping && status && security && disk_use && nas_update) {
-                    return nas_update.state === 'on'
-                      ? 1
-                      : ping.state === 'on' ||
-                        status.state === 'background_scrubbing' ||
-                        security.state === 'on' ||
-                        parseFloat(disk_use.state) >= 90;
-                  }
+                  let id = this._config.triggers_update;
+                  if (id.every(e => states[e]))
+                      return states[id[0]].state === 'off'
+                          ? '!'
+                          : states[id[1]].state === 'background_scrubbing' ||
+                            states[id[2]].state === 'on' ||
+                            parseFloat(states[id[3]].state) >= 90;
                 ]]]
             template: footer
 
+          # NETWORK
           - type: custom:button-card
             name: >
               <ha-icon icon="custom:eth-jack"></ha-icon> Network
@@ -872,6 +848,7 @@ views:
                 ]]]
             template: footer
 
+          # PLEX
           - type: custom:button-card
             name: >
               <ha-icon icon="mdi:plex"></ha-icon> Plex
@@ -882,13 +859,14 @@ views:
             variables:
               notify: >
                 [[[
-                  let ping = states['binary_sensor.ping_rackstation'];
+                  let ping = states['binary_sensor.ping_rackstationmedia_volume'];
                   if (ping) {
                     return ping.state === 'off';
                   }
                 ]]]
             template: footer
 
+          # PC
           - type: custom:button-card
             name: >
               <ha-icon icon="custom:win11"></ha-icon> PC
@@ -930,5 +908,4 @@ views:
           - sensor.rss_search_result_tv_shows
           - sensor.radarr_rss_search_result
           - sensor.torrent_tv_show_already_downloaded
-
 
