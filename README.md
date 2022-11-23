@@ -26,7 +26,7 @@ HA is put into different modes throughout the day, based on what's happening - o
 
 Automations and scripts looks at the state of the Home Mode and takes actions based on that.
 
-![image](https://user-images.githubusercontent.com/93126880/202784186-b1abc968-6366-446a-955a-30fa6ab87199.png)
+![image](https://user-images.githubusercontent.com/93126880/203490547-8f40a480-aaac-48d8-bfe5-6a2f7b0563b2.png)
 
 Mode | Purpose
 --- | ---
