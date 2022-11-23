@@ -2,7 +2,7 @@
 My personal config - based on [Mattias's config](https://github.com/matt8707/hass-config)
 
 
-![image](https://user-images.githubusercontent.com/93126880/187745637-cb682c44-f131-493d-945b-cee3a064f1ea.png)
+![image](https://user-images.githubusercontent.com/93126880/203490436-2ed45a66-965b-4289-9b4a-26de1685903d.png)
 
 
 ## Features
