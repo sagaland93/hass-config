@@ -2,13 +2,12 @@ action: fire-dom-event
 browser_mod:
   service: browser_mod.popup
   data:
-    title: Cameras
+    title: Last detected motion
     size: wide
     style: >
       --popup-background-color: transparent;
     content:
       type: custom:mod-card
-      
       card:
         type: vertical-stack
         cards:
@@ -27,21 +26,25 @@ browser_mod:
                 #phone
                 "(max-width: 800px)":
                   grid-gap: 1.5vw
-                  grid-template-columns: auto
-                  grid-template-rows: auto auto auto auto
+                  grid-template-columns: 5px auto 5px
+                  grid-template-rows: auto
                   grid-template-areas: |
-                    "cam1"
-                    "cam2"
-                    "cam3"
-                    "cam4"
+                    ". cam1 ."
+                    ". cam2 ."
+                    ". cam3 ."
+                    ". cam4 ."
 
                 #tablet
                 "(max-width: 2000px)":
                   grid-gap: 0.5vw
-                  grid-template-rows: 23vw 23vw
+                  #grid-margin: 0px 0px 0px 95px
+                  #grid-template-columns: 10px 600px 600px 10px
+                  #grid-template-rows: 330px 330px
+                  grid-template-columns: 80px 800px 800px 50px
+                  grid-template-rows: 430px 430px
                   grid-template-areas: |
-                    "cam1 cam2"
-                    "cam3 cam4"
+                    ". cam1 cam2 ."
+                    ". cam3 cam4 ."
 
             cards:
 
