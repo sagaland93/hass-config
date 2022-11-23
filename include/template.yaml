@@ -1224,6 +1224,28 @@ template:
         {% endif %}
 
 
+    # SENSOR - SECURITY - DOORS
+    - unique_id: doors_state
+      name: 'Doors State'
+      state: >
+        {% if states('binary_sensor.contact_sensor_entrance') == 'on' %} open
+        {% elif states('binary_sensor.contact_sensor_terrace_door') == 'on' %} open
+        {% elif states('cover.garage_door') != 'closed' %} open
+        {% else %} closed
+        {% endif %}
+      icon: >
+        {% if 'open' in this.state or 'unlocked' in this.state %} mdi:lock-open
+        {% else %} mdi:lock
+        {% endif %}
+      attributes:
+        doors_open: >
+          {% set doors = [
+            states.binary_sensor.contact_sensor_entrance,
+            states.binary_sensor.contact_sensor_terrace_door,
+            states.cover.garage_door ] %}
+          {{ doors | selectattr('state', 'in', ['open','opening','closing','on','unlocked']) | map(attribute='name') | list | replace(' door', '') }}
+
+
     # SENSOR - RSS - Movies
     - unique_id: rss_search_result
       name: 'RSS Search Result'
