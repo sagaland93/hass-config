@@ -41,17 +41,19 @@ Conditional media card. Displays currently active media player. If none is activ
 
 ![media-tilt](https://user-images.githubusercontent.com/93126880/187746806-00f313c0-fbc9-4904-882f-1ecf25f144b7.gif)
 
-Volume controls with [media_player-popup-card](https://github.com/DBuit/media_player-popup-card).
 
-![image](https://user-images.githubusercontent.com/93126880/187842555-1fc1cdb0-3374-4ee3-afb8-d8e616404404.png)
-
-
-
-#### Blinds
+#### Sliders
 
 Shader position controls with [cover-popup-card](https://github.com/DBuit/cover-popup-card).
 
-![blinds-control](https://user-images.githubusercontent.com/93126880/187845173-4da0fdb6-bb24-4528-8b2e-3b738a38b60a.gif)
+Media and volume controls with [media_player-popup-card](https://github.com/DBuit/media_player-popup-card).
+
+Light brightness and color [light-popup-card](https://github.com/DBuit/light-popup-card).
+
+
+| Blinds position | Media controls | Light brightness |
+| --- | --- | --- |
+| ![image](https://user-images.githubusercontent.com/93126880/204550984-306a3894-c852-439b-ad6f-56b16b64ca17.png) | ![image](https://user-images.githubusercontent.com/93126880/187842555-1fc1cdb0-3374-4ee3-afb8-d8e616404404.png) | ![image](https://user-images.githubusercontent.com/93126880/204550834-c943a0fb-70cc-4d98-8d81-bb3679fa7887.png) |
 
 
 #### Rooms
@@ -75,7 +77,7 @@ RSS Feed
 
 Using [feedparser](https://github.com/custom-components/feedparser) to gather data and displaying RSS feed with custom icons.
 
-![rss-feed](https://user-images.githubusercontent.com/93126880/187744661-00a74549-344d-466e-98e1-6982ed8e24dc.gif)
+![image](https://user-images.githubusercontent.com/93126880/204553130-9de404bd-6636-4549-9709-ee061a96ac73.png)
 
 
 Popup displayed when the RSS footer is clicked.
