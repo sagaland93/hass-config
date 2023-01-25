@@ -160,6 +160,82 @@
             }
           }
 
+          ${this._config.template.includes('light') ? `
+
+          /* * * * * * * * * * * * * * * * * *
+            *                                 *
+            *          CIRCLE SLIDER          *
+            *                                 *
+            * * * * * * * * * * * * * * * * * */
+
+            #circle_slider {
+              opacity: 0;
+              appearance: none;
+              transform: rotate(270deg);
+              width: 90%;
+              position: absolute;
+              pointer-events: none;
+              cursor: grab;
+              left: 35%;
+              margin-top: 13%;
+            }
+
+            #circle_slider::-webkit-slider-thumb {
+              pointer-events: initial;
+              appearance: none;
+              width: 3vw;
+              height: 3vw;
+              border-radius: 50%;
+              background: green;
+            }
+
+            #circle_slider::-webkit-slider-runnable-track {
+              background: cornflowerblue;
+            }
+
+            #circle_slider::-moz-range-thumb {
+              pointer-events: initial;
+              appearance: none;
+              width: 3vw;
+              height: 3vw;
+              border-radius: 50%;
+              background: green;
+            }
+
+            #circle_slider::-moz-range-track {
+              background: cornflowerblue;
+              height: 3vw;
+            }
+
+            /* portrait */
+            @media screen and (max-width: 1200px) {
+              #circle_slider::-webkit-slider-thumb {
+                width: 4vw;
+                height: 4vw;
+              }
+
+              #circle_slider::-moz-range-thumb {
+                width: 4vw;
+                height: 4vw;
+              }
+            }
+
+            /* phone */
+            @media screen and (max-width: 800px) {
+              #circle_slider::-webkit-slider-thumb {
+                width: 7vw;
+                height: 7vw;
+              }
+
+              #circle_slider::-moz-range-thumb {
+                width: 7vw;
+                height: 7vw;
+              }
+            }
+
+          `:''}
+
+
           /* tilt */
           #ripple, .js-tilt-glare {
             clip-path: inset(0 round var(--custom-button-card-border-radius));
@@ -790,7 +866,7 @@
     state_display: |
       [[[
         if (entity && entity.state !== '0') {
-          let privatehd = entity.attributes.link,
+          let privatetorr = entity.attributes.link,
             imdb = entity.attributes.id,
             torrent = entity.attributes.torrent;
 
@@ -821,7 +897,7 @@
     state_display: |
       [[[
         if (entity && entity.state !== '0') {
-          let privatehd = entity.attributes.link,
+          let privatetorr = entity.attributes.link,
             imdb = entity.attributes.id,
             torrent = entity.attributes.torrent;
 
@@ -853,40 +929,261 @@
   #################################################
 
   circle:
-    state_display: '[[[ if (entity.state === "on") return " "; ]]]'
-    custom_fields:
-      circle: >
-        [[[
-          const width = 3;
-          let color = '#7d7e80';
-          if (variables.state_on || variables.state === 'open' || entity.entity_id.split('.')[0] === "person") {
-            let input = variables.circle_input,
-              radius = 20.5,
-              circumference = radius * 2 * Math.PI;
-            return `
-              <svg viewBox="0 0 50 50">
-                <circle cx="25" cy="25" r="${radius}" fill="none" stroke="${color}" opacity="0.3" stroke-width="${width}" />
-                <circle style="
-                    transform: rotate(-90deg);
-                    transform-origin: 50% 50%;
-                    stroke-dasharray: ${circumference};
-                    stroke-dashoffset: ${circumference - input / 100 * circumference};
-                  "
-                  id="c_brightness" cx="25" cy="25" r="${radius}" stroke="${color}" opacity="1.0" stroke-width="${width}" fill="none" stroke-linecap="round" />
-                <text x="50%" y="54%" fill="${color}" font-size="14" text-anchor="middle" alignment-baseline="middle" dominant-baseline="middle">${input}<tspan font-size="10">%</tspan></text>
-              </svg>
-            `;
-          }
-        ]]]
     styles:
+      card:
+        - --c-stroke-color-on: '#7d7e80'
+        - --c-stroke-color-off: none
+        - --c-fill-color-on: none
+        - --c-fill-color-off: rgba(255,255,255,0.04)
+        - --c-stroke-width: 3
+        - --c-stroke-width-dragging: 4
+        - --c-font-color: '#97989c'
+        - --c-font-size: 14px
+        - --c-unit-font-size: 10px
+        - --c-font-weight: 500
+        - --c-letter-spacing: 0.03rem
       custom_fields:
-        circle: &person
+        circle:
           - display: initial
           - width: 90%
-          - letter-spacing: 0.03vw
           - margin: -6% -6% 0 0
           - justify-self: end
           - opacity: 1
+    custom_fields:
+      circle: >
+        [[[
+          if (entity) {
+              let r = 20.5,
+                  c = r * 2 * Math.PI,
+                  tspan = '<tspan dx=".2" dy="-.4">',
+                  domain = entity.entity_id.split('.')[0],
+                  state = variables.state_on,
+                  input = variables.circle_input || ' ',
+                  unit = variables.circle_input_unit || ' ';
+
+            /* * * * * * * * * * * * * * * * * *
+              *                                 *
+              *             CIRCLE              *
+              *                                 *
+              * * * * * * * * * * * * * * * * * */
+
+              let circle = (state, input, unit) => {
+                  return `
+                    <svg viewBox="0 0 50 50">
+                      <style>
+                        circle {
+                          transform: rotate(-90deg);
+                          transform-origin: 50% 50%;
+                          stroke-dasharray: ${c};
+                          stroke-linecap: round;
+                          fill: ${state ? 'var(--c-fill-color-on)' : 'var(--c-fill-color-off)'};
+                        }
+                        text {
+                          font-size: var(--c-font-size);
+                          font-weight: var(--c-font-weight);
+                          letter-spacing: var(--c-letter-spacing);
+                          fill: var(--c-font-color);
+                        }
+                        tspan {
+                          font-size: var(--c-unit-font-size);
+                        }
+                        #circle_value, tspan {
+                          text-anchor: middle;
+                          dominant-baseline: central;
+                        }
+                      </style>
+                      <circle id="circle_stroke_bg" cx="25" cy="25" r="${r}" opacity="0.7" stroke-width="var(--c-stroke-width)" stroke="#9da0a2"/>
+                      <circle id="circle_stroke_prev" cx="25" cy="25" r="${r}" opacity="1" stroke-width="2.5" stroke="#ffd945"  stroke-dashoffset="${typeof input === 'number' && c - input / 100 * c}" stroke-dasharray="${c}"/>
+                      <circle id="circle_stroke" cx="25" cy="25" r="${r}" opacity="1.0" stroke-width="var(--c-stroke-width)" stroke="${state ? 'var(--c-stroke-color-on)' : 'var(--c-stroke-color-off)'}" stroke-dashoffset="${typeof input === 'number' && c - input / 100 * c}" stroke-dasharray="${c}"/>
+                      <text id="circle_value" x="50%" y="52%" text-anchor="middle" alignment-baseline="middle" dominant-baseline="middle">${input}${tspan}${unit}</tspan></text>
+                    </svg>
+
+                    ${domain === 'light' && `
+                        <input id="circle_slider" type="range" min="0" max="100" value="${input}">
+                    `}
+                  `;
+              }
+
+            /* * * * * * * * * * * * * * * * * *
+              *                                 *
+              *              LIGHT              *
+              *                                 *
+              * * * * * * * * * * * * * * * * * */
+
+              if (domain === 'light' && state) {
+
+                  // wait 0ms for shadow dom
+                  setTimeout(() => {
+
+                      // then get elements
+                      let elt = this.shadowRoot,
+                          circle_slider = elt.getElementById('circle_slider'),
+                          circle_value = elt.getElementById('circle_value'),
+                          circle_stroke_prev = elt.getElementById('circle_stroke_prev'),
+                          circle_stroke = elt.getElementById('circle_stroke');
+
+                      // approximate position of thumb relative to circle
+                      circle_slider.style.top = `${(circle_slider.value - 70) / 1.66 - 1}%`;
+
+                      // debug position
+                      let debug = false;
+                      if (debug) circle_slider.style.opacity = 0.3;
+
+                      // pass each event to handler
+                      ['click', 'input', 'mousedown', 'mouseup', 'touchstart', 'touchend'].forEach((event) => {
+                          circle_slider.addEventListener(event, handler, { passive: true })
+                      });
+
+                      function handler(event) {
+
+                          // "this" refers to slider
+                          if (event.target === this) {
+
+                              // bypass button-card tap_action
+                              event.stopPropagation();
+
+                              // update circle_value
+                              circle_value.innerHTML = `${this.value}${tspan}${unit}</tspan>`;
+
+                              // update stroke
+                              circle_stroke.style.strokeDashoffset = c - this.value / 100 * c;
+                              circle_stroke.style.strokeWidth = 'var(--c-stroke-width-dragging)';
+                              
+                              // set cursor while dragging
+                              if (event.type === 'mousedown' || event.type === 'input') {
+                                  this.style.cursor = 'grabbing';
+                              } else {
+                                  this.style.cursor = 'grab';
+                              }
+
+                              // reset stroke width if value doesn't change
+                              if (input == this.value && (event.type === 'click' || event.type === 'touchend'))
+                                  circle_stroke.style.strokeWidth = 'var(--c-stroke-width)';
+
+                              // on release
+                              if (event.type === 'mouseup' || event.type === 'touchend') {
+
+                                  // display loader if brightness is 0
+                                  if (circle_slider.value == 0 && elt.getElementById('loader')) {
+                                      elt.getElementById('loader').style.display = 'initial';
+                                      elt.getElementById('circle').style.display = 'none';
+                                  }
+
+                                  // set brightness
+                                  hass.callService('light', 'turn_on', {
+                                      entity_id: entity.entity_id,
+                                      brightness_pct: this.value
+                                  });
+                              }
+                          }
+                      }
+                  }, 0);
+
+                  return circle(state, input, unit);
+              }
+
+            /* * * * * * * * * * * * * * * * * *
+              *                                 *
+              *             PERSON              *
+              *                                 *
+              * * * * * * * * * * * * * * * * * */
+
+              else if (domain === 'person') {
+                  let time = c => {
+                      let s = (c/1e3),
+                          m = (c/6e4),
+                          h = (c/36e5),
+                          d = (c/864e5);
+                      return s < 60
+                          ? parseInt(s) + 's'
+                          : m < 60 ? parseInt(m) + 'm'
+                          : h < 24 ? parseInt(h) + 'h'
+                          : parseInt(d) + 'd';
+                  };
+                  let input = states[variables.retain] === undefined || states[variables.retain].state === 'unavailable'
+                          ? time(Date.now() - Date.parse(entity.last_changed))
+                          : time(Date.now() - Date.parse(states[variables.retain].state)),
+                      unit = ' ';
+
+                  return `
+                    <svg viewBox="0 0 50 50">
+                      <style>
+                        circle {
+                          transform: rotate(-90deg);
+                          transform-origin: 50% 50%;
+                          stroke-dasharray: ${c};
+                          stroke-linecap: round;
+                          fill: ${state ? 'var(--c-fill-color-on)' : 'var(--c-fill-color-off)'};
+                        }
+                        text {
+                          font-size: var(--c-font-size);
+                          font-weight: var(--c-font-weight);
+                          letter-spacing: var(--c-letter-spacing);
+                          fill: var(--c-font-color);
+                        }
+                        tspan {
+                          font-size: var(--c-unit-font-size);
+                        }
+                        #circle_value, tspan {
+                          text-anchor: middle;
+                          dominant-baseline: central;
+                        }
+                      </style>
+                      <circle id="circle_stroke_bg" cx="25" cy="25" r="${r}" opacity="0.7" stroke-width="var(--c-stroke-width)" stroke="#9da0a2"/>
+                      <text id="circle_value" x="50%" y="52%" text-anchor="middle" alignment-baseline="middle" dominant-baseline="middle">${input}${tspan}${unit}</tspan></text>
+                    </svg>
+                  `;
+              }
+
+            /* * * * * * * * * * * * * * * * * *
+              *                                 *
+              *             CLIMATE             *
+              *                                 *
+              * * * * * * * * * * * * * * * * * */
+
+              else if (domain === 'climate' || domain === 'switch') {
+                  return `
+                    <svg viewBox="0 0 50 50">
+                      <style>
+                        circle {
+                          transform: rotate(-90deg);
+                          transform-origin: 50% 50%;
+                          stroke-dasharray: ${c};
+                          stroke-linecap: round;
+                          fill: ${state ? 'var(--c-fill-color-on)' : 'var(--c-fill-color-off)'};
+                        }
+                        text {
+                          font-size: var(--c-font-size);
+                          font-weight: var(--c-font-weight);
+                          letter-spacing: var(--c-letter-spacing);
+                          fill: var(--c-font-color);
+                        }
+                        tspan {
+                          font-size: var(--c-unit-font-size);
+                        }
+                        #circle_value, tspan {
+                          text-anchor: middle;
+                          dominant-baseline: central;
+                        }
+                      </style>
+                      <circle id="circle_stroke_bg" cx="25" cy="25" r="${r}" opacity="0.7" stroke-width="var(--c-stroke-width)" stroke="#9da0a2"/>
+                      <text id="circle_value" x="50%" y="52%" text-anchor="middle" alignment-baseline="middle" dominant-baseline="middle">${input}${tspan}${unit}</tspan></text>
+                    </svg>
+                  `;
+              }
+
+            /* * * * * * * * * * * * * * * * * *
+              *                                 *
+              *              OTHER              *
+              *                                 *
+              * * * * * * * * * * * * * * * * * */
+
+              else if (variables.state_on) {
+                  return circle(state, input, unit);
+              }
+          }
+        ]]]
+
 
 
   #################################################
@@ -987,41 +1284,80 @@
   #                                               #
   #################################################
 
-  climate:
-    custom_fields:
-      circle: >
-        [[[
-          if (entity) {
-            let input = variables.circle_input == null ? ' ' : `${parseInt(variables.circle_input)}<tspan font-size="10">°C</tspan>`,
-              stroke_color = variables.state === 'on' || variables.state === 'cool' || variables.state === 'heat' || variables.state === 'heat_cool' || variables.state === 'fan_only' ? '#b2b2b2' : 'none',
-              fill_color = variables.state === 'off' ? 'rgba(255,255,255,0.04)' : 'none';
-            if (input) {
-              return `
-                <svg viewBox="0 0 50 50">
-                  <circle cx="25" cy="25" r="20.5" stroke="${stroke_color}" stroke-width="2.5" fill="${fill_color}" />
-                  <text x="50%" y="54%" fill="#8d8e90" font-size="14" text-anchor="middle" alignment-baseline="middle" dominant-baseline="middle">${input}</text>
-                </svg>
-              `;
-            }
-          }
-        ]]]
+  climate_base:
+    show_icon: false
     styles:
-      custom_fields:
-        circle:
-          - display: initial
-          - width: 90%
-          - letter-spacing: 0.03vw
-          - margin: -6% -6% 0 0
-          - justify-self: end
-          - opacity: 1
+      name:
+        - padding: 12px 13px
+        - font-size: 0.8em
+        - font-weight: 600
+      card:
+        - border-radius: 10px
 
-  climate_ac:
+  climate_fan_mode:
+    show_icon: false
+    variables:
+      fan_mode: false
+    tap_action:
+      action: call-service
+      service: climate.set_fan_mode
+      service_data:
+        entity_id: >
+          [[[
+            return !entity || entity.entity_id;
+          ]]]
+        fan_mode: >
+          [[[
+            return variables.fan_mode;
+          ]]]
+    styles:
+      card:
+        - background-color: >
+            [[[
+              return !entity || entity.attributes.fan_mode === variables.fan_mode ? "rgba(158, 158, 158, 0.2)" : "rgba(189, 189, 189, 0.05)";
+            ]]]
+    template:
+      - climate_base
+
+  climate_swing_mode:
+    tap_action:
+      action: call-service
+      service: climate.set_swing_mode
+      service_data:
+        entity_id: >
+          [[[
+            return !entity || entity.entity_id;
+          ]]]
+        swing_mode: >
+          [[[
+            return !entity || entity.attributes.swing_mode === 'off' ? 'on' : 'off';
+          ]]]
+    styles:
+      card:
+        - background-color: >
+            [[[
+              return !entity || entity.attributes.swing_mode === "on" ? "rgba(158, 158, 158, 0.2)" : "rgba(189, 189, 189, 0.05)";
+            ]]]
+    template:
+      - climate_base
+
+  climate:
+    template:
+      - circle
     state_display: >
       [[[
         if (variables.state == 'heat_cool') {
           return 'Auto';
         }
       ]]]
+    variables:
+      circle_input: >
+        [[[
+          if (states['sensor.temperature_average_upstairs'].state) {
+            return (Math.round(states['sensor.temperature_average_upstairs'].state));
+          }
+        ]]]
+      circle_input_unit: '°C'
     styles:
       custom_fields:
         circle:
@@ -1031,32 +1367,6 @@
           - margin: -6% -6% 0 0
           - justify-self: end
           - opacity: 1
-    custom_fields:
-      circle: >
-        [[[
-          if (entity) {
-            let input = variables.circle_input == null ? ' ' : `${parseInt(variables.circle_input)}<tspan font-size="10">°C</tspan>`,
-              stroke_color = variables.state === 'on' || variables.state === 'cool' || variables.state === 'heat' || variables.state === 'heat_cool' || variables.state === 'fan_only' ? '#b2b2b2' : 'none',
-              fill_color = variables.state === 'off' ? 'rgba(255,255,255,0.04)' : 'none',
-              filter_status = states['binary_sensor.kaiteki_6600_filter_clean_required'].state;
-            if (filter_status == 'off') {
-              return `
-                <svg viewBox="0 0 50 50">
-                  <circle cx="25" cy="25" r="20.5" stroke="${stroke_color}" stroke-width="2.5" fill="${fill_color}" />
-                  <text x="50%" y="54%" fill="#8d8e90" font-size="14" text-anchor="middle" alignment-baseline="middle" dominant-baseline="middle">${input}</text>
-                </svg>
-              `;
-            }
-            else
-            {
-              return `
-                <svg viewBox="0 0 50 50">
-                  <path fill="#b71616" d="M25.029 9.998c-.695.004-1.375.206-1.959.582-.611.4-1.125.93-1.506 1.553l-.035.059L12.3 28.142h-.002a1.77 1.77 0 0 0-.166.324c-.233.599-.347 1.237-.336 1.879a3.78 3.78 0 0 0 .645 2.059c.409.598.991 1.056 1.668 1.312.426.159.877.243 1.332.246h.141 18.584c.672.021 1.341-.107 1.959-.373l.123-.057a3.44 3.44 0 0 0 1.492-1.42 3.78 3.78 0 0 0 .465-1.795c.007-.76-.168-1.511-.51-2.189l-.049-.094-9.078-15.76a1.76 1.76 0 0 0-.078-.139c-.378-.626-.892-1.159-1.504-1.561-.583-.377-1.263-.578-1.957-.578zm-.566 6.67c.355-.07.72-.07 1.074 0 .561.12.998.429.998.953v.051l-.613 7.898c-.043 1.029-1.787 1.031-1.828 0l-.611-7.973c.015-.511.43-.814.98-.93zm.453 10.764c.175-.012.351.013.516.074a1.25 1.25 0 0 1 .43.281 1.19 1.19 0 0 1 .348.764 1.3 1.3 0 0 1-.018.301 1.19 1.19 0 0 1-1.211.988 1.22 1.22 0 0 1-.488-.111c-.275-.127-.491-.353-.605-.633-.036-.087-.061-.178-.076-.271s-.019-.189-.012-.283a1.33 1.33 0 0 1 .121-.43.98.98 0 0 1 .244-.334l.004-.006c.201-.199.466-.319.748-.34z"/>
-                </svg>
-              `;
-            }
-          }
-        ]]]
 
 
   #################################################
@@ -1273,7 +1583,19 @@
       - loader
     variables:
       circle_input: >
-        [[[ return entity === undefined || Math.round(entity.attributes.brightness / 2.54); ]]]
+        [[[
+          if (entity) {
+              // if light group get brightness from child to remove bounce
+              let child = entity.attributes.entity_id,
+                  brightness = child && states[child[0]].attributes.brightness
+                      ? Math.round(states[child[0]].attributes.brightness / 2.54)
+                      : Math.round(entity.attributes.brightness / 2.54);
+              return brightness === 0 && entity.state !== 'off'
+                  ? 1
+                  : brightness
+          }
+        ]]]
+      circle_input_unit: '%'
     double_tap_action:
       action: fire-dom-event
       browser_mod:
@@ -1363,6 +1685,7 @@
     template:
       - base
     variables:
+      light_entity: ''
       circle_input: >
         [[[ return entity === undefined || Math.round(entity.attributes.brightness / 2.54); ]]]
     state_display: >
@@ -1374,6 +1697,44 @@
           return 'On';
         }
       ]]]
+    hold_action:
+      action: call-service
+      service: light.toggle
+      service_data:
+        entity_id: '[[[ return variables.light_entity; ]]]'
+    double_tap_action:
+      action: fire-dom-event
+      browser_mod:
+        service: browser_mod.popup
+        data:
+          title: >
+            [[[
+              return states[variables.light_entity].attributes.friendly_name;
+            ]]]
+          style: >
+            --popup-background-color: transparent;
+          content:
+            type: custom:mod-card
+            card_mod:
+              style: |
+                #states {
+                  padding-top: 0.5em;
+                }
+            card:
+              type: custom:light-popup-card
+              entity: >
+                [[[ return variables.light_entity; ]]]
+              icon: none
+              fullscreen: false
+              brightnessWidth: 130px
+              brightnessHeight: 360px
+              borderRadius: 1.7em
+              sliderColor: '#c7c7c7'
+              sliderTrackColor: rgba(25, 25, 25, 0.9)
+              displayType: slider
+              actionSize: 4.5em
+              actionsInARow: 2
+
 
 
   #################################################
@@ -1439,59 +1800,6 @@
                       [[[ return entity.entity_id ]]]
                   #name: close
                   icon: mdi:arrow-down
-
-
-  #################################################
-  #                                               #
-  #                 MEDIA VOLUME                  #
-  #                                               #
-  #################################################
-
-  media_volume:
-    variables:
-      volume_control: ''
-    tap_action:
-      action: fire-dom-event
-      browser_mod:
-        service: browser_mod.popup
-        data:
-          timeout: 120000
-          title: >
-            [[[ return entity.attributes.friendly_name; ]]]
-          style: >
-            --popup-background-color: transparent;
-          content:
-            type: custom:mod-card
-            card:
-              type: custom:media_player-popup-card
-              #entity: media_player.denon_receiver
-              entity: '[[[ return variables.volume_control; ]]]' # IF something, then receiver, else current entity
-              icon: none
-              fullscreen: false
-              sliderWidth: 130px
-              sliderHeight: 360px
-              borderRadius: 1.7em
-              sliderColor: '#c7c7c7'
-              sliderTrackColor: rgba(25, 25, 25, 0.9)
-              displayType: slider
-              actionsInARow: 3
-              actions:
-                - service: media_player.media_previous_track
-                  service_data:
-                    entity_id: '[[[ return variables.volume_control; ]]]'
-                  #name: previous
-                  icon: mdi:skip-previous
-                - service: media_player.media_play_pause
-                  service_data:
-                    entity_id: '[[[ return variables.volume_control; ]]]'
-                  #name: play/pause
-                  icon: mdi:play-pause
-                - service: media_player.media_next_track
-                  service_data:
-                    entity_id: '[[[ return variables.volume_control; ]]]'
-                  #name: next
-                  icon: mdi:skip-next
-              
 
 
   #################################################
@@ -1705,6 +2013,7 @@
     variables:
       temp_min: ''
       temp_max: ''
+      current_weather: ''
     aspect_ratio: 1/1
     show_icon: false
     show_entity_picture: true
@@ -1747,7 +2056,7 @@
       img_cell:
         - justify-content: start
       icon:
-        - width: 32%
+        - width: 35%
         #- width: 37%
       label:
         - place-self: start
@@ -1770,26 +2079,27 @@
         [[[ return entity.attributes.temperature + "°"; ]]]
     entity_picture: |
       [[[
-        if ((entity.state == 'sunny') && (states['sun.sun'].state == 'above_horizon'))
+        let weather = states[variables.current_weather].state.toLowerCase();
+        if ((weather == 'sunny') && (states['sun.sun'].state == 'above_horizon'))
           return "/local/svg/weather/animated/clear-day.svg";
-          if ((entity.state == 'sunny') || (entity.state == 'clear-night') && (states['sun.sun'].state == 'below_horizon'))
+          if ((weather == 'sunny') || (weather == 'clear-night') && (states['sun.sun'].state == 'below_horizon'))
             return "/local/svg/weather/animated/clear-night.svg";
-              if (entity.state == 'fog')
+              if (weather == 'fog')
                 return "/local/svg/weather/animated/fog.svg";
-                  if ((entity.state == 'partlycloudy') && (states['sun.sun'].state == 'above_horizon'))
+                  if ((weather == 'partlycloudy') && (states['sun.sun'].state == 'above_horizon'))
                     return "/local/svg/weather/animated/partly-cloudy-day.svg";
-                      if ((entity.state == 'partlycloudy') && (states['sun.sun'].state == 'below_horizon'))
-                        return "/local/svg/weather/animated/partly-cloudy-night.svg";    
-                          if (entity.state == 'rainy')
-                            return "/local/svg/weather/animated/rain.svg";                  
-                              if (entity.state == 'sleet')
-                                return "/local/svg/weather/animated/sleet.svg";         
-                                  if (entity.state == 'snow')
-                                    return "/local/svg/weather/animated/snow.svg";  
-                                      if (entity.state == 'cloudy')
-                                        return "/local/svg/weather/animated/cloudy.svg";    
-        else (entity.state == 'wind')
-          return "/local/svg/weather/animated/wind.svg";                        
+                      if ((weather == 'partlycloudy') && (states['sun.sun'].state == 'below_horizon'))
+                        return "/local/svg/weather/animated/partly-cloudy-night.svg";
+                          if (weather == 'rainy')
+                            return "/local/svg/weather/animated/rain.svg";
+                              if (weather == 'sleet')
+                                return "/local/svg/weather/animated/sleet.svg";
+                                  if (weather == 'snow')
+                                    return "/local/svg/weather/animated/snow.svg";
+                                      if (weather == 'cloudy')
+                                        return "/local/svg/weather/animated/cloudy.svg";
+        else (weather == 'wind')
+          return "/local/svg/weather/animated/wind.svg";
       ]]]
     extra_styles: |
       [[[
@@ -1888,26 +2198,7 @@
     custom_fields:
       icon: >
         [[[ return entity === undefined ? null : `<img src="${states[entity.entity_id].attributes.entity_picture}" width="100%">`; ]]]
-      circle: >
-        [[[
-          if (entity) {
-            let time = c => {
-              let s = (c/1e3), m = (c/6e4), h = (c/36e5), d = (c/864e5);
-              return s < 60 ? parseInt(s) + 's' : m < 60 ? parseInt(m) + 'm' : h < 24 ? parseInt(h) + 'h' : parseInt(d) + 'd';
-            };
-            let last_changed = states[variables.retain] == null || states[variables.retain].state == 'unavailable'
-                ? time(Date.now() - Date.parse(states[entity.entity_id].last_changed))
-                : time(Date.now() - Date.parse(states[variables.retain].state)),
-              stroke = variables.state === 'home' ? '#b2b2b2' : 'none',
-              fill = variables.state === 'not_home' ? 'rgba(255,255,255,0.04)' : 'none';
-            return `
-              <svg viewBox="0 0 50 50">
-                <circle cx="25" cy="25" r="20.5" stroke="${stroke}" stroke-width="2.5" fill="${fill}" />
-                <text x="50%" y="54%" fill="#8d8e90" font-size="14" text-anchor="middle" alignment-baseline="middle" dominant-baseline="middle">${last_changed}</text>
-              </svg>
-            `;
-          }
-        ]]]
+
 
 
   #################################################
@@ -1915,7 +2206,6 @@
   #                 CIRCLE STATE                  #
   #                                               #
   #################################################
-
 
   circle_state:
     template:
@@ -1958,13 +2248,13 @@
       media_off: >
         [[[ return !entity || ['off', 'idle', 'standby', 'unknown', 'unavailable'].indexOf(entity.state) !== -1; ]]]
     tap_action:
-      action: >
+      action: call-service
+      service: >
         [[[
           return variables.media_on
-              ? 'call-service'
-              : 'none';
+              ? 'media_player.media_play_pause'
+              : 'media_player.toggle';
         ]]]
-      service: media_player.media_play_pause
       service_data:
         entity_id: >
           [[[
@@ -1974,7 +2264,7 @@
       action: more-info
     hold_action:
       action: call-service
-      service: media_player.toggle
+      service: media_player.turn_off
       service_data:
         entity_id: >
           [[[
@@ -2042,6 +2332,11 @@
 
   # APPLE TV
   atv:
+    variables:
+      media_on: >
+        [[[ return !entity || ['playing', 'paused', 'idle'].indexOf(entity.state) !== -1; ]]]
+      media_off: >
+        [[[ return !entity || ['off', 'standby', 'unknown', 'unavailable'].indexOf(entity.state) !== -1; ]]]
     state_display: >
       [[[ 
         if (entity.state === 'standby') {
@@ -2082,7 +2377,7 @@
           - opacity: >
               [[[
                 let entity_picture = entity === undefined ? null : entity.attributes.entity_picture;
-                if (entity.state !== 'idle' && entity.state !== 'unavailable' && entity.state !== 'standby') {
+                if (entity.state !== 'paused' && entity.state !== 'idle' && entity.state !== 'unavailable' && entity.state !== 'standby') {
                   return entity_picture == null ? 1 : 0;
                 }
               ]]]
@@ -2121,6 +2416,83 @@
 
   #################################################
   #                                               #
+  #                 MEDIA VOLUME                  #
+  #                                               #
+  #################################################
+
+  media_volume:
+    variables:
+      media_on: >
+        [[[ return !entity || ['playing', 'paused', 'idle'].indexOf(entity.state) !== -1; ]]]
+      media_off: >
+        [[[ return !entity || ['off', 'standby', 'unknown', 'unavailable'].indexOf(entity.state) !== -1; ]]]
+      volume_control: '[[[ return entity.entity_id; ]]]'
+      player: '[[[ return entity.entity_id; ]]]'
+    tap_action:
+      action: >
+        [[[
+          return variables.media_on
+              ? 'fire-dom-event'
+              : 'call-service';
+        ]]]
+      service: >
+        [[[
+          return variables.media_on
+              ? 'none'
+              : 'media_player.toggle';
+        ]]]
+      service_data:
+        entity_id: >
+          [[[
+            return variables.entity_id;
+          ]]]
+      browser_mod:
+        service: >
+          [[[
+            return variables.media_on
+                ? 'browser_mod.popup'
+                : 'none';
+          ]]]
+        data:
+          title: >
+            [[[ return entity.attributes.friendly_name; ]]]
+          style: >
+            --popup-background-color: transparent;
+          content:
+            type: custom:mod-card
+            card:
+              type: custom:media_player-popup-card
+              #entity: media_player.denon_receiver
+              entity: '[[[ return variables.volume_control; ]]]' # IF something, then receiver, else current entity
+              icon: none
+              fullscreen: false
+              sliderWidth: 130px
+              sliderHeight: 360px
+              borderRadius: 1.7em
+              sliderColor: '#c7c7c7'
+              sliderTrackColor: rgba(25, 25, 25, 0.9)
+              displayType: slider
+              actionsInARow: 3
+              actions:
+                - service: media_player.media_previous_track
+                  service_data:
+                    entity_id: '[[[ return variables.player; ]]]'
+                  #name: previous
+                  icon: mdi:skip-previous
+                - service: media_player.media_play_pause
+                  service_data:
+                    entity_id: '[[[ return variables.player; ]]]'
+                  #name: play/pause
+                  icon: mdi:play-pause
+                - service: media_player.media_next_track
+                  service_data:
+                    entity_id: '[[[ return variables.player; ]]]'
+                  #name: next
+                  icon: mdi:skip-next
+              
+
+  #################################################
+  #                                               #
   #               CONDITIONAL MEDIA               #
   #                                               #
   #################################################
@@ -2142,28 +2514,41 @@
         ]]]
     state_display: >
       [[[
+        let horizontalStack = this.getRootNode().host,
+            swipeCard = horizontalStack.getRootNode().host,
+            gridTitle = swipeCard.getRootNode().querySelector("h1");
+        swipeCard.swiper.on("slideChange", () => {
+            if (swipeCard.swiper.realIndex === 0) {
+                gridTitle.textContent = "Media";
+            }
+            else if (swipeCard.swiper.realIndex === 1) {
+                gridTitle.textContent = "Players";
+            }
+        });
+
         if (entity) {
-            let elt = this.shadowRoot,
-                await = setTimeout(marquee, 100),
-                data = entity.attributes.data,
-                artist = entity.attributes.media_artist,
-                title = entity.attributes.media_title;
-              if (data !== undefined) {
-                  var number = data[variables.i].number === undefined && data[variables.i].aired !== undefined
-                      ? `(${data[variables.i].aired.split("-")[0]})`
-                      : data[variables.i].number === undefined && data[variables.i].aired === undefined
-                          ? ' '
-                          : data[variables.i].number,
-                  output = `${data[variables.i].title} ${number}`;
-              } else {
-                  var output = artist === undefined && title !== undefined || title !== ''
-                      ? title
-                      : title === undefined && artist !== undefined && artist !== ''
-                          ? artist
-                          : title !== undefined && artist !== undefined && artist !== ''
-                              ? `${artist} - ${title}`
-                              : variables.translate_idle;
-              }
+          let elt = this.shadowRoot,
+              await = setTimeout(marquee, 100),
+              data = entity.attributes.data,
+              artist = entity.attributes.media_artist,
+              title = entity.attributes.media_title;
+            if (data !== undefined) {
+                var number = data[variables.i].number === undefined && data[variables.i].aired !== undefined
+                    ? `(${data[variables.i].aired.split("-")[0]})`
+                    : data[variables.i].number === undefined && data[variables.i].aired === undefined
+                        ? ' '
+                        : data[variables.i].number,
+                output = `${data[variables.i].title} ${number}`;
+            } else {
+                var output = artist === undefined && title !== undefined
+                    ? title
+                    : title === undefined && artist !== undefined
+                        ? artist
+                        : title !== undefined && artist !== undefined
+                            ? `${artist} - ${title}`
+                            : variables.translate_idle;
+            }
+
             function marquee() {
                 let state = elt.getElementById("state"),
                     container = elt.getElementById("container");
@@ -6711,7 +7096,7 @@
           - margin-top: -5%
           - margin-left: -5%
           - color: >
-              [[[ return variables.state === 'on' ? '#000000' : '#9da0a2'; ]]]
+              [[[ return variables.state === 'on' ? '#018c41' : '#9da0a2'; ]]]
     custom_fields:
       icon: >
         <ha-icon icon="custom:tree-flat"></ha-icon>
