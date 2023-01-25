@@ -11,7 +11,7 @@ My personal config - based on [Mattias's config](https://github.com/matt8707/has
 * Portrait, landscape and mobile view
 * Less cluttered interface by displaying more information in a popup
 
-#### Sidebar
+### Sidebar
 
 * Time and date with greeting based on time of day.
 * Entities that are on.
@@ -20,7 +20,7 @@ My personal config - based on [Mattias's config](https://github.com/matt8707/has
 * Occasions info. Shows important dates so you don't forget.
 * Other conditional alerts.
 
-#### Home Modes
+### Home Modes
 
 HA is put into different modes throughout the day, based on what's happening - or not happening in the home.
 
@@ -35,14 +35,15 @@ Occupied | The home is occupied and nothing special is happening. Normal light l
 Sleep | Low light brightness levels, and some lights do not turn on from motion.
 Empty | Home is unoccupied and entities are updated automatically.
 
-#### Media
+
+### Media
 
 Conditional media card. Displays currently active media player. If none is active, displays recent items from Plex.
 
 ![media-tilt](https://user-images.githubusercontent.com/93126880/187746806-00f313c0-fbc9-4904-882f-1ecf25f144b7.gif)
 
 
-#### Sliders
+### Sliders
 
 Shader position controls with [cover-popup-card](https://github.com/DBuit/cover-popup-card).
 
@@ -51,12 +52,19 @@ Media and volume controls with [media_player-popup-card](https://github.com/DBui
 Light brightness and color [light-popup-card](https://github.com/DBuit/light-popup-card).
 
 
+
 | Blinds position | Media controls | Light brightness |
 | --- | --- | --- |
 | ![image](https://user-images.githubusercontent.com/93126880/204550984-306a3894-c852-439b-ad6f-56b16b64ca17.png) | ![image](https://user-images.githubusercontent.com/93126880/187842555-1fc1cdb0-3374-4ee3-afb8-d8e616404404.png) | ![image](https://user-images.githubusercontent.com/93126880/204550834-c943a0fb-70cc-4d98-8d81-bb3679fa7887.png) |
 
 
-#### Rooms
+Circle slider which also shows previous value
+
+![2023-01-25_12-03-03](https://user-images.githubusercontent.com/93126880/214547461-44479bc2-6b9e-405e-99cf-880ed61a9e4a.gif)
+
+
+
+### Rooms
 
 Room entities are grouped under one card.
 
@@ -64,27 +72,29 @@ Room entities are grouped under one card.
 
 Example: All the Office entities are displayed as a popup with new button cards.
 
-![office](https://user-images.githubusercontent.com/93126880/187751207-17268f49-a907-4b35-93ea-35258e6d93eb.gif)
+![image](https://user-images.githubusercontent.com/93126880/214548519-f42ce5fb-5ec0-4567-aca0-6aa32be3f43b.png)
 
 
-#### Footers
+
+### Footers
 
 Popups that supports notifications.
 
 ![image](https://user-images.githubusercontent.com/93126880/187744558-fc281be5-af49-4433-976f-ce3af5bd7b0d.png)
 
-RSS Feed
+#### RSS Feed
 
 Using [feedparser](https://github.com/custom-components/feedparser) to gather data and displaying RSS feed with custom icons.
 
 ![image](https://user-images.githubusercontent.com/93126880/204553130-9de404bd-6636-4549-9709-ee061a96ac73.png)
 
+#### Radarr
 
-Popup displayed when the RSS footer is clicked.
+![image](https://user-images.githubusercontent.com/93126880/214549632-9c0178a7-8914-41b8-8e0a-03351034a9ef.png)
 
-![image](https://user-images.githubusercontent.com/93126880/187751839-4a3b5f65-8a5f-4bf8-92eb-0ff0ec3fba01.png)
 
-## Security
+
+### Security
 
 Cameras (Screenshots edited and blurred)
 
@@ -97,7 +107,7 @@ Single camera with live feed.
 ![image](https://user-images.githubusercontent.com/93126880/187852631-e04fad27-f6d2-4a45-aa56-4c44dc55c58a.png)
 
 
-## Screenshots
+### Screenshots
 
 | PC | Plex |
 | --- | --- |
@@ -107,9 +117,15 @@ Single camera with live feed.
 | --- | --- |
 | ![image](https://user-images.githubusercontent.com/93126880/187849727-56a42be2-40e4-4055-9e51-931e7264fc7c.png) | ![image](https://user-images.githubusercontent.com/93126880/187849789-7001698c-1e5d-4a31-9c44-4f53833ee6f6.png) |
 
+| Network | WiFi QR code |
+| --- | --- |
+| ![image](https://user-images.githubusercontent.com/93126880/214550581-b1b7b843-7e3d-4863-bc2b-7b4e8be99e14.png) | ![image](https://user-images.githubusercontent.com/93126880/214550628-0c0f5099-6b88-417b-bf6a-4c769ac97c33.png) |
+
+
+
 | Climate | Electrical |
 | --- | --- |
-| ![image](https://user-images.githubusercontent.com/93126880/187849936-98bba209-2aa5-4aef-9640-08688a58970e.png) | ![image](https://user-images.githubusercontent.com/93126880/187849966-bb4b5cdb-bcbb-4b33-bd05-d0225a4c0ba1.png) |
+| ![image](https://user-images.githubusercontent.com/93126880/214549825-0ee3c5ad-524d-4697-aef0-307b1e791c38.png) | ![image](https://user-images.githubusercontent.com/93126880/187849966-bb4b5cdb-bcbb-4b33-bd05-d0225a4c0ba1.png) |
 
 ## Hardware
 
