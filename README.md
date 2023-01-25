@@ -68,11 +68,9 @@ Circle slider which also shows previous value
 
 Room entities are grouped under one card.
 
+Pressing the Office button, for example, reveals all entities in that room.
+
 ![image](https://user-images.githubusercontent.com/93126880/202784390-46e0f1df-f8a6-4474-a3e9-265d5dbb2f72.png)
-
-Example: All the Office entities are displayed as a popup with new button cards.
-
-![image](https://user-images.githubusercontent.com/93126880/214548519-f42ce5fb-5ec0-4567-aca0-6aa32be3f43b.png)
 
 
 
@@ -89,6 +87,8 @@ Using [feedparser](https://github.com/custom-components/feedparser) to gather da
 ![image](https://user-images.githubusercontent.com/93126880/204553130-9de404bd-6636-4549-9709-ee061a96ac73.png)
 
 #### Radarr
+
+Upcoming releases from a Radarr calendar is displayed if there's no match in the RSS Feed.
 
 ![image](https://user-images.githubusercontent.com/93126880/214549632-9c0178a7-8914-41b8-8e0a-03351034a9ef.png)
 
