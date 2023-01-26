@@ -133,7 +133,11 @@ Single camera with live feed.
 |---|---|---|---|
 | Samsung | Galaxy Tab A7 | [custom](https://github.com/cgarwood/homeassistant-fullykiosk) | Wall-mounted tablet |
 | Ubiquiti | UniFi Dream Machine Pro | [unifi](https://www.home-assistant.io/integrations/unifi/) | Router, controller, firewall, switch |
+| Ubiquiti | Cameras | [unifiprotect](https://www.home-assistant.io/integrations/unifiprotect/) | Various UniFi cameras |
 | Synology | DiskStation RS1221+ | [synology_dsm](https://www.home-assistant.io/integrations/synology_dsm/) | 55TB NAS |
 | Electrolama | zzh CC2652R1 | [zha](https://www.home-assistant.io/integrations/zha/) | 1 ZigBee Coordinator + 1 Router |
 | Apple | TV 4K | [apple_tv](https://www.home-assistant.io/integrations/apple_tv/) | 2x set-top-boxes that streams content from Plex |
 | NVIDIA | SHIELD Pro | [androidtv](https://www.home-assistant.io/integrations/androidtv/) | 1x set-top-box that streams lossless content from Plex |
+| EcoDim | Dimmer | [ZHA](https://www.home-assistant.io/integrations/zha) | Physical in-wall ZigBee dimmer |
+| PowerView | Blinds | [powerview](https://www.home-assistant.io/integrations/hunterdouglas_powerview/) | Luxaflex motorised blinds/shades |
+| Sensibo | AC control | [sensibo](https://www.home-assistant.io/integrations/sensibo/) | Making the Airconditioner smart |
