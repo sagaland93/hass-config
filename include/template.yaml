@@ -76,7 +76,7 @@ template:
     # SENSOR - SYSTEM - BASE URL
     - unique_id: base_url
       name: 'Base URL'
-      state: 'https://saga93.me:8123'
+      state: 'https://url:8123'
 
 
     # SENSOR - SYSTEM - VERSIONS
@@ -110,34 +110,13 @@ template:
             |rejectattr('entity_id','in',state_attr('group.ignored_entities','entity_id'))
             |selectattr('state','in',['unavailable','unknown','none'])|map(attribute='entity_id')|list %}
           {% for item in entities %}
-            {% if not '.browser_' in item %}
-              {% if not 'scene.' in item %}
-                {% if states[item].last_changed < now() - timedelta(seconds=ignore_sec) %}
-                  {% set unavail.entities = unavail.entities + [item] %}
-                {% endif %}
+            {% if not 'browser_' in item and not 'scene.' in item and not 'media_player.plex_' in item %}
+              {% if states[item].last_changed < now() - timedelta(seconds=ignore_sec) %}
+                {% set unavail.entities = unavail.entities + [item] %}
               {% endif %}
             {% endif %}
           {% endfor %}
           {{ unavail.entities }}
-
-
-    # SENSOR - SYSTEM - HOME ALONE
-    - unique_id: home_alone
-      name: 'Home Alone'
-      state: >
-        {% set iam = states.person.andre.state %}
-        {% set siri = states.person.siri.state %}
-        {% if iam == 'home' and siri != 'home' %}
-          yes
-        {% else %}
-          no
-        {% endif %}
-      icon: >
-        {% if is_state("sensor.home_alone", "yes") %}
-          mdi:party-popper
-        {% else %}
-          mdi:emoticon-sad
-        {% endif %}
 
 
     # SENSOR - SYSTEM - SEASON CALCULATOR
@@ -192,7 +171,7 @@ template:
           Second Christmas day
         {% elif "01/30" in date %}
           Mamma
-        {% elif "02/13" in date %}
+        {% elif "02/12" in date %}
           Mother's day
         {% elif "02/14" in date %}
           Valentine's day
@@ -202,7 +181,7 @@ template:
           Birthday
         {% elif "09/02" in date %}
           Pappa
-        {% elif "11/13" in date %}
+        {% elif "11/12" in date %}
           Father's day
         {% else %}
           nothing
@@ -232,9 +211,10 @@ template:
       state: >
         {% set date = now().strftime('%d/%m/%Y') %}
         {% set food = states('sensor.matavfall') %}
-        {% set paper = states('sensor.papir') %}
+        {% set paper = states('sensor.papir_papp') %}
         {% set rest = states('sensor.restavfall') %}
-        {% if food in date or paper in date or rest in date %}
+        {% set glass = states('sensor.glass_og_metallemballasje') %}
+        {% if food in date or paper in date or rest in date or glass in date %}
           on
         {% else %}
           off
@@ -242,12 +222,12 @@ template:
       attributes:
         today: >
           {% set today = now().strftime('%d/%m/%Y') %}
-          {% set dates = expand('sensor.matavfall', 'sensor.papir', 'sensor.restavfall') %}
+          {% set dates = expand('sensor.matavfall', 'sensor.papir_papp', 'sensor.restavfall', 'sensor.glass_og_metallemballasje') %}
           {% set dates = dates | selectattr('state', 'search', today) | map(attribute='name') | list %}
           {{ dates or ['nothing'] }}
         tomorrow: >
           {% set tomorrow = (as_timestamp(now())+ (86400)) | timestamp_custom("%d/%m/%Y",true) %}
-          {% set dates = expand('sensor.matavfall', 'sensor.papir', 'sensor.restavfall') %}
+          {% set dates = expand('sensor.matavfall', 'sensor.papir_papp', 'sensor.restavfall', 'sensor.glass_og_metallemballasje') %}
           {% set dates = dates | selectattr('state', 'search', tomorrow) | map(attribute='name') | list %}
           {{ dates or ['nothing'] }}
       icon: mdi:calendar
@@ -511,7 +491,7 @@ template:
         {% for forecast in forecasts %}
           {%- set date = forecast.datetime | replace('T23:00:00+00:00', '') %}
           {%- if date == today %}
-            {{ forecast.templow }}
+            {{ forecast.templow | round(0) }}
           {% endif %}
         {% endfor %}
 
@@ -523,7 +503,7 @@ template:
         {% for forecast in forecasts %}
           {%- set date = forecast.datetime | replace('T23:00:00+00:00', '') %}
           {%- if date == today %}
-            {{ forecast.temperature }}
+            {{ forecast.temperature | round(0) }}
           {% endif %}
         {% endfor %}
 
@@ -578,6 +558,56 @@ template:
           {% set year = as_timestamp(today) | timestamp_custom('%Y') | int %}
           {{ year }}
 
+    # SENSOR - PAY-DAY COUNTDOWN
+    - unique_id: pay_day_countdown
+      name: 'Pay-day Countdown'
+      state: >-
+        {% set t = now() %}
+        {% set midnight = today_at() %}
+        {% set event = state_attr('calendar.pay_day', 'start_time') | as_datetime | as_local %}
+        {% set delta = event - midnight %}
+        {% set weekend = ['Saturday','Sunday'] %}
+        {% set days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+        {% set payday = days[event.weekday()] %}
+        {% if payday in weekend %}
+          {% if event.weekday() == 6 %}
+            {% set payday = delta.days | int(0) - 2 %}
+          {% else %}
+            {% set payday = delta.days | int(0) - 1 %}
+          {% endif %}
+        {% else %}
+          {% set payday = delta.days | int(0) %}
+        {% endif %}
+        {% if payday == 0 %}
+          {{ 0 | int(0) }}
+        {% else %}
+          {{ payday | int(0) }}
+        {% endif %}
+      attributes:
+        lang_countdown: >-
+          {% set state = this.state | int(0) %}
+          {% if state == 0 %}
+            Today
+          {% elif state == 1 %}
+            Tomorrow
+          {% else %}
+            In {{ state }} days
+          {% endif %}
+        day: >-
+          {% set midnight = today_at() %}
+          {% set event = state_attr('calendar.pay_day', 'start_time') | as_datetime | as_local %}
+          {% set delta = event - midnight %}
+          {% set weekend = ['Saturday','Sunday'] %}
+          {% set days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+          {% set payday = days[event.weekday()] %}
+          {% if payday in weekend %}
+            {% if event.weekday() == 6 %}
+              {% set payday = days[(event.weekday() - 2)] %}
+            {% else %}
+              {% set payday = days[(event.weekday() - 1)] %}
+            {% endif %}
+          {% endif %}
+          {{ payday }}
 
     # SENSOR - UNIFI PROTECT
     - unique_id: surveillance_cameras
@@ -593,6 +623,44 @@ template:
           error
         {% else %}
           recording
+        {% endif %}
+
+    # SENSOR - UNIFI STATUS
+    - unique_id: unifi_status
+      name: 'UniFi Status'
+      state: >
+        {% set lan = state_attr('sensor.unifi_gateway_lan', 'status') %}
+        {% set wan = state_attr('sensor.unifi_gateway_wan', 'status') %}
+        {% set wlan = state_attr('sensor.unifi_gateway_wlan', 'status') %}
+        {% set www = state_attr('sensor.unifi_gateway_www', 'status') %}
+        {% if lan == 'ok' and wan == 'ok' and wlan == 'ok' and www == 'ok' %}
+          OK
+        {% else %}
+          Attention
+        {% endif %}
+
+    # SENSOR - UNIFI ROUTER STATUS
+    - unique_id: unifi_router_status
+      name: 'UniFi Router Status'
+      state: >
+        {% set lan = state_attr('sensor.unifi_gateway_lan', 'status') %}
+        {% set wan = state_attr('sensor.unifi_gateway_wan', 'status') %}
+        {% set www = state_attr('sensor.unifi_gateway_www', 'status') %}
+        {% if lan == 'ok' and wan == 'ok' and www == 'ok' %}
+          OK
+        {% else %}
+          Attention
+        {% endif %}
+
+    # SENSOR - UNIFI AP STATUS
+    - unique_id: unifi_ap_status
+      name: 'UniFi AP Status'
+      state: >
+        {% set wlan = state_attr('sensor.unifi_gateway_wlan', 'status') %}
+        {% if wlan == 'ok' %}
+          OK
+        {% else %}
+          Attention
         {% endif %}
 
     # SENSOR - UNIFI NETWORK
@@ -612,7 +680,6 @@ template:
         {% else %}
           healthy
         {% endif %}
-
 
     # SENSOR - SYNOLOGY - RACKSTATION
     - unique_id: rs_status
@@ -703,20 +770,15 @@ template:
     - unique_id: home_occupied
       name: 'Home Occupied'
       state: >
-        {% if is_state('person.andre', 'home') %} yes
-        {% elif ((as_timestamp(now()) - as_timestamp(states.group.motion_sensors.last_changed))) | round(0) > 1800 %}
-          {% if is_state('media_player.denon_receiver', 'off') %}
-            {% if is_state('media_player.lg_tv_55', 'off') %}
-              {% if not is_state('sensor.office_pc_real_session_state', 'Active') %}
-                no
-              {% endif %}
-            {% endif %}
-          {% endif %}
-        {% else %} no
+        {% set state = 'no' %}
+        {% if is_state('person.andre', 'home') %}
+          {% set state = 'yes' %}
+        {% elif is_state('sensor.office_pc_real_session_state', 'Active') %}
+          {% set state = 'yes' %}
         {% endif %}
+        {{ state }}
       icon: >
-        {% set state = states.sensor.home_occupied.state %}
-        {% if state == 'yes' %}
+        {% if is_state('sensor.home_occupied', 'yes') %}
           mdi:home-variant
         {% else %}
           mdi:home-variant-outline
@@ -749,14 +811,37 @@ template:
           ios:hand-thumbsup-fill
         {%- endif %}
 
+    # SENSOR - BASEMENT OCCUPIED
+    - unique_id: basement_occupied
+      name: 'Basement Occupied'
+      state: >
+        {% set state = 'no' %}
+        {% if is_state('person.andre', 'home') %}
+          {% if not is_state('sensor.upstairs_occupied', 'yes') %}
+            {% if is_state('sensor.office_pc_real_session_state', 'Active') %}
+              {% set state = 'yes' %}
+            {% elif is_state('input_boolean.guest_mode', 'on') %}
+              {% set state = 'maybe' %}
+            {% endif %}
+          {% endif %}
+        {% endif %}
+        {{ state }}
+      icon: >
+        {% set state = this.state %}
+        {% if state == 'no' %}
+          ios:hand-thumbsdown-fill
+        {% else %}
+          ios:hand-thumbsup-fill
+        {%- endif %}
+
 
     # SENSOR - UPSTAIRS LUX
     - unique_id: upstairs_illuminance
       name: 'Illuminance Upstairs'
       state: >
-        {{ ((states('sensor.lumi_illuminance_plant') | int(0) + states('sensor.lumi_illuminance_kitchen') | int(0)) / 2) }}
+        {{ ((states('sensor.lumi_illuminance_plant') | int(0) + states('sensor.lumi_illuminance_hallway') | int(0) + states('sensor.lumi_illuminance_kitchen') | int(0)) / 3) | round(0) }}
       icon: >
-        {% if (this.state | int(0) <= 8) %} mdi:brightness-1
+        {% if (this.state | int(0) <= 10) %} mdi:brightness-1
         {% else %} mdi:brightness-5
         {%- endif %}
 
@@ -771,7 +856,7 @@ template:
         {% set blind = states('cover.blind_living_room') %}
         {% if lights == 'on' %} No
         {% elif day == 'on' and blind != 'closed' %} No
-        {% elif lux <= 12 and lights == 'off' %} Yes
+        {% elif lux <= 6 and lights == 'off' %} Yes
         {% elif sun == 'below_horizon' and lights == 'off' %} Yes
         {% else %} No
         {% endif %}
@@ -798,11 +883,11 @@ template:
       name: 'Living-room Active'
       state: >
         {% if not is_state('light.ecodim_dimmer_downlights_living_room', 'off') %} yes
-        {% elif states('media_player.lg_tv_77') not in ['off'] %} yes
-        {% elif states('media_player.denon_receiver') not in ['off'] %} yes
-        {% elif states('media_player.apple_tv_1') not in ['standby'] %} yes
+        {% elif states('media_player.lg_tv_77') in ['on'] %} yes
+        {% elif states('media_player.denon_receiver') in ['on'] %} yes
+        {% elif states('media_player.apple_tv_1') not in ['standby', 'off'] %} yes
         {% elif states('sensor.shield_real_state') not in ['off', 'idle'] %} yes
-        {% elif states('group.subwoofers') not in ['off'] %} yes
+        {% elif states('switch.subwoofers') in ['on'] %} yes
         {% else %} no
         {% endif %}
       icon: >
@@ -815,7 +900,7 @@ template:
     - unique_id: bedroom_active
       name: 'Bedroom Active'
       state: >
-        {% if states('media_player.apple_tv_2') not in ['standby'] %} yes
+        {% if states('media_player.apple_tv_2') not in ['standby', 'off'] %} yes
         {% elif not is_state('light.bedroom_lights', 'off') %} yes
         {% elif not is_state('media_player.lg_tv_55', 'off') %} yes
         {% elif is_state('media_player.sonos_arc', 'playing') %} yes
@@ -953,6 +1038,7 @@ template:
       state: >
         {% if is_state('input_boolean.doorbell_chime_mute', 'on') %} 
           {% if is_state('media_player.denon_receiver', 'on') and is_state('media_player.sonos_connect_living_room', 'playing') %} on
+          {% elif is_state('sensor.shield_real_state', 'playing') or is_state('media_player.apple_tv_1', 'playing') %} on          
           {% else %} off
           {% endif %}
         {% else %} off
@@ -966,24 +1052,27 @@ template:
         {% set sleep = states('sensor.home_sleep_mode') %}
         {% set mood = states('sensor.home_comfort_lighting') %}
         {% set occupied = states('sensor.home_occupied') %}
-        {% set playing = states('sensor.active_media_players') %}
+        {% set mute = states('sensor.home_mute_mode') %}
         {% set party = states('sensor.home_party_mode') %}
-        {% if occupied == 'no' %} Empty
+        {% set guest = states('input_boolean.guest_mode') %}
+        {% if occupied == 'no' %} Unoccupied
         {% elif party == 'on' %} Party
         {% elif sleep == 'on' %} Sleep
-        {% elif playing != '0' %} Mute
+        {% elif mute == 'on' %} Mute
+        {% elif guest == 'on' %} Guest
         {% elif mood == 'yes' %} Comfort
-        {% else %} Occupied
+        {% else %} Normal
         {% endif %}
       icon: >
         {% set state = states.sensor.home_mode.state %}
-        {% if this.state not in ['unknown','unavailable','none','off'] %}
-          {% if state == 'Empty' %} mdi:shield-lock
+        {% if state not in ['unknown','unavailable','none','off'] %}
+          {% if state == 'Normal' %} mdi:home
           {% elif state == 'Sleep' %} mdi:sleep
           {% elif state == 'Comfort' %} hue:scene-relax
-          {% elif state == 'party' %} mdi:liquor
+          {% elif state == 'Party' %} mdi:liquor
           {% elif state == 'Mute' %} mdi:volume-mute
-          {% elif state == 'Occupied' %} mdi:home
+          {% elif state == 'Unoccupied' %} mdi:home-outline
+          {% elif state == 'Guest' %} ios:person-2-circle-fill
           {% else %} mdi:home
           {% endif %}
         {% else %} mdi:alert-circle-outline
@@ -1049,7 +1138,7 @@ template:
             {{ media_player_id_paused }}
           {%- endif -%}
         app: >
-          {%- if this.state not in ['unavailable','undefined','unknown','none','null', '0'] %}
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null','0'] %}
             {% set players = (state_attr('sensor.active_media_players', 'active')).split(', ') %}
             {% if players[0] is defined %}
               {% if 'plex' in players[0] %}
@@ -1068,20 +1157,22 @@ template:
             {% endif %}
           {% endif %}
         media_title: >
-          {%- if this.state not in ['unavailable','undefined','unknown','none','null', '0'] %}
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null','0'] %}
             {% set players = (state_attr('sensor.active_media_players', 'active')).split(', ') %}
             {% if players[0] is defined %}
               {% if 'plex' in players[0] or state_attr('sensor.active_media_players', 'app') == 'plex' %}
-                {% if state_attr(players[0], 'media_content_type') == 'tvshow' %}
-                  {{state_attr(players[0], 'media_series_title')}} - {{state_attr(players[0], 'media_title')}}
+                {% if state_attr(players[0], 'media_content_type') == 'video' %}
+                  Next media screen
+                {% elif state_attr(players[0], 'media_content_type') == 'tvshow' %}
+                  {{state_attr(players[0], 'media_series_title')}} - S{{state_attr(players[0], 'media_season')}} · E{{state_attr(players[0], 'media_episode')}}
                 {% else %}
-                  {{state_attr(players[0], 'media_title')}}
+                  {{state_attr(players[0], 'media_title')}} 
                 {% endif %}
               {% endif %}
             {% endif %}
           {% endif %}
         media_content_type: >
-          {% if this.state not in ['unavailable','undefined','unknown','none','null', '0'] %}
+          {% if this.state not in ['unavailable','undefined','unknown','none','null','0'] %}
             {% set players = (state_attr('sensor.active_media_players', 'active')).split(', ') %}
             {% if players[0] is defined %}
               {% if 'plex' in players[0] or state_attr('sensor.active_media_players', 'app') == 'plex' %}
@@ -1092,7 +1183,7 @@ template:
             {% endif %}
           {% endif %}
         entity_picture: >
-          {%- if this.state not in ['unavailable','undefined','unknown','none','null', '0'] %}
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null','0'] %}
             {%- set players = (state_attr('sensor.active_media_players', 'active')).split(', ') %}
             {% if players[0] is defined %}
               {%- set entitypic = state_attr(players[0],'entity_picture') %}
@@ -1142,66 +1233,52 @@ template:
         {% endif %}
       attributes:
         player: >
-          {% if states.sensor.shield_real_state.state | lower not in ['unknown','unavailable','none','off'] %}
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null','off','0'] %}
             {% set app = state_attr('media_player.shield', 'app_name') %}
-            {%- if app is defined %}
-              media_player.shield
+            {% if not app is none %}
+              {% if 'plex' in app | lower %}
+                media_player.plex_plex_for_android_tv_shield_android_tv
+              {% else %}
+                media_player.shield
+              {% endif %}
+            {% else %}
+              media_player.plex_plex_for_android_tv_shield_android_tv
             {% endif %}
           {% endif %}
         app_name: >
-          {% if states.sensor.shield_real_state.state | lower not in ['unknown','unavailable','none','off'] %}
-            {% set app = states.media_player.shield.attributes.app_name %}
-            {%- if app is defined %}
-              {%- if app != '' and app not in ['unknown','unavailable','none','off'] %}
-                {{ app | lower }}
-              {% endif %}
-            {% else %}
-              plex
-            {% endif %}
-          {% endif %}
-        app_id: >
-          {% if states.sensor.shield_real_state.state | lower not in ['unknown','unavailable','none','off'] %}
-            {% set app = states.media_player.shield.attributes.app_id %}
-            {%- if app is defined %}
-              {%- if app != '' and app not in ['unknown','unavailable','none','off'] %}
-                {{ app }}
-              {% endif %}
-            {% else %}
-              plex
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null','off','0'] %}
+            {% set app = state_attr('media_player.shield','app_name') %}
+            {% set player = state_attr('sensor.shield_real_state','player') %}
+            {% if not app is none %}
+              {{ 'plex' if 'plex' in app | lower else app | lower }}
+            {% elif not player is none %}
+              {{ 'plex' if 'plex' in player | lower }}
             {% endif %}
           {% endif %}
         entity_picture: >
-          {% if states.sensor.shield_real_state.state | lower not in ['unknown','unavailable','none','off'] %}
-            {% set current_app = states.sensor.shield_real_state.attributes.app_name %}
-            {% set picture = states.media_player.plex_plex_for_android_tv_shield_android_tv.attributes.entity_picture %}
-            {%- if picture is defined %}
-              {%- if picture != '' and picture not in ['unknown','unavailable','none'] %}
-                {%- if current_app is defined and current_app == 'plex' %}
-                  {{- '/local/images/Plex_bg.png' if current_app == 'plex' else picture -}}
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null','off','0'] %}
+            {% set app = state_attr('sensor.shield_real_state','app_name') %}
+            {% if not app is none %}
+              {{ '/local/images/Plex_bg.png' if app == 'plex' }}
+            {% endif %}
+          {% endif %}
+        media_title: >
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null','off','0'] %}
+            {% set players = (state_attr('sensor.shield_real_state', 'player')).split(', ') %}
+            {% if players[0] is defined %}
+              {% if 'plex' in players[0] or state_attr('sensor.shield_real_state', 'app_name') == 'plex' %}
+                {% if state_attr(players[0], 'media_content_type') == 'video' %}
+                  Next media screen
+                {% elif state_attr(players[0], 'media_content_type') == 'tvshow' %}
+                  {{state_attr(players[0], 'media_series_title')}} - S{{state_attr(players[0], 'media_season')}} · E{{state_attr(players[0], 'media_episode')}}
+                {% else %}
+                  {{state_attr(players[0], 'media_title')}} 
                 {% endif %}
               {% endif %}
             {% endif %}
           {% endif %}
-        media_artist: >
-          {% if states.sensor.shield_real_state.state | lower not in ['unknown','unavailable','none','off'] %}
-            {% set artist = states.media_player.shield.attributes.media_artist %}
-            {%- if artist is defined %}
-              {%- if artist != '' and artist not in ['unknown','unavailable','none'] %}
-                {{ artist }}
-              {% endif %}
-            {% endif %}
-          {% endif %}
-        media_title: >
-          {% if states.sensor.shield_real_state.state | lower not in ['unknown','unavailable','none','off'] %}
-            {% set media_title = states.media_player.shield.attributes.media_title %}
-            {%- if media_title is defined %}
-              {%- if media_title != '' and media_title not in ['unknown','unavailable','none'] %}
-                {{ media_title }}
-              {% endif %}
-            {% endif %}
-          {% endif %}
         media_content_type: >
-          {% if this.state not in ['unavailable','undefined','unknown','none','null', '0'] %}
+          {% if this.state not in ['unavailable','undefined','unknown','none','null','0'] %}
             {% set app = state_attr('sensor.shield_real_state', 'app_name') %}
             {% if app is defined and app == 'plex' %}
               {% if state_attr('media_player.plex_plex_for_android_tv_shield_android_tv', 'media_content_type') %}
@@ -2018,12 +2095,12 @@ template:
         {% set session_changed = states('sensor.sagasdesktop_lastactive') %}
         {% set lock_state = states('input_boolean.computer_lock') %}
         {% set active_window_state = states('sensor.sagasdesktop_activewindow') %}
-        {% if lock_state == 'on' %} Locked
-        {% elif active_window_state == 'Windows Default Lock Screen' %} Locked
-        {% elif session == 'Locked' %} Locked
+        {% if session == 'Locked' %} Locked
         {% elif ((as_timestamp(now()) - as_timestamp(session_changed))) | round(0) < 600 %} Active
         {% elif ((as_timestamp(now()) - as_timestamp(session_changed))) | round(0) > 600 %} Idle
         {% elif session == 'Unlocked' %} Unlocked
+        {% elif active_window_state == 'Windows Default Lock Screen' %} Locked
+        {% elif lock_state == 'on' %} Locked
         {% else %} Locked
         {% endif %}
       icon: >
