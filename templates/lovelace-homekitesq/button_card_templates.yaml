@@ -2837,9 +2837,16 @@
             ]]]
         - color: >
             [[[
-              return entity === undefined
-                  ? '#97989c'
-                  : '#efefef';
+              if (entity.state === "Active") {
+                return entity === undefined
+                    ? '#97989c'
+                    : 'rgba(239, 239, 239, 0.5)';
+              }
+              else {
+                return entity === undefined
+                    ? '#97989c'
+                    : '#efefef';
+              }
             ]]]
         - text-shadow: >
             [[[
