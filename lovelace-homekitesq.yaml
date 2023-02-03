@@ -120,7 +120,7 @@ views:
                 entity_id: automation.house_house_empty
             double_tap_action:
               action: call-service
-              service: script.home_leave
+              service: script.home_turn_lights_off
             hold_action:
               action: call-service
               service: script.home_leave
@@ -137,8 +137,11 @@ views:
           - type: custom:button-card
             entity: sensor.home_mode
             name: Mode
-            hold_action:
-              action: none
+            tap_action:
+              action: call-service
+              service: input_boolean.toggle
+              service_data:
+                entity_id: input_boolean.guest_mode
             template:
               - base
               - icon_home
@@ -175,8 +178,8 @@ views:
             entity: sensor.doors_state
             template:
               - doors
-              - circle_state
               - loader
+              - circle_state
               - icon_lock
             tap_action:
               !include popup/doors.yaml
@@ -236,15 +239,8 @@ views:
               - binary_sensor.kaiteki_6600_filter_clean_required
             template:
               - base
-              - climate_ac
+              - climate
               - icon_climate
-            variables:
-              circle_input: >
-                [[[
-                  if (states['sensor.temperature_average_upstairs'].state) {
-                    return (states['sensor.temperature_average_upstairs'].state);
-                  }
-                ]]]
 
           - type: custom:button-card
             entity: cover.blind_living_room
@@ -252,7 +248,6 @@ views:
             template:
               - blinds
               - icon_blinds
-              #- loader
 
           - type: custom:button-card
             entity: weather.pirateweather
@@ -265,6 +260,7 @@ views:
             variables:
               temp_min: sensor.weather_min_temp
               temp_max: sensor.weather_max_temp
+              current_weather: sensor.pirateweather_hourly_summary
 
           - type: custom:button-card
             entity: light.ecodim_dimmer_downlights_bathroom
@@ -296,48 +292,41 @@ views:
             template:
               - room_group
               - icon_entrance
+            variables:
+              light_entity: light.ecodim_dimmer_downlights_entrance
 
           - type: custom:button-card
             entity: light.hallway_lights
             name: Hallway
             tap_action:
               !include popup/hallway.yaml
-            hold_action:
-              action: call-service
-              service: light.toggle
-              service_data:
-                entity_id: light.all_hallway_lights
             template:
               - room_group
               - icon_hallway
+            variables:
+              light_entity: light.all_hallway_lights
 
           - type: custom:button-card
             entity: sensor.living_room_active
             name: Living
             tap_action:
               !include popup/living_room.yaml
-            hold_action:
-              action: call-service
-              service: light.toggle
-              service_data:
-                entity_id: light.ecodim_dimmer_downlights_living_room
             template:
               - room_group
               - icon_sofa
+            variables:
+              light_entity: light.ecodim_dimmer_downlights_living_room
 
           - type: custom:button-card
             entity: sensor.dining_room_active
             name: Dining
             tap_action:
               !include popup/dining_room.yaml
-            hold_action:
-              action: call-service
-              service: light.toggle
-              service_data:
-                entity_id: light.dining_room_lights
             template:
               - room_group
               - icon_dining
+            variables:
+              light_entity: light.dining_room_lights
 
 
       #################################################
@@ -357,57 +346,44 @@ views:
             name: Bathroom
             tap_action:
               !include popup/bathroom.yaml
-            hold_action:
-              action: call-service
-              service: light.toggle
-              service_data:
-                entity_id: light.ecodim_dimmer_downlights_bathroom
             template:
               - room_group
               - icon_colgate
+            variables:
+              light_entity: light.ecodim_dimmer_downlights_bathroom
 
           - type: custom:button-card
             entity: light.kitchen_lights
             name: Kitchen
             tap_action:
               !include popup/kitchen.yaml
-            hold_action:
-              action: call-service
-              service: light.toggle
-              service_data:
-                entity_id: light.kitchen_lights
             template:
               - room_group
               - icon_kitchen
+            variables:
+              light_entity: light.kitchen_lights
 
           - type: custom:button-card
             entity: sensor.bedroom_active
             name: Bedroom
             tap_action:
               !include popup/bedroom.yaml
-            hold_action:
-              action: call-service
-              service: light.toggle
-              service_data:
-                entity_id: light.bedroom_lights
             template:
               - room_group
               - icon_bed
+            variables:
+              light_entity: light.bedroom_lights
 
           - type: custom:button-card
             entity: sensor.office_active
             name: Office
             tap_action:
-              #action: none
               !include popup/office.yaml
-            hold_action:
-              action: call-service
-              service: light.toggle
-              service_data:
-                entity_id: light.office_lights
             template:
               - room_group
               - icon_office
+            variables:
+              light_entity: light.office_lights
 
 
 
@@ -437,6 +413,8 @@ views:
                   - type: conditional
                     conditions:
                       - entity: select.conditional_media
+                        state_not: Recently Added (Offline)
+                      - entity: select.conditional_media
                         state_not: Apple TV 1
                       - entity: select.conditional_media
                         state_not: Apple TV 2
@@ -452,7 +430,25 @@ views:
                       template:
                         - conditional_media
                         - icon_plex
+                      tap_action:
+                        !include popup/footer/rss.yaml
 
+                    # RECENTLY ADDED (BACKUP)
+                  - type: conditional
+                    conditions:
+                      - entity: select.conditional_media
+                        state: Recently Added (Offline)
+                    card:
+                      type: custom:button-card
+                      entity: sensor.recently_added_offline
+                      name: Recently Added (Offline)
+                      template:
+                        - conditional_media
+                        - icon_plex
+                      tap_action:
+                        !include popup/footer/rss.yaml
+
+                    # ATV 1
                   - type: conditional
                     conditions:
                       - entity: select.conditional_media
@@ -462,14 +458,16 @@ views:
                       entity: media_player.apple_tv_1
                       template:
                         - conditional_media
-                        - icon_apple_tv
                         - media_volume
+                        - progress_bar
+                        - icon_apple_tv
                       variables:
                         entity_picture: sensor.active_media_players
                         volume_control: media_player.denon_receiver
                       triggers_update:
                         - sensor.active_media_players
 
+                    # ATV 2
                   - type: conditional
                     conditions:
                       - entity: select.conditional_media
@@ -479,14 +477,16 @@ views:
                       entity: media_player.apple_tv_2
                       template:
                         - conditional_media
-                        - icon_apple_tv
                         - media_volume
+                        - progress_bar
+                        - icon_apple_tv
                       variables:
                         entity_picture: sensor.active_media_players
                         volume_control: media_player.sonos_arc
                       triggers_update:
                         - sensor.active_media_players
 
+                    # SONOS
                   - type: conditional
                     conditions:
                       - entity: select.conditional_media
@@ -496,8 +496,12 @@ views:
                       entity: media_player.sonos_connect_living_room
                       template:
                         - conditional_media
+                        - media_volume
                         - icon_sonos
+                      variables:
+                        volume_control: media_player.denon_receiver
 
+                    # SHIELD
                   - type: conditional
                     conditions:
                       - entity: select.conditional_media
@@ -507,15 +511,17 @@ views:
                       entity: sensor.shield_real_state
                       template:
                         - conditional_media
-                        - icon_nvidia_shield
                         - media_volume
+                        - progress_bar
+                        - icon_nvidia_shield
                       variables:
-                        player: '[[[ return entity.attributes.player; ]]]'
+                        player: '[[[ return states[entity.entity_id].attributes.player; ]]]'
                         entity_picture: sensor.active_media_players
                         volume_control: media_player.denon_receiver
                       triggers_update:
                         - sensor.active_media_players
 
+                    # DESKTOP
                   - type: conditional
                     conditions:
                       - entity: select.conditional_media
@@ -541,9 +547,9 @@ views:
                     name: ATV 1
                     template:
                       - media
-                      - icon_apple_tv
                       - atv
                       - media_volume
+                      - icon_apple_tv
                     variables:
                       player: '[[[ return states["sensor.active_media_players"].attributes.active; ]]]'
                       volume_control: media_player.denon_receiver
@@ -553,9 +559,9 @@ views:
                     name: ATV 2
                     template:
                       - media
-                      - icon_apple_tv
                       - atv
                       - media_volume
+                      - icon_apple_tv
                     variables:
                       volume_control: media_player.apple_tv_2
 
@@ -564,8 +570,8 @@ views:
                     name: SONOS
                     template:
                       - sonos
-                      - icon_sonos
                       - media_volume
+                      - icon_sonos
                     variables:
                       volume_control: media_player.denon_receiver
 
@@ -574,8 +580,8 @@ views:
                     name: SHIELD
                     template:
                       - media
-                      - icon_nvidia_shield
                       - media_volume
+                      - icon_nvidia_shield
                     variables:
                       player: '[[[ return states["sensor.active_media_players"].attributes.active; ]]]'
                       volume_control: media_player.denon_receiver
@@ -699,7 +705,7 @@ views:
 
       #################################################
       #                                               #
-      #                   OUTSIDE                     #
+      #                   SECTIONS                    #
       #                                               #
       #################################################
 
@@ -718,14 +724,18 @@ views:
               - icon_tree
 
           - type: custom:button-card
-            entity: light.ecodim_dimmer_downlights_entrance
+            entity: light.lights_upstairs
             name: Upstairs
             template:
-              - base
+              - room_group
               - icon_stairs_up
+            tap_action:
+              !include popup/upstairs.yaml
+            variables:
+              light_entity: light.lights_upstairs
 
           - type: custom:button-card
-            entity: light.ecodim_dimmer_downlights_entrance
+            entity: cover.garage_door
             name: Garage
             template:
               - base
@@ -739,12 +749,11 @@ views:
               service_data:
                 entity_id: cover.garage_door
 
-
           - type: custom:button-card
-            entity: light.ecodim_dimmer_downlights_entrance
+            entity: light.ecodim_dimmer_ceiling_downstairs
             name: Basement
             template:
-              - base
+              - room_group
               - icon_stairs_down
 
 
@@ -838,6 +847,8 @@ views:
               <ha-icon icon="custom:eth-jack"></ha-icon> Network
             tap_action:
               !include popup/footer/network.yaml
+            double_tap_action:
+              !include popup/footer/network_wifi_qr.yaml
             variables:
               notify: >
                 [[[
