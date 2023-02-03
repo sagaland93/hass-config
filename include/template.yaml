@@ -7,6 +7,7 @@ template:
     - name: conditional_media
       state: >
         {% set recently_added = 'Recently Added' %}
+        {% set recently_added_backup = 'Recently Added (Offline)' %}
         {% set paused_timeout_minutes = 15 %}
         {% set media_players = [
           states.media_player.apple_tv_1,
@@ -19,6 +20,8 @@ template:
         {% set last_changed = recently_added if state | length == 0 else state | map(attribute='last_changed') | list | max %}
           {{ state | selectattr('last_changed','eq', last_changed) | map(attribute='name') | list | join }}
         {% endmacro %}
+
+        {% set recently_added = recently_added_backup if is_state('sensor.recently_added_offline','Active') else recently_added %}
 
         {% set playing = media_players | selectattr('state','eq','playing') | list %}
         {% set timeout_playing = False if playing | length == 0 else
@@ -37,12 +40,13 @@ template:
         {% endif %}
       options: >
         {% set recently_added = ['Recently Added'] %}
+        {% set recently_added_backup = ['Recently Added (Offline)'] %}
         {% set media_players = [
           states.media_player.apple_tv_1,
           states.media_player.apple_tv_2,
           states.sensor.shield_real_state,
           states.media_player.plex_plex_for_windows_sagasdesktop ] %}
-        {{ recently_added + media_players | map(attribute='name') | list }}
+        {{ recently_added + recently_added_backup + media_players | map(attribute='name') | list }}
       select_option:
         service: select.select_option
         target:
@@ -1321,6 +1325,49 @@ template:
             states.binary_sensor.contact_sensor_terrace_door,
             states.cover.garage_door ] %}
           {{ doors | selectattr('state', 'in', ['open','opening','closing','on','unlocked']) | map(attribute='name') | list | replace(' door', '') }}
+
+
+    # SENSOR - PLEX RECENTLY ADDED (BACKUP)
+    - unique_id: recently_added_backup
+      name: 'Recently Added (Offline)'
+      state: >
+        {% if not is_state('sensor.recently_added_mix', 'Online') %}
+          Active
+        {% else %}
+          Passive
+        {# Waiting for 'Recently Added' to fail #}
+        {% endif %}
+      attributes:
+        data: >
+          {% if this.state not in ['unavailable','undefined','unknown','none','null','0'] %}
+            {% set data = states('input_text.backup_plex_recently_added') %}
+            {% set return = namespace(state=[]) %}
+            {% set items = data.split("|") %}
+            {% for item in items %}
+              {% set object = item.split(":") %}
+              {% set return.state = return.state + [{object[0]:object[1]}] %}
+            {% endfor %}
+            {{ return.state }}
+          {% endif %}
+        title: >
+          {% if this.state not in ['unavailable','undefined','unknown','none','null','0'] %}
+            {% set data = this.attributes.data %}
+            {% set year = data[0].aired.split('-')[0] %}
+            {% set title = data[1].title + ' (' + year + ')' %}
+            {{ title }}
+          {% endif %}
+        poster: >
+          {% if this.state not in ['unavailable','undefined','unknown','none','null','0'] %}
+            {% set data = this.attributes.data %}
+            {% set poster = data[3].poster %}
+            {{ poster }}
+          {% endif %}
+        fanart: >
+          {% if this.state not in ['unavailable','undefined','unknown','none','null','0'] %}
+            {% set data = this.attributes.data %}
+            {% set poster = data[2].fanart %}
+            {{ poster }}
+          {% endif %}
 
 
     # SENSOR - RSS - Movies
