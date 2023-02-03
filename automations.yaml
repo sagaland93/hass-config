@@ -1,0 +1,31 @@
+- id: '1675415708652'
+  alias: System - Plex Recently Added
+  description: Sensor attribute backup
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.recently_added_mix
+    to: Online
+  condition:
+  - condition: template
+    value_template: '{{ trigger.to_state.state not in [trigger.from_state.state, ''cannot
+      be reached'', ''unavailable'', ''undefined'',''unknown'',''none'',''null'']
+      }}'
+  action:
+  - service: input_text.set_value
+    data:
+      value: "{% if not states('sensor.recently_added_mix') in ['unavailable','undefined','unknown','none','null','0']
+        %}\n  {% set state = namespace(return='') %}\n  {% set data = state_attr('sensor.recently_added_mix','data')
+        %}\n  {%- for value in data %}\n    {%- if not loop.first and value is defined
+        and state.return == '' %}\n      {%- if not value.number is defined %}\n        {%
+        set state.return = \n          \"aired:\" + value.aired + \"|\" +\n          \"title:\"
+        + value.title  + \"|\" +\n          \"fanart:\" + value.fanart + \"|\" +\n
+        \         \"poster:\" + value.poster\n        %}\n      {%- else %}\n        {%
+        set state.return = \n          \"aired:\" + value.aired + \"|\" +\n          \"title:\"
+        + value.title  + \"|\" +\n          \"number:\" + value.number  + \"|\" +\n
+        \         \"fanart:\" + value.fanart + \"|\" +\n          \"poster:\" + value.poster\n
+        \       %}\n      {%- endif %}\n    {%- endif %}\n  {%- endfor %}\n  {{ state.return
+        }}\n{% endif %}"
+    target:
+      entity_id: input_text.backup_plex_recently_added
+  mode: single
