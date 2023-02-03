@@ -284,6 +284,64 @@
             }
           `:''}
 
+          ${this._config.template.includes('scene') ? `
+            :host {
+              --name-font-size: 1vw;
+              --name-icon-size: 1.2vw;
+              --name-padding-v: 0.4vw;
+              --name-padding-h: 0.8vw;
+              --card-border-radius: 0.6vw;
+            }
+            #ripple, .js-tilt-glare {
+              border-radius: calc(var(--card-border-radius) - 0.1vw);
+              clip-path: inset(0 round calc( var(--custom-button-card-border-radius) - 0.1vw ));
+            }
+            #name {
+              font-size: var(--name-font-size);
+              padding: var(--name-padding-v) var(--name-padding-h);
+              letter-spacing: 0.012vw;
+            }
+            ha-icon {
+              width: var(--name-icon-size);
+              vertical-align: 7%;
+              opacity: 0.4;
+            }
+            #card {
+              border-radius: var(--card-border-radius);
+              background: rgba(115, 115, 115, 0.04);
+            }
+            /* portrait */
+            @media screen and (max-width: 1200px) {
+              #name {
+                font-size: calc(var(--name-font-size) * 1.4);
+                padding: calc(var(--name-padding-v) * 1.4) calc(var(--name-padding-h) * 1.4);
+              }
+              ha-icon {
+                width: calc(var(--name-icon-size) * 1.4);
+              }
+              #card {
+                border-radius: calc(var(--card-border-radius) * 1.4);
+                margin: 0 0.5vw;
+              }
+            }
+            /* phone */
+            @media screen and (max-width: 800px) {
+              #name {
+                font-size: calc(var(--name-font-size) * 2.7);
+                padding: calc(var(--name-padding-v) * 2.7) calc(var(--name-padding-h) * 2.7);
+                letter-spacing: 0.12vw;
+              }
+              ha-icon {
+                width: calc(var(--name-icon-size) * 2.7);
+              }
+              #card {
+                border-radius: calc(var(--card-border-radius) * 2.7);
+                background: rgba(115, 115, 115, 0.08);
+                margin: 0 0.5vw;
+              }
+            }
+          `:''}
+
           ${this._config.template.includes('footer') ? `
             :host {
               --name-font-size: 1vw;
@@ -365,8 +423,6 @@
               }
             }
           `:''}
-
-
         `
       ]]]
 
@@ -466,6 +522,38 @@
           padding: 0 0 0 1vw;
         }
       }
+
+
+  #################################################
+  #                                               #
+  #                     SCENE                     #
+  #                                               #
+  #################################################
+
+  scene:
+    template:
+      - settings
+      - tilt
+      - extra_styles
+    variables:
+      tilt_options: >
+        [[[ return { max: 5, scale: 1.1, glare: true, 'max-glare': 0.07, perspective: 1000, speed: 800, parallax: '10px' }; ]]]
+    show_icon: false
+    size: 2vw
+    color: '#9da0a2'
+    styles:
+      card:
+        - color: rgba(157,160,162, 0.55)
+        - border: 0.12vw solid rgba(58, 69, 73, 0.2)
+        - transition: none
+        - padding: 0.37em 0.37em
+        - margin-top: -0.2vw
+        - overflow: visible
+        - --mdc-ripple-color: rgba(0, 0, 0, 0.8)
+    hold_action:
+      action: none
+    tap_action:
+      haptic: medium
 
 
   #################################################
@@ -813,7 +901,7 @@
             </div>
           `;
 
-        } else if (states[variables.radarr].state !== 'unavailable' && states[variables.radarr].state !== '' ) {
+        } else if (states[variables.radarr].state !== 'unavailable' && states[variables.radarr].state !== '' && states[variables.movie_downloaded].state !== 'Yes' ) {
           var entity = states[variables.radarr].attributes,
             movie = entity.titles[0],
             year = entity.year,
@@ -1150,6 +1238,7 @@
                           transform-origin: 50% 50%;
                           stroke-dasharray: ${c};
                           stroke-linecap: round;
+                          stroke: ${state ? '#9da0a2' : 'rgba(255,255,255,0.1)'};
                           fill: ${state ? 'var(--c-fill-color-on)' : 'var(--c-fill-color-off)'};
                         }
                         text {
@@ -1166,10 +1255,20 @@
                           dominant-baseline: central;
                         }
                       </style>
-                      <circle id="circle_stroke_bg" cx="25" cy="25" r="${r}" opacity="0.7" stroke-width="var(--c-stroke-width)" stroke="#9da0a2"/>
+                      <circle id="circle_stroke_bg" cx="25" cy="25" r="${r}" opacity="0.7" stroke-width="var(--c-stroke-width)"/>
                       <text id="circle_value" x="50%" y="52%" text-anchor="middle" alignment-baseline="middle" dominant-baseline="middle">${input}${tspan}${unit}</tspan></text>
                     </svg>
                   `;
+              }
+
+            /* * * * * * * * * * * * * * * * * *
+              *                                 *
+              *              COVER              *
+              *                                 *
+              * * * * * * * * * * * * * * * * * */
+
+              else if (domain === 'cover' && state) {
+                  return circle(state, input, unit);
               }
 
             /* * * * * * * * * * * * * * * * * *
@@ -1200,15 +1299,36 @@
       loader: >
         [[[
           if (entity) {
-            let elt = this.shadowRoot,
-              loader = (id, style, timeout) => {
-                elt.getElementById(id) && (elt.getElementById(id).style.display = style,
-                  window.setTimeout(() => {
-                    elt.getElementById('loader').style.display = 'none'
-                  }, 20000))
-              };
-            loader('circle', 'none', 'initial'),
-            loader('loader', 'initial', 'none');
+            var domain = entity.entity_id.split('.')[0];
+            if (domain === 'light' || domain === 'lock') {
+              let elt = this.shadowRoot,
+                loader = (id, style, timeout) => {
+                  elt.getElementById(id) && (elt.getElementById(id).style.display = style,
+                    window.setTimeout(() => {
+                      elt.getElementById('loader').style.display = 'none'
+                    }, 20000))
+                };
+              loader('circle', 'none', 'initial'),
+              loader('loader', 'initial', 'none');
+            }
+          }
+        ]]]
+    double_tap_action:
+      loader: >
+        [[[
+          if (entity) {
+            var domain = entity.entity_id.split('.')[0];
+            if (domain === 'cover') {
+              let elt = this.shadowRoot,
+                loader = (id, style, timeout) => {
+                  elt.getElementById(id) && (elt.getElementById(id).style.display = style,
+                    window.setTimeout(() => {
+                      elt.getElementById('loader').style.display = 'none'
+                    }, 20000))
+                };
+              loader('circle', 'none', 'initial'),
+              loader('loader', 'initial', 'none');
+            }
           }
         ]]]
     styles:
@@ -1221,7 +1341,13 @@
           - position: absolute
           - opacity: 0.5
           - filter: >
-              [[[ return variables.state === 'off' ? 'invert(1)' : 'none'; ]]]
+              [[[
+                return variables.state_on
+                    ? 'none'
+                    : 'invert(1)';
+              ]]]
+          #- filter: >
+          #    [[[ return variables.state === 'off' ? 'invert(1)' : 'none'; ]]]
 
 
   #################################################
@@ -1607,6 +1733,17 @@
             ]]]
           style: >
             --popup-background-color: transparent;
+          card_mod:
+            style:
+              .: |
+                ha-header-bar {
+                  display: none !important;
+                }
+                @media screen and (max-width: 800px) {
+                  ha-header-bar {
+                    display: block !important;
+                  }
+                }
           content:
             type: custom:mod-card
             card_mod:
@@ -1755,16 +1892,27 @@
             return pos;
           }
         ]]]
+      circle_input_unit: '%'
     tap_action:
       action: fire-dom-event
       browser_mod:
         service: browser_mod.popup
         data:
-          #timeout: 120000
           title: >
             [[[ return entity.attributes.friendly_name; ]]]
           style: >
             --popup-background-color: transparent;
+          card_mod:
+            style:
+              .: |
+                ha-header-bar {
+                  display: none !important;
+                }
+                @media screen and (max-width: 800px) {
+                  ha-header-bar {
+                    display: block !important;
+                  }
+                }
           content:
             type: custom:mod-card
             card:
@@ -2244,9 +2392,9 @@
   base_media:
     variables:
       media_on: >
-        [[[ return !entity || ['playing', 'paused'].indexOf(entity.state) !== -1; ]]]
+        [[[ return !entity || ['on', 'playing', 'paused', 'idle'].indexOf(entity.state) !== -1; ]]]
       media_off: >
-        [[[ return !entity || ['off', 'idle', 'standby', 'unknown', 'unavailable'].indexOf(entity.state) !== -1; ]]]
+        [[[ return !entity || ['off', 'standby', 'unknown', 'unavailable'].indexOf(entity.state) !== -1; ]]]
     tap_action:
       action: call-service
       service: >
@@ -2423,7 +2571,7 @@
   media_volume:
     variables:
       media_on: >
-        [[[ return !entity || ['playing', 'paused', 'idle'].indexOf(entity.state) !== -1; ]]]
+        [[[ return !entity || ['on', 'playing', 'paused', 'idle'].indexOf(entity.state) !== -1; ]]]
       media_off: >
         [[[ return !entity || ['off', 'standby', 'unknown', 'unavailable'].indexOf(entity.state) !== -1; ]]]
       volume_control: '[[[ return entity.entity_id; ]]]'
@@ -2439,7 +2587,7 @@
         [[[
           return variables.media_on
               ? 'none'
-              : 'media_player.toggle';
+              : 'media_player.turn_on';
         ]]]
       service_data:
         entity_id: >
@@ -2489,7 +2637,77 @@
                     entity_id: '[[[ return variables.player; ]]]'
                   #name: next
                   icon: mdi:skip-next
-              
+
+
+  #################################################
+  #                                               #
+  #                 PROGRESS BAR                  #
+  #                                               #
+  #################################################
+
+  progress_bar:
+    styles:
+      custom_fields:
+        progress:
+          - background-color: var(--progress-bar-background-color)
+          - position: absolute
+          - left: 0%
+          - top: 73.4%
+          - height: var(--progress-bar-height)
+          - width: 100%
+        bar:
+          - background-color: var(--progress-bar-color)
+          - position: absolute
+          - left: 0%
+          - top: 73.4%
+          - height: var(--progress-bar-height)
+          - z-index: 1
+    custom_fields:
+      bar: >
+        [[[
+          if (entity.attributes.media_position !== undefined) {
+          setTimeout(() => {
+            let elt = this.shadowRoot,
+                card = elt.getElementById('card'),
+                container = elt.getElementById('container'),
+                bar = elt.getElementById('bar');
+          
+            if (elt && card && container && bar) {
+                card.insertBefore(bar, container);
+                  function update() {
+                      let mediaPositionUpdatedAt = entity.attributes.media_position_updated_at;
+                      let mediaPosition = entity.attributes.media_position;
+                      let mediaDuration = entity.attributes.media_duration;
+                  
+                      let percentage = entity.state === 'playing'
+                        ? (((Date.now() / 1000) - (new Date(mediaPositionUpdatedAt).getTime() / 1000) + mediaPosition) / mediaDuration * 100)
+                        : entity.state === 'paused'
+                          ? (mediaPosition / mediaDuration * 100)
+                          : 0;
+          
+                      bar.style.width = percentage.toFixed(1) + '%';
+                      requestAnimationFrame(update);
+                  }
+                  requestAnimationFrame(update);
+            }
+          }, 0);
+          return ' ';}
+        ]]]
+      progress: >
+        [[[
+          if (entity.attributes.media_position !== undefined) {
+          setTimeout(() => {
+              let elt = this.shadowRoot,
+                  card = elt.getElementById('card'),
+                  container = elt.getElementById('container'),
+                  progress = elt.getElementById('progress');
+              if (elt && card && container && progress) {
+                  card.insertBefore(progress, container);
+              }
+            }, 0);
+          return ' ';}
+        ]]]
+        
 
   #################################################
   #                                               #
@@ -2530,23 +2748,33 @@
           let elt = this.shadowRoot,
               await = setTimeout(marquee, 100),
               data = entity.attributes.data,
-              artist = entity.attributes.media_artist,
-              title = entity.attributes.media_title;
-            if (data !== undefined) {
-                var number = data[variables.i].number === undefined && data[variables.i].aired !== undefined
-                    ? `(${data[variables.i].aired.split("-")[0]})`
-                    : data[variables.i].number === undefined && data[variables.i].aired === undefined
-                        ? ' '
-                        : data[variables.i].number,
-                output = `${data[variables.i].title} ${number}`;
+              title = entity.attributes.title,
+              poster = entity.attributes.poster,
+              fanart = entity.attributes.fanart,
+              s_e = entity.attributes.number,
+              media_artist = entity.attributes.media_artist,
+              media_title = entity.attributes.media_title;
+            if (entity.state === "Active") {
+              var number = s_e === undefined && title !== undefined
+                  ? ' '
+                  : '· ' + s_e,
+              output = `${title} ${number}`;
+            }
+            else if (data !== undefined) {
+              var number = data[variables.i].number === undefined && data[variables.i].aired !== undefined
+                  ? `(${data[variables.i].aired.split("-")[0]})`
+                  : data[variables.i].number === undefined && data[variables.i].aired === undefined
+                      ? ' '
+                      : '· ' + data[variables.i].number,
+              output = `${data[variables.i].title} ${number}`;
             } else {
-                var output = artist === undefined && title !== undefined
-                    ? title
-                    : title === undefined && artist !== undefined
-                        ? artist
-                        : title !== undefined && artist !== undefined
-                            ? `${artist} - ${title}`
-                            : variables.translate_idle;
+              var output = media_artist === undefined && media_title !== undefined
+                  ? media_title
+                  : media_title === undefined && media_artist !== undefined
+                      ? media_artist
+                      : media_title !== undefined && media_artist !== undefined
+                          ? `${media_artist} - ${media_title}`
+                          : variables.translate_idle;
             }
 
             function marquee() {
@@ -2595,9 +2823,16 @@
         - background-image: &media_background_image >
             [[[
               if (entity) {
-                return entity.attributes.data !== undefined
-                  ? `url("${entity.attributes.data[variables.i].fanart}"), url("${entity.attributes.data[variables.i].poster}")`
-                  : `url("${states[variables.entity_picture].attributes.entity_picture}")`;
+                if (entity.state === "Active") {
+                  return entity.attributes.data !== undefined
+                    ? `url("${entity.attributes.fanart}"), url("${entity.attributes.poster}")`
+                    : `url("${states[variables.entity_picture].attributes.entity_picture}")`;
+                }
+                else {
+                  return entity.attributes.data !== undefined
+                    ? `url("${entity.attributes.data[variables.i].fanart}"), url("${entity.attributes.data[variables.i].poster}")`
+                    : `url("${states[variables.entity_picture].attributes.entity_picture}")`;
+                }
               }
             ]]]
         - color: >
@@ -3087,26 +3322,15 @@
         icon:
           - width: 90%
           - margin-top: -15%
-          #- margin-left: -1%
+          - fill: >
+              [[[
+                return variables.state === 'on' ? '#2a2a2a' : '#9da0a2';
+              ]]]
     custom_fields:
       icon: >
-        [[[
-          return variables.state === 'on' ? `
-            <svg viewBox="0 0 50 50">
-              <path id="front" fill="black" d="M2.1582 17.7246V26.9844V36.2422H3.42969H4.70117V36.5273C4.70117 36.7773 4.71712 36.8232 4.82812 36.9102L4.82617 36.9121C4.95117 37.0091 4.99719 37.0117 7.49219 37.0117H10.0293L10.1484 36.8926C10.2454 36.7956 10.2656 36.7278 10.2656 36.5098V36.2422H24.9922H39.7207V36.5098C39.7207 36.7288 39.7428 36.7956 39.8398 36.8926L39.957 37.0117H42.5039H45.0508L45.1699 36.8926C45.2669 36.7956 45.2871 36.7278 45.2871 36.5098V36.2422H46.5586H47.8281V26.9844V17.7246H24.9941H2.1582ZM33.1816 20.3711C33.8161 20.3706 34.3306 20.8851 34.3301 21.5195C34.3306 22.154 33.8161 22.6685 33.1816 22.668C32.5479 22.6674 32.0346 22.1532 32.0352 21.5195C32.0346 20.8858 32.5479 20.3717 33.1816 20.3711ZM24.9688 21.0352C25.7626 21.0351 26.5487 21.1914 27.2821 21.4952C28.0155 21.7989 28.682 22.2442 29.2433 22.8055C29.8046 23.3669 30.2499 24.0333 30.5537 24.7667C30.8574 25.5001 31.0137 26.2862 31.0137 27.0801C31.0137 27.8739 30.8574 28.66 30.5537 29.3934C30.2499 30.1269 29.8046 30.7933 29.2433 31.3546C28.682 31.916 28.0155 32.3612 27.2821 32.665C26.5487 32.9687 25.7626 33.1251 24.9688 33.125C23.3658 33.1246 21.8287 32.4875 20.6955 31.3539C19.5622 30.2203 18.9257 28.683 18.9258 27.0801C18.9257 25.4772 19.5622 23.9398 20.6955 22.8062C21.8287 21.6726 23.3658 21.0356 24.9688 21.0352V21.0352ZM7.27539 25.3633C8.19892 25.3628 8.9477 26.1116 8.94727 27.0352C8.9477 27.9587 8.19892 28.7075 7.27539 28.707C6.35262 28.7064 5.60503 27.9579 5.60547 27.0352C5.60503 26.1124 6.35262 25.3639 7.27539 25.3633ZM42.127 25.6172C42.3428 25.6176 42.5587 25.655 42.7227 25.7285C43.041 25.888 43.3031 26.1429 43.4707 26.457C43.6307 26.764 43.6305 27.3899 43.4727 27.7109C43.3277 28.0059 43.0794 28.2532 42.7754 28.4082V28.4062C42.406 28.5697 41.9901 28.5987 41.6016 28.4883C41.2451 28.3206 40.9535 28.0407 40.7715 27.6914C40.6165 27.3404 40.6175 26.8187 40.7715 26.4688C40.9338 26.1424 41.2009 25.8806 41.5312 25.7266C41.6947 25.6536 41.9111 25.6168 42.127 25.6172ZM33.1406 31.8047C33.7479 31.8046 34.2403 32.297 34.2402 32.9043C34.2403 33.5116 33.7479 34.0039 33.1406 34.0039C32.5333 34.0039 32.041 33.5116 32.041 32.9043C32.041 32.297 32.5333 31.8046 33.1406 31.8047Z"/>
-              <g id="dials">
-                <path id="path964" d="M8.39551 27.0353C8.39551 27.3322 8.27758 27.6169 8.06765 27.8268C7.85772 28.0367 7.57299 28.1547 7.27611 28.1547C6.97923 28.1547 6.6945 28.0367 6.48457 27.8268C6.27464 27.6169 6.15671 27.3322 6.15671 27.0353C6.15671 26.7384 6.27464 26.4537 6.48457 26.2437C6.6945 26.0338 6.97923 25.9159 7.27611 25.9159C7.57299 25.9159 7.85772 26.0338 8.06765 26.2437C8.27758 26.4537 8.39551 26.7384 8.39551 27.0353V27.0353Z" fill="black"/>
-                <path id="path964-1" d="M33.8503 21.5195C33.8503 21.6966 33.78 21.8665 33.6548 21.9917C33.5295 22.117 33.3597 22.1873 33.1826 22.1873C33.0054 22.1873 32.8356 22.117 32.7104 21.9917C32.5851 21.8665 32.5148 21.6966 32.5148 21.5195C32.5148 21.3424 32.5851 21.1726 32.7104 21.0473C32.8356 20.9221 33.0054 20.8517 33.1826 20.8517C33.2703 20.8517 33.3571 20.869 33.4381 20.9026C33.5191 20.9361 33.5927 20.9853 33.6548 21.0473C33.7168 21.1093 33.7659 21.183 33.7995 21.264C33.8331 21.345 33.8503 21.4318 33.8503 21.5195Z" fill="black"/>
-                <path id="path964-1-5" d="M33.8089 32.9037C33.8089 32.9914 33.7916 33.0782 33.7581 33.1592C33.7245 33.2402 33.6753 33.3138 33.6133 33.3759C33.5513 33.4379 33.4777 33.4871 33.3967 33.5206C33.3156 33.5542 33.2288 33.5714 33.1411 33.5714C32.964 33.5714 32.7942 33.5011 32.6689 33.3759C32.5437 33.2506 32.4733 33.0808 32.4733 32.9037C32.4733 32.7265 32.5437 32.5567 32.6689 32.4315C32.7942 32.3062 32.964 32.2359 33.1411 32.2359C33.2288 32.2359 33.3156 32.2531 33.3967 32.2867C33.4777 32.3203 33.5513 32.3695 33.6133 32.4315C33.6753 32.4935 33.7245 32.5671 33.7581 32.6481C33.7916 32.7291 33.8089 32.816 33.8089 32.9037V32.9037Z" fill="black"/>
-                <path id="center-dial" d="M30.4142 27.0802C30.4142 27.7952 30.2734 28.5032 29.9997 29.1638C29.7261 29.8244 29.3251 30.4246 28.8195 30.9302C28.3139 31.4358 27.7136 31.8369 27.053 32.1105C26.3924 32.3841 25.6844 32.525 24.9694 32.525C24.2544 32.525 23.5463 32.3841 22.8857 32.1105C22.2251 31.8369 21.6249 31.4358 21.1193 30.9302C20.6137 30.4246 20.2127 29.8244 19.939 29.1638C19.6654 28.5032 19.5246 27.7952 19.5246 27.0802C19.5246 25.6361 20.0982 24.2512 21.1193 23.2301C22.1404 22.209 23.5253 21.6353 24.9694 21.6353C26.4134 21.6353 27.7984 22.209 28.8195 23.2301C29.8406 24.2512 30.4142 25.6361 30.4142 27.0802V27.0802Z" fill="black"/>
-              </g>
-            </svg>
-          ` : `
-            <svg viewBox="0 0 50 50">
-              <path id="front" fill="#9da0a2" d="M2.1582 17.7246V26.9844V36.2422H3.42969H4.70117V36.5273C4.70117 36.7773 4.71712 36.8232 4.82812 36.9102L4.82617 36.9121C4.95117 37.0091 4.99719 37.0117 7.49219 37.0117H10.0293L10.1484 36.8926C10.2454 36.7956 10.2656 36.7278 10.2656 36.5098V36.2422H24.9922H39.7207V36.5098C39.7207 36.7288 39.7428 36.7956 39.8398 36.8926L39.957 37.0117H42.5039H45.0508L45.1699 36.8926C45.2669 36.7956 45.2871 36.7278 45.2871 36.5098V36.2422H46.5586H47.8281V26.9844V17.7246H24.9941H2.1582ZM33.1816 20.3711C33.8161 20.3706 34.3306 20.8851 34.3301 21.5195C34.3306 22.154 33.8161 22.6685 33.1816 22.668C32.5479 22.6674 32.0346 22.1532 32.0352 21.5195C32.0346 20.8858 32.5479 20.3717 33.1816 20.3711ZM24.9688 21.0352C25.7626 21.0351 26.5487 21.1914 27.2821 21.4952C28.0155 21.7989 28.682 22.2442 29.2433 22.8055C29.8046 23.3669 30.2499 24.0333 30.5537 24.7667C30.8574 25.5001 31.0137 26.2862 31.0137 27.0801C31.0137 27.8739 30.8574 28.66 30.5537 29.3934C30.2499 30.1269 29.8046 30.7933 29.2433 31.3546C28.682 31.916 28.0155 32.3612 27.2821 32.665C26.5487 32.9687 25.7626 33.1251 24.9688 33.125C23.3658 33.1246 21.8287 32.4875 20.6955 31.3539C19.5622 30.2203 18.9257 28.683 18.9258 27.0801C18.9257 25.4772 19.5622 23.9398 20.6955 22.8062C21.8287 21.6726 23.3658 21.0356 24.9688 21.0352V21.0352ZM7.27539 25.3633C8.19892 25.3628 8.9477 26.1116 8.94727 27.0352C8.9477 27.9587 8.19892 28.7075 7.27539 28.707C6.35262 28.7064 5.60503 27.9579 5.60547 27.0352C5.60503 26.1124 6.35262 25.3639 7.27539 25.3633ZM42.127 25.6172C42.3428 25.6176 42.5587 25.655 42.7227 25.7285C43.041 25.888 43.3031 26.1429 43.4707 26.457C43.6307 26.764 43.6305 27.3899 43.4727 27.7109C43.3277 28.0059 43.0794 28.2532 42.7754 28.4082V28.4062C42.406 28.5697 41.9901 28.5987 41.6016 28.4883C41.2451 28.3206 40.9535 28.0407 40.7715 27.6914C40.6165 27.3404 40.6175 26.8187 40.7715 26.4688C40.9338 26.1424 41.2009 25.8806 41.5312 25.7266C41.6947 25.6536 41.9111 25.6168 42.127 25.6172ZM33.1406 31.8047C33.7479 31.8046 34.2403 32.297 34.2402 32.9043C34.2403 33.5116 33.7479 34.0039 33.1406 34.0039C32.5333 34.0039 32.041 33.5116 32.041 32.9043C32.041 32.297 32.5333 31.8046 33.1406 31.8047Z"/>
-            </svg>
-          `;
-        ]]]
+        <svg viewBox="0 0 50 50">
+          <path d="M2.158 17.725v9.26 9.258H3.43h1.271v.484c0 .25.016.296.127.383l-.002.002c.125.097.171.1 2.666.1h2.537l.119-.119c.097-.097.117-.165.117-.383v-.467h14.727 14.729v.471c0 .219.022.286.119.383l.117.119h2.547 2.547l.119-.119c.097-.097.117-.165.117-.383v-.471h1.271 1.27v-9.258-9.26H24.994zm31.023 2.646a1.15 1.15 0 0 1 1.148 1.148 1.15 1.15 0 0 1-1.148 1.148 1.15 1.15 0 0 1-1.146-1.148 1.15 1.15 0 0 1 1.146-1.148zm-8.213.664c3.339 0 6.045 2.706 6.045 6.045s-2.706 6.045-6.045 6.045-6.045-2.706-6.045-6.045 2.706-6.045 6.045-6.045zM7.275 25.363c2.229 0 2.229 3.344 0 3.344s-2.229-3.344 0-3.344zm34.852.254a1.52 1.52 0 0 1 .596.111 1.72 1.72 0 0 1 .748.729c.16.307.16.933.002 1.254a1.57 1.57 0 0 1-.697.697v-.002a1.73 1.73 0 0 1-1.174.082 1.8 1.8 0 0 1-.83-.797c-.155-.351-.154-.873 0-1.223a1.61 1.61 0 0 1 .76-.742 1.51 1.51 0 0 1 .596-.109zm-8.986 6.188c1.467 0 1.467 2.2 0 2.2s-1.467-2.2 0-2.2z"/>
+        </svg>
 
 
   icon_blinds:
@@ -3115,7 +3339,6 @@
         icon:
           - width: 80%
           - margin-top: -4%
-          #- margin-left: -1%
     custom_fields:
       icon: >
         [[[
@@ -3349,42 +3572,15 @@
           - width: 95%
           - margin-left: 1%
           - margin-top: -15%
+          - fill: >
+              [[[
+                return variables.state === 'on' ? '#2a2a2a' : '#9da0a2';
+              ]]]
     custom_fields:
       icon: >
-        [[[
-          if (variables.state === 'on' && variables.timeout < 2000) {
-          return `
-            <svg viewBox="0 0 50 50" >
-              <path id="screen" d="M37.16 19.797H12.839C12.7048 19.797 12.596 19.9134 12.596 20.057V24.842C12.596 24.9856 12.7048 25.102 12.839 25.102H37.16C37.2942 25.102 37.403 24.9856 37.403 24.842V20.057C37.403 19.9134 37.2942 19.797 37.16 19.797Z" fill="#535353"/>
-              <g id="legs">
-                <path id="Vector" d="M9.82101 32.634H4.30701C4.16176 32.634 4.04401 32.7325 4.04401 32.854V33.74C4.04401 33.8615 4.16176 33.96 4.30701 33.96H9.82101C9.96626 33.96 10.084 33.8615 10.084 33.74V32.854C10.084 32.7325 9.96626 32.634 9.82101 32.634Z" fill="black"/>
-                <path id="Vector_2" d="M45.586 32.634H40.072C39.9267 32.634 39.809 32.7325 39.809 32.854V33.74C39.809 33.8615 39.9267 33.96 40.072 33.96H45.586C45.7312 33.96 45.849 33.8615 45.849 33.74V32.854C45.849 32.7325 45.7312 32.634 45.586 32.634Z" fill="black"/>
-              </g>
-              <path id="front" d="M1.87099 16.521C1.73299 16.521 1.62299 16.632 1.62299 16.771V32.134C1.62273 32.1668 1.62894 32.1994 1.64126 32.2298C1.65358 32.2603 1.67177 32.288 1.6948 32.3114C1.71783 32.3348 1.74524 32.3534 1.77547 32.3662C1.80571 32.379 1.83816 32.3857 1.87099 32.386H48.125C48.1578 32.3857 48.1903 32.379 48.2205 32.3662C48.2507 32.3534 48.2782 32.3348 48.3012 32.3114C48.3242 32.288 48.3424 32.2603 48.3547 32.2298C48.367 32.1994 48.3733 32.1668 48.373 32.134V16.771C48.373 16.632 48.262 16.521 48.125 16.521H1.87099ZM12.531 19.529H37.469C37.607 19.529 37.719 19.658 37.719 19.816V25.084C37.719 25.243 37.607 25.369 37.469 25.369H12.531C12.393 25.369 12.281 25.242 12.281 25.084V19.816C12.281 19.657 12.393 19.529 12.531 19.529ZM42.963 19.621C47.239 19.621 47.239 26.035 42.963 26.035C38.687 26.035 38.687 19.621 42.963 19.621V19.621ZM6.99599 20.24C10.321 20.24 10.321 25.228 6.99599 25.228C3.67099 25.228 3.67099 20.24 6.99599 20.24Z" fill="black"/>
-              <path id="dials" d="M42.963 19.941C39.185 20.011 39.185 25.644 42.963 25.714C46.741 25.644 46.741 20.011 42.963 19.941ZM6.99601 20.558C5.79401 20.557 4.81901 21.532 4.82001 22.734C4.82101 23.936 5.79501 24.909 6.99601 24.908C8.19701 24.907 9.16901 23.934 9.17001 22.734C9.17101 21.534 8.19701 20.559 6.99601 20.558Z" fill="#1A1A1A"/>
-            </svg>
-          `;
-          }
-          return variables.state === 'on' && variables.timeout > 2000 ? `
-            <svg viewBox="0 0 50 50" >
-              <path id="screen" d="M37.16 19.797H12.839C12.7048 19.797 12.596 19.9134 12.596 20.057V24.842C12.596 24.9856 12.7048 25.102 12.839 25.102H37.16C37.2942 25.102 37.403 24.9856 37.403 24.842V20.057C37.403 19.9134 37.2942 19.797 37.16 19.797Z" fill="#535353"/>
-              <g id="legs">
-                <path id="Vector" d="M9.82101 32.634H4.30701C4.16176 32.634 4.04401 32.7325 4.04401 32.854V33.74C4.04401 33.8615 4.16176 33.96 4.30701 33.96H9.82101C9.96626 33.96 10.084 33.8615 10.084 33.74V32.854C10.084 32.7325 9.96626 32.634 9.82101 32.634Z" fill="black"/>
-                <path id="Vector_2" d="M45.586 32.634H40.072C39.9267 32.634 39.809 32.7325 39.809 32.854V33.74C39.809 33.8615 39.9267 33.96 40.072 33.96H45.586C45.7312 33.96 45.849 33.8615 45.849 33.74V32.854C45.849 32.7325 45.7312 32.634 45.586 32.634Z" fill="black"/>
-              </g>
-              <path id="front" d="M1.87099 16.521C1.73299 16.521 1.62299 16.632 1.62299 16.771V32.134C1.62273 32.1668 1.62894 32.1994 1.64126 32.2298C1.65358 32.2603 1.67177 32.288 1.6948 32.3114C1.71783 32.3348 1.74524 32.3534 1.77547 32.3662C1.80571 32.379 1.83816 32.3857 1.87099 32.386H48.125C48.1578 32.3857 48.1903 32.379 48.2205 32.3662C48.2507 32.3534 48.2782 32.3348 48.3012 32.3114C48.3242 32.288 48.3424 32.2603 48.3547 32.2298C48.367 32.1994 48.3733 32.1668 48.373 32.134V16.771C48.373 16.632 48.262 16.521 48.125 16.521H1.87099ZM12.531 19.529H37.469C37.607 19.529 37.719 19.658 37.719 19.816V25.084C37.719 25.243 37.607 25.369 37.469 25.369H12.531C12.393 25.369 12.281 25.242 12.281 25.084V19.816C12.281 19.657 12.393 19.529 12.531 19.529ZM42.963 19.621C47.239 19.621 47.239 26.035 42.963 26.035C38.687 26.035 38.687 19.621 42.963 19.621V19.621ZM6.99599 20.24C10.321 20.24 10.321 25.228 6.99599 25.228C3.67099 25.228 3.67099 20.24 6.99599 20.24Z" fill="black"/>
-              <path id="dials" d="M42.963 19.941C39.185 20.011 39.185 25.644 42.963 25.714C46.741 25.644 46.741 20.011 42.963 19.941ZM6.99601 20.558C5.79401 20.557 4.81901 21.532 4.82001 22.734C4.82101 23.936 5.79501 24.909 6.99601 24.908C8.19701 24.907 9.16901 23.934 9.17001 22.734C9.17101 21.534 8.19701 20.559 6.99601 20.558Z" fill="#1A1A1A"/>
-            </svg>
-          ` : `
-            <svg viewBox="0 0 50 50" >
-              <g id="legs">
-                <path id="Vector" d="M9.82101 32.634H4.30701C4.16176 32.634 4.04401 32.7325 4.04401 32.854V33.74C4.04401 33.8615 4.16176 33.96 4.30701 33.96H9.82101C9.96626 33.96 10.084 33.8615 10.084 33.74V32.854C10.084 32.7325 9.96626 32.634 9.82101 32.634Z" fill="#9da0a2"/>
-                <path id="Vector_2" d="M45.586 32.634H40.072C39.9267 32.634 39.809 32.7325 39.809 32.854V33.74C39.809 33.8615 39.9267 33.96 40.072 33.96H45.586C45.7312 33.96 45.849 33.8615 45.849 33.74V32.854C45.849 32.7325 45.7312 32.634 45.586 32.634Z" fill="#9da0a2"/>
-              </g>
-              <path id="front" d="M1.87099 16.521C1.73299 16.521 1.62299 16.632 1.62299 16.771V32.134C1.62273 32.1668 1.62894 32.1994 1.64126 32.2298C1.65358 32.2603 1.67177 32.288 1.6948 32.3114C1.71783 32.3348 1.74524 32.3534 1.77547 32.3662C1.80571 32.379 1.83816 32.3857 1.87099 32.386H48.125C48.1578 32.3857 48.1903 32.379 48.2205 32.3662C48.2507 32.3534 48.2782 32.3348 48.3012 32.3114C48.3242 32.288 48.3424 32.2603 48.3547 32.2298C48.367 32.1994 48.3733 32.1668 48.373 32.134V16.771C48.373 16.632 48.262 16.521 48.125 16.521H1.87099ZM12.531 19.529H37.469C37.607 19.529 37.719 19.658 37.719 19.816V25.084C37.719 25.243 37.607 25.369 37.469 25.369H12.531C12.393 25.369 12.281 25.242 12.281 25.084V19.816C12.281 19.657 12.393 19.529 12.531 19.529ZM42.963 19.621C47.239 19.621 47.239 26.035 42.963 26.035C38.687 26.035 38.687 19.621 42.963 19.621V19.621ZM6.99599 20.24C10.321 20.24 10.321 25.228 6.99599 25.228C3.67099 25.228 3.67099 20.24 6.99599 20.24Z" fill="#9da0a2"/>
-            </svg>
-          `;
-        ]]]
+        <svg viewBox="0 0 50 50">
+          <path d="M1.871 16.521c-.138 0-.248.111-.248.25v15.363a.25.25 0 0 0 .248.252h2.174v1.123a.45.45 0 0 0 .449.451h5.139a.45.45 0 0 0 .451-.451v-1.123h29.725v1.123a.45.45 0 0 0 .451.451h5.139a.45.45 0 0 0 .451-.451v-1.123h2.275a.25.25 0 0 0 .248-.252V16.771c0-.139-.111-.25-.248-.25H1.871zm10.66 3.008h24.938c.138 0 .25.129.25.287v5.268c0 .159-.112.285-.25.285H12.531c-.138 0-.25-.127-.25-.285v-5.268c0-.159.112-.287.25-.287zm30.432.092c4.276 0 4.276 6.414 0 6.414s-4.276-6.414 0-6.414zm-35.967.619c3.325 0 3.325 4.988 0 4.988s-3.325-4.988 0-4.988z"/>
+        </svg>
 
 
   icon_amp:
