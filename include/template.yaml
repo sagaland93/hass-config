@@ -1168,9 +1168,13 @@ template:
                 {% if state_attr(players[0], 'media_content_type') == 'video' %}
                   Next media screen
                 {% elif state_attr(players[0], 'media_content_type') == 'tvshow' %}
-                  {{state_attr(players[0], 'media_series_title')}} - S{{state_attr(players[0], 'media_season')}} · E{{state_attr(players[0], 'media_episode')}}
+                  {% if state_attr(players[0], 'media_season') | replace('S','') | int(0) >= 10 %}
+                    {{state_attr(players[0], 'media_series_title')}} · S{{state_attr(players[0], 'media_season')}}E{{state_attr(players[0], 'media_episode')}}
+                  {% else %}
+                    {{state_attr(players[0], 'media_series_title')}} · S0{{state_attr(players[0], 'media_season')}}E{{state_attr(players[0], 'media_episode')}}
+                  {% endif %}
                 {% else %}
-                  {{state_attr(players[0], 'media_title')}} 
+                  {{state_attr(players[0], 'media_title')}}
                 {% endif %}
               {% endif %}
             {% endif %}
