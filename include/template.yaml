@@ -1357,20 +1357,32 @@ template:
           {% if this.state not in ['unavailable','undefined','unknown','none','null','0'] %}
             {% set data = this.attributes.data %}
             {% set year = data[0].aired.split('-')[0] %}
-            {% set title = data[1].title + ' (' + year + ')' %}
+            {% if data | count == 4 %}
+              {% set title = data[1].title + ' (' + year + ')' %}
+            {% else %}
+              {% set title = data[1].title + ' · ' + data[2].number %}
+            {% endif %}
             {{ title }}
           {% endif %}
         poster: >
           {% if this.state not in ['unavailable','undefined','unknown','none','null','0'] %}
             {% set data = this.attributes.data %}
-            {% set poster = data[3].poster %}
+            {% if data | count == 4 %}
+              {% set poster = data[3].poster %}
+            {% else %}
+              {% set poster = data[4].poster %}
+            {% endif %}
             {{ poster }}
           {% endif %}
         fanart: >
           {% if this.state not in ['unavailable','undefined','unknown','none','null','0'] %}
             {% set data = this.attributes.data %}
-            {% set poster = data[2].fanart %}
-            {{ poster }}
+            {% if data | count == 4 %}
+              {% set fanart = data[2].fanart %}
+            {% else %}
+              {% set fanart = data[3].fanart %}
+            {% endif %}
+            {{ fanart }}
           {% endif %}
 
 
