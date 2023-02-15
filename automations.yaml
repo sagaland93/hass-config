@@ -5,12 +5,10 @@
   - platform: state
     entity_id:
     - sensor.recently_added_mix
-    to: Online
   condition:
   - condition: template
-    value_template: '{{ trigger.to_state.state not in [trigger.from_state.state, ''cannot
-      be reached'', ''unavailable'', ''undefined'',''unknown'',''none'',''null'']
-      }}'
+    value_template: '{{ trigger.to_state.state | lower not in [''cannot be reached'',
+      ''unavailable'', ''undefined'',''unknown'',''none'',''null''] }}'
   action:
   - service: input_text.set_value
     data:
