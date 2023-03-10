@@ -2722,7 +2722,7 @@
       - base_media
       - icon_play_pause
     variables:
-      entity_picture: ''
+      entity_picture: '[[[ return entity.entity_id; ]]]'
       i: >
         [[[
           if (entity) {
@@ -2768,7 +2768,7 @@
                       : '· ' + data[variables.i].number,
               output = `${data[variables.i].title} ${number}`;
             } else {
-              var output = media_artist === undefined && media_title !== undefined
+              var output = media_artist === undefined && media_title !== undefined && media_title !== ''
                   ? media_title
                   : media_title === undefined && media_artist !== undefined
                       ? media_artist
