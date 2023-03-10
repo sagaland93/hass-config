@@ -422,6 +422,8 @@ views:
                         state_not: SHIELD
                       - entity: select.conditional_media
                         state_not: Saga's Desktop
+                      - entity: select.conditional_media
+                        state_not: PC Gaming
 
                     card:
                       type: custom:button-card
@@ -493,7 +495,7 @@ views:
                         state: SONOS Stua
                     card:
                       type: custom:button-card
-                      entity: media_player.sonos_connect_living_room
+                      entity: media_player.sonos_port_living_room
                       template:
                         - conditional_media
                         - media_volume
@@ -532,9 +534,24 @@ views:
                       name: Saga's Desktop
                       template:
                         - conditional_media
+                        - progress_bar
                         - icon_plex
                       variables:
                         entity_picture: sensor.active_media_players
+
+                    # DESKTOP GAMING
+                  - type: conditional
+                    conditions:
+                      - entity: select.conditional_media
+                        state: PC Gaming
+                    card:
+                      type: custom:button-card
+                      entity: sensor.office_pc_media_state
+                      name: PC Gaming
+                      template:
+                        - conditional_media
+                        - icon_win11
+                        #- icon_pc_gaming
 
 
               # SWIPE CARD - 2nd PAGE
@@ -566,7 +583,7 @@ views:
                       volume_control: media_player.apple_tv_2
 
                   - type: custom:button-card
-                    entity: media_player.sonos_connect_living_room
+                    entity: media_player.sonos_port_living_room
                     name: SONOS
                     template:
                       - sonos
