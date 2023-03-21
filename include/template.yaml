@@ -1014,10 +1014,14 @@ template:
       name: 'Home Sleep Mode'
       state: >
         {% set state = 'off' %}
-        {% if states('sensor.saga_sin_iphone_battery_state') in ["Charging", "Full"] %} 
+        {% if is_state('input_boolean.sleep_mode','on') %}
+          {% set state = 'on' %}
+        {% elif states('sensor.saga_sin_iphone_battery_state') in ["Charging", "Full"] %}
           {% if not is_state('media_player.denon_receiver', 'on') %}
             {% if not is_state('sensor.office_pc_real_session_state', 'Active') %}
-              {% set state = 'on' %}
+              {% if is_state('person.andre', 'home') %}
+                {% set state = 'on' %}
+              {% endif %}
             {% endif %}
           {% endif %}
         {% endif %}
@@ -1222,6 +1226,101 @@ template:
           {%- endif %}
 
 
+    # SENSOR - ACTIVE MUSIC PLAYERS
+    - unique_id: active_music_players
+      name: 'Active Music Players'
+      state: >
+        {% set media_players = [
+          states.media_player.sonos_port_living_room,
+          states.media_player.sonos_play_one_bathroom,
+          states.media_player.sonos_amp_bathroom,
+          states.media_player.sonos_amp_dining_room
+        ] %}
+        
+        {% macro media(state) %}
+        {% set state = media_players | selectattr('state','eq',state) | list %}
+        {% set last_changed = '0' if state | length == 0 else state | map(attribute='last_changed') | list | max %}
+          {{ state | selectattr('last_changed','eq', last_changed) | map(attribute='name') | list | join }}
+        {% endmacro %}
+
+        {% set playing = media_players | selectattr('state','eq','playing') | list %}
+        {% set paused = media_players | selectattr('state','eq','paused') | list %}
+
+        {% if playing %}
+          playing
+        {% elif paused %}
+          0
+        {% else %}
+          {{ media_players | selectattr('state','search','(playing|paused)') | list | count }}
+        {% endif %}
+      attributes:
+        active: >
+          {% set media_players = [
+            states.media_player.sonos_port_living_room,
+            states.media_player.sonos_play_one_bathroom,
+            states.media_player.sonos_amp_bathroom,
+            states.media_player.sonos_amp_dining_room
+          ] %}
+
+          {%- set media_players_playing = media_players | selectattr('state','eq','playing') | list %}
+          {%- set media_player_id_playing = media_players_playing | map(attribute='entity_id') | join(', ') %}
+
+          {%- set media_players_paused = media_players | selectattr('state','eq','paused') | list %}
+          {%- set media_player_id_paused = media_players_paused | map(attribute='entity_id') | join(', ') %}
+
+          {%- if (media_players_playing | length > 0) -%}
+            {{ media_player_id_playing.split(",") | replace(" ","") }}
+          {%- endif -%}
+        service: >
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null','off','0'] %}
+            {% set state = namespace(return="") %}
+            {% set active = state_attr('sensor.active_music_players','active') %}
+            {% for player in active if state.return == "" %}
+              {% set content_id = state_attr(player,'media_content_id') %}
+              {% if 'sonos-spotify' in content_id | lower %}
+                {% set state.return = "spotify" %}
+              {% endif %}
+            {% endfor %}
+            {{ state.return }}
+          {% endif %}
+        media_artist: >
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null','off','0'] %}
+            {% set state = namespace(return="") %}
+            {% set active = state_attr('sensor.active_music_players','active') %}
+            {% for player in active if state.return == "" %}
+              {% set media_artist = state_attr(player,'media_artist') %}
+              {% if media_artist %}
+                {% set state.return = media_artist %}
+              {% endif %}
+            {% endfor %}
+            {{ state.return }}
+          {% endif %}
+        media_title: >
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null','off','0'] %}
+            {% set state = namespace(return="") %}
+            {% set active = state_attr('sensor.active_music_players','active') %}
+            {% for player in active if state.return == "" %}
+              {% set media_title = state_attr(player,'media_title') %}
+              {% if media_title %}
+                {% set state.return = media_title %}
+              {% endif %}
+            {% endfor %}
+            {{ state.return }}
+          {% endif %}
+        entity_picture: >
+          {%- if this.state not in ['unavailable','undefined','unknown','none','null','off','0'] %}
+            {% set state = namespace(return="") %}
+            {% set active = state_attr('sensor.active_music_players','active') %}
+            {% for player in active if state.return == "" %}
+              {% set entity_picture = state_attr(player,'entity_picture') %}
+              {% if entity_picture %}
+                {% set state.return = entity_picture %}
+              {% endif %}
+            {% endfor %}
+            {{ state.return }}
+          {% endif %}
+
+
     # SENSOR - SHIELD REAL STATE
     - unique_id: shield_real_state
       name: 'SHIELD Real State'
@@ -1313,9 +1412,9 @@ template:
     - unique_id: doors_state
       name: 'Doors State'
       state: >
-        {% if states('binary_sensor.contact_sensor_entrance') == 'on' %} open
-        {% elif states('binary_sensor.contact_sensor_terrace_door') == 'on' %} open
-        {% elif states('cover.garage_door') != 'closed' %} open
+        {% if states('binary_sensor.aqara_contact_entrance_door') == 'on' %} open
+        {% elif states('binary_sensor.aqara_contact_terrace_door') == 'on' %} open
+        {% elif states('cover.garage_door') not in ['closed','unavailable'] %} open
         {% else %} closed
         {% endif %}
       icon: >
@@ -1325,8 +1424,8 @@ template:
       attributes:
         doors_open: >
           {% set doors = [
-            states.binary_sensor.contact_sensor_entrance,
-            states.binary_sensor.contact_sensor_terrace_door,
+            states.binary_sensor.aqara_contact_entrance_door,
+            states.binary_sensor.aqara_contact_terrace_door,
             states.cover.garage_door ] %}
           {{ doors | selectattr('state', 'in', ['open','opening','closing','on','unlocked']) | map(attribute='name') | list | replace(' door', '') }}
 
