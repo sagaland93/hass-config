@@ -2644,22 +2644,24 @@
   #                 PROGRESS BAR                  #
   #                                               #
   #################################################
-
+  
   progress_bar:
+    variables:
+      player: '[[[ return entity.entity_id; ]]]'
     styles:
       custom_fields:
         progress:
           - background-color: var(--progress-bar-background-color)
           - position: absolute
           - left: 0%
-          - top: 73.4%
+          - top: 71.6%
           - height: var(--progress-bar-height)
           - width: 100%
         bar:
           - background-color: var(--progress-bar-color)
           - position: absolute
           - left: 0%
-          - top: 73.4%
+          - top: 71.6%
           - height: var(--progress-bar-height)
           - z-index: 1
     custom_fields:
@@ -2867,7 +2869,7 @@
           - display: block
           - position: absolute
           - width: 102.9%
-          - height: 103.1%
+          - height: 110%
           - filter: var(--blur-intensity)
           - clip-path: >
               inset(74.5% 1.45% 1.45% 1.45% round 0 0 calc(var(--button-card-border-radius) / 2) calc(var(--button-card-border-radius) / 2))
