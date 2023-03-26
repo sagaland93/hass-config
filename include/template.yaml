@@ -493,7 +493,7 @@ template:
         {% set today = states.sensor.date.state %}
         {% set forecasts = state_attr('weather.pirateweather', 'forecast') %}
         {% for forecast in forecasts %}
-          {%- set date = forecast.datetime | replace('T23:00:00+00:00', '') %}
+          {%- set date = forecast.datetime | replace('T23:00:00+00:00', '') | replace('T22:00:00+00:00', '') %}
           {%- if date == today %}
             {{ forecast.templow | round(0) }}
           {% endif %}
@@ -502,10 +502,10 @@ template:
     - unique_id: weather_max_temp
       name: 'Weather Max Temp'
       state: >-
-        {% set today = states.sensor.date.state %}
+        {% set today = states('sensor.date') %}
         {% set forecasts = state_attr('weather.pirateweather', 'forecast') %}
         {% for forecast in forecasts %}
-          {%- set date = forecast.datetime | replace('T23:00:00+00:00', '') %}
+          {%- set date = forecast.datetime | replace('T23:00:00+00:00', '') | replace('T22:00:00+00:00', '') %}
           {%- if date == today %}
             {{ forecast.temperature | round(0) }}
           {% endif %}
