@@ -8,6 +8,9 @@
   themes:
     tablet:
 
+      # ENABLE MODE
+      modes: {dark: {.: .}}
+
       # DEFAULT DARK MODE
       primary-background-color: '#111111'
       secondary-background-color: '#202020'
@@ -20,6 +23,9 @@
       sidebar-background-color: var(--card-background-color)
       divider-color: rgba(225, 225, 225, 0.12)
 
+      # DEFAULT BASE COLORS
+      green-color: '#256d3d'
+
       # TEXT
       primary-text-color: '#e1e1e1'
       secondary-text-color: '#b5b5b5'
@@ -27,8 +33,7 @@
       disabled-text-colour: '#bdbdbd'
       app-header-text-color: var(--primary-text-color)
 
-      #FONT
-      #primary-font-family: Roboto, system-ui
+      # FONT
       primary-font-family: SF Pro Text, Roboto, system-ui
       paper-font-common-base_-_font-family: var(--primary-font-family)
       paper-font-common-code_-_font-family: var(--primary-font-family)
@@ -50,6 +55,8 @@
       state-icon-active-color: '#3182b7'
       state-light-color: '#9da0a2'
       state-light-active-color: '#debd00'
+      state-home-color: var(--green-color)
+      rgb-state-person-home-color: 37, 109, 61
       switch-checked-color: '#7a7d7f'
       switch-unchecked-button-color: '#3b4041'
       switch-unchecked-track-color: '#0c0d0d'
@@ -91,6 +98,19 @@
       sidebar-font-size: min(max(16px, 1.1vw), 1.5vw)
       sidebar-line-height: 2.1vw
       card-content-padding: 1.8em 2em 1.8em 2em
+      ha-marker-font-size: 0.9em
+
+      # BUTTON_CARD_TEMPLATES
+      button-card-font-size: 1.35vw
+      z-axis-adjustment: 0.05vw #tilt compensation
+      button-card-font-weight: 500
+      button-card-letter-spacing: normal
+      button-card-border-radius: 10%
+
+      # MUSHROOM
+      mush-title-padding: 24px 12px 6px
+      mush-title-font-size: 28px
+      mush-title-font-weight: 400
 
       # WEATHER
       weather-icon-clear-night: url("/local/svg/weather/static/clear-night.svg")
@@ -109,6 +129,27 @@
       weather-icon-windy: url("/local/svg/weather/static/wind.svg")
       weather-icon-windy-alert: url("/local/svg/weather/static/wind-alert.svg")
 
+      # BROWSER_MOD.POPUP
+      dialog-backdrop-filter: blur(2em) brightness(0.75)
+      popup-background-color: rgba(34,38,39,0.9)
+      popup-border-width: 0px
+      popup-border-radius: 1em
+      popup-padding-x: 0px
+      popup-padding-y: 0px
+      popup-min-width: 440px
+      tablet-popup-header-color: rgba(200, 218, 222, 0.05)
+      tablet-popup-content-padding: 1.4em 2.2em 1.6em 1.5em
+      tablet-popup-button-padding: 0.1em 2em 1.8em 2em
+      tablet-popup-border-style: 1.5px solid rgba(0,0,0,0.2)
+      tablet-popup-align-dialog: center
+      tablet-popup-margin-top: 0px
+
+      # PROGRESS BAR
+      progress-bar-color: '#e5a00d'
+      progress-bar-background-color: rgba(0,0,0,0.33)
+      progress-bar-height: 2%
+
+
 
     ####################################################
     #                                                  #
@@ -119,7 +160,7 @@
       card-mod-theme: tablet
 
       card-mod-root: |
-        ha-app-layout {
+        #view {
           background: url('/local/images/bg3.jpg');
           background-size: cover;
         }
@@ -352,7 +393,7 @@
           background: none;
         }
 
-        .type-custom-bar-card bar-card-background  {
+        .type-custom-bar-card bar-card-background {
           background: radial-gradient(circle, rgba(52, 57, 58, 0.1) 0%, rgba(17, 18, 18, 0.2) 75%);
           box-shadow: inset 0 0 25px #00000045;
           border-radius: 0.3em;
@@ -361,6 +402,16 @@
 
       card-mod-more-info-yaml: |
         .: |
+
+          :host {
+            --ha-card-border-width: 0;
+          }
+
+          ha-dialog {
+            --vertical-align-dialog: var(--tablet-popup-align-dialog) !important;
+            --dialog-surface-margin-top: var(--tablet-popup-margin-top) !important;
+          }
+          
           app-toolbar {
             background: none !important;
           }
