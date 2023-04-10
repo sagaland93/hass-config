@@ -2602,41 +2602,114 @@
                 : 'none';
           ]]]
         data:
-          title: >
-            [[[ return entity.attributes.friendly_name; ]]]
           style: >
             --popup-background-color: transparent;
+          card_mod:
+            style:
+              .: |
+                ha-header-bar {
+                  display: none !important;
+                }
+                @media screen and (max-width: 800px) {
+                  ha-header-bar {
+                    display: none !important;
+                  }
+                }
           content:
             type: custom:mod-card
+            card_mod:
+              style:
+                layout-card:
+                  $grid-layout$:
+                    hui-vertical-stack-card:
+                      $: |
+                        ha-card {
+                          animation: border 1s forwards;
+                        }
+                      $hui-horizontal-stack-card:
+                        $: |
+                          #root {
+                            height: 0% !important;
+                            justify-content: center !important;
+                            margin-top: 2.2em !important;
+                          }
+
             card:
-              type: custom:media_player-popup-card
-              #entity: media_player.denon_receiver
-              entity: '[[[ return variables.volume_control; ]]]' # IF something, then receiver, else current entity
-              icon: none
-              fullscreen: false
-              sliderWidth: 130px
-              sliderHeight: 360px
-              borderRadius: 1.7em
-              sliderColor: '#c7c7c7'
-              sliderTrackColor: rgba(25, 25, 25, 0.9)
-              displayType: slider
-              actionsInARow: 3
-              actions:
-                - service: media_player.media_previous_track
-                  service_data:
-                    entity_id: '[[[ return variables.player; ]]]'
-                  #name: previous
-                  icon: mdi:skip-previous
-                - service: media_player.media_play_pause
-                  service_data:
-                    entity_id: '[[[ return variables.player; ]]]'
-                  #name: play/pause
-                  icon: mdi:play-pause
-                - service: media_player.media_next_track
-                  service_data:
-                    entity_id: '[[[ return variables.player; ]]]'
-                  #name: next
-                  icon: mdi:skip-next
+              type: custom:layout-card
+              layout_type: custom:grid-layout
+              layout:
+                grid-template-areas: |
+                  "volume"
+                  "actions"
+                mediaquery:
+                  #phone
+                  "(max-width: 800px)":
+                    grid-template-areas: |
+                      "volume"
+                      "actions"
+
+              cards:
+                - type: vertical-stack
+                  view_layout:
+                    grid-area: volume
+                  cards:
+                  - type: custom:mushroom-title-card
+                    title: "[[[ return entity.entity_id === variables.volume_control ? entity.entity_id : states[variables.volume_control].attributes.friendly_name; ]]]"
+                    alignment: center
+                    
+                  - type: custom:media_player-popup-card
+                    entity: '[[[ return variables.volume_control; ]]]'
+                    icon: none
+                    fullscreen: false
+                    sliderWidth: 100px
+                    sliderHeight: 320px
+                    borderRadius: 24px
+                    sliderColor: '#c7c7c7'
+                    sliderTrackColor: rgba(25, 25, 25, 0.9)
+                    displayType: slider
+                    actionsInARow: 3
+
+                  - type: horizontal-stack
+                    view_layout:
+                      grid-area: actions
+                    cards:
+                      - type: custom:button-card
+                        icon: "[[[ return entity.entity_id === 'media_player.denon_receiver' ? 'custom:nvidia-m' : 'mdi:skip-previous'; ]]]"
+                        tap_action:
+                          action: call-service
+                          service: "[[[ return entity.entity_id === 'media_player.denon_receiver' ? 'script.living_room_set_inputs_to_shield' : 'media_player.media_previous_track'; ]]]"
+                          service_data:
+                            entity_id: "[[[ return entity.entity_id === 'media_player.denon_receiver' ? 'none' : variables.player; ]]]"
+                        template: icon_button
+
+                      - type: custom:button-card
+                        icon: "[[[ return entity.entity_id === 'media_player.denon_receiver' ? 'bha:apple-tv' : 'mdi:play-pause'; ]]]"
+                        tap_action:
+                          action: call-service
+                          service: "[[[ return entity.entity_id === 'media_player.denon_receiver' ? 'script.living_room_set_inputs_to_apple_tv' : 'media_player.media_play_pause'; ]]]"
+                          service_data:
+                            entity_id: "[[[ return entity.entity_id === 'media_player.denon_receiver' ? 'none' : variables.player; ]]]"
+                        double_tap_action:
+                          action: call-service
+                          service: "[[[ return entity.entity_id === 'media_player.denon_receiver' ? 'script.living_room_set_inputs_to_apple_tv' : 'media_player.media_stop'; ]]]"
+                          service_data:
+                            entity_id: "[[[ return entity.entity_id === 'media_player.denon_receiver' ? 'none' : variables.player; ]]]"
+                        hold_action:
+                          action: call-service
+                          service: "[[[ return entity.entity_id === 'media_player.denon_receiver' ? 'script.living_room_set_inputs_to_apple_tv' : 'media_player.media_stop'; ]]]"
+                          service_data:
+                            entity_id: "[[[ return entity.entity_id === 'media_player.denon_receiver' ? 'none' : variables.player; ]]]"
+                        template: icon_button
+
+                      - type: custom:button-card
+                        icon: "[[[ return entity.entity_id === 'media_player.denon_receiver' ? 'custom:sonos' : 'mdi:skip-next'; ]]]"
+                        tap_action:
+                          action: call-service
+                          service: "[[[ return entity.entity_id === 'media_player.denon_receiver' ? 'script.living_room_set_input_to_sonos' : 'media_player.media_next_track'; ]]]"
+                          service_data:
+                            entity_id: "[[[ return entity.entity_id === 'media_player.denon_receiver' ? 'none' : variables.player; ]]]"
+                        template: icon_button
+
 
 
   #################################################
@@ -3217,6 +3290,24 @@
         - width: 4em
         - height: 3.7em
         #- background: '#FFFFFF10'
+
+  icon_button:
+    show_name: false
+    color: '#9da0a2'
+    styles:
+      card:
+        - color: '#9da0a2'
+        - border-radius: 50%
+        - width: 3em
+        - height: 3em
+        - padding: 4px
+        - margin: 2px
+      img_cell:
+        - border-style: solid
+        - border-radius: 50%
+        - border-width: 1px
+      icon:
+        - width: 55%
 
 
   #################################################
