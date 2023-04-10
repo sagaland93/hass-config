@@ -3028,7 +3028,7 @@ class MediaPlayerPopupCard extends LitElement {
     static get styles() {
         return css `
         :host {
-            background-color:#000!important;
+            background-color:transparent!important;
         }
         .popup-wrapper {
             margin-top:64px;
@@ -3088,7 +3088,7 @@ class MediaPlayerPopupCard extends LitElement {
         }
         .icon {
             text-align:center;
-            display:block;
+            display: none !important;
             height: 40px;
             width: 40px;
             color: rgba(255,255,255,0.3);
@@ -3106,10 +3106,10 @@ class MediaPlayerPopupCard extends LitElement {
         h4 {
             color: #FFF;
             display: block;
-            font-weight: 300;
-            margin-bottom: 30px;
+            font-weight: 500;
+            margin-bottom: 24px;
             text-align: center;
-            font-size:20px;
+            font-size:16px;
             margin-top:0;
             text-transform: capitalize;
         }
