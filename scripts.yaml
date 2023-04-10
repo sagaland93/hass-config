@@ -1,0 +1,71 @@
+living_room_set_inputs_to_shield:
+  alias: Living-room - Set inputs to SHIELD
+  sequence:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: media_player.lg_tv_77
+        state: 'on'
+      - condition: state
+        entity_id: media_player.denon_receiver
+        state: 'on'
+      sequence:
+      - parallel:
+        - service: media_player.select_source
+          data:
+            source: TV
+          target:
+            entity_id: media_player.denon_receiver
+        - service: media_player.select_source
+          data:
+            source: SHIELD
+          target:
+            entity_id: media_player.lg_tv_77
+        alias: Switch to SHIELD
+  mode: single
+  icon: mdi:audio-input-rca
+living_room_set_inputs_to_apple_tv:
+  alias: Living-room - Set inputs to Apple TV
+  sequence:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: media_player.lg_tv_77
+        state: 'on'
+      - condition: state
+        entity_id: media_player.denon_receiver
+        state: 'on'
+      sequence:
+      - parallel:
+        - service: media_player.select_source
+          data:
+            source: 8K
+          target:
+            entity_id: media_player.denon_receiver
+        - service: media_player.select_source
+          data:
+            source: Apple TV
+          target:
+            entity_id: media_player.lg_tv_77
+        alias: Switch to Apple TV
+  mode: single
+  icon: mdi:audio-input-rca
+living_room_set_input_to_sonos:
+  alias: Living-room - Set input to SONOS
+  sequence:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: media_player.denon_receiver
+        state: 'on'
+      sequence:
+      - parallel:
+        - service: media_player.select_source
+          data:
+            source: SONOS
+          target:
+            entity_id: media_player.denon_receiver
+        alias: Switch to SONOS
+  mode: single
+  icon: mdi:audio-input-rca
+  
