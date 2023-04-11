@@ -1225,11 +1225,14 @@
 
             /* * * * * * * * * * * * * * * * * *
               *                                 *
-              *             CLIMATE             *
+              *             COOKING             *
               *                                 *
               * * * * * * * * * * * * * * * * * */
 
-              else if (domain === 'climate' || domain === 'switch') {
+              else if (entity.entity_id === 'sensor.xiaomi_airfryer_status' && state) {
+
+                let state = states[entity.entity_id].state;
+                if (state !== undefined && state == 'Cooking') {
                   return `
                     <svg viewBox="0 0 50 50">
                       <style>
@@ -1259,6 +1262,148 @@
                       <text id="circle_value" x="50%" y="52%" text-anchor="middle" alignment-baseline="middle" dominant-baseline="middle">${input}${tspan}${unit}</tspan></text>
                     </svg>
                   `;
+                }
+              }
+
+            /* * * * * * * * * * * * * * * * * *
+              *                                 *
+              *       BOOLEAN & SENSOR          *
+              *                                 *
+              * * * * * * * * * * * * * * * * * */
+
+              else if (domain === 'input_boolean' && state || domain === 'sensor' && state) {
+                  let time = c => {
+                      let s = (c/1e3),
+                          m = (c/6e4),
+                          h = (c/36e5),
+                          d = (c/864e5);
+                      return s < 60
+                          ? parseInt(s) + 's'
+                          : m < 60 ? parseInt(m) + 'm'
+                          : h < 24 ? parseInt(h) + 'h'
+                          : parseInt(d) + 'd';
+                  };
+                  let input = states[variables.retain] === undefined || states[variables.retain].state === 'unavailable'
+                          ? time(Date.now() - Date.parse(entity.last_changed))
+                          : time(Date.now() - Date.parse(states[variables.retain].state)),
+                      unit = ' ';
+
+                  return `
+                    <svg viewBox="0 0 50 50">
+                      <style>
+                        circle {
+                          transform: rotate(-90deg);
+                          transform-origin: 50% 50%;
+                          stroke-dasharray: ${c};
+                          stroke-linecap: round;
+                          fill: ${state ? 'var(--c-fill-color-on)' : 'var(--c-fill-color-off)'};
+                        }
+                        text {
+                          font-size: var(--c-font-size);
+                          font-weight: var(--c-font-weight);
+                          letter-spacing: var(--c-letter-spacing);
+                          fill: var(--c-font-color);
+                        }
+                        tspan {
+                          font-size: var(--c-unit-font-size);
+                        }
+                        #circle_value, tspan {
+                          text-anchor: middle;
+                          dominant-baseline: central;
+                        }
+                      </style>
+                      <circle id="circle_stroke_bg" cx="25" cy="25" r="${r}" opacity="0.7" stroke-width="var(--c-stroke-width)" stroke="#9da0a2"/>
+                      <text id="circle_value" x="50%" y="52%" text-anchor="middle" alignment-baseline="middle" dominant-baseline="middle">${input}${tspan}${unit}</tspan></text>
+                    </svg>
+                  `;
+              }
+
+            /* * * * * * * * * * * * * * * * * *
+              *                                 *
+              *             CLIMATE             *
+              *                                 *
+              * * * * * * * * * * * * * * * * * */
+
+              else if (domain === 'climate') {
+
+                let filter_status = states[variables.filter].state;
+                if (filter_status !== undefined && filter_status == 'on') {
+                  return `
+                    <svg viewBox="0 0 50 50">
+                      <path fill="#b71616" d="M25.029 9.998c-.695.004-1.375.206-1.959.582-.611.4-1.125.93-1.506 1.553l-.035.059L12.3 28.142h-.002a1.77 1.77 0 0 0-.166.324c-.233.599-.347 1.237-.336 1.879a3.78 3.78 0 0 0 .645 2.059c.409.598.991 1.056 1.668 1.312.426.159.877.243 1.332.246h.141 18.584c.672.021 1.341-.107 1.959-.373l.123-.057a3.44 3.44 0 0 0 1.492-1.42 3.78 3.78 0 0 0 .465-1.795c.007-.76-.168-1.511-.51-2.189l-.049-.094-9.078-15.76a1.76 1.76 0 0 0-.078-.139c-.378-.626-.892-1.159-1.504-1.561-.583-.377-1.263-.578-1.957-.578zm-.566 6.67c.355-.07.72-.07 1.074 0 .561.12.998.429.998.953v.051l-.613 7.898c-.043 1.029-1.787 1.031-1.828 0l-.611-7.973c.015-.511.43-.814.98-.93zm.453 10.764c.175-.012.351.013.516.074a1.25 1.25 0 0 1 .43.281 1.19 1.19 0 0 1 .348.764 1.3 1.3 0 0 1-.018.301 1.19 1.19 0 0 1-1.211.988 1.22 1.22 0 0 1-.488-.111c-.275-.127-.491-.353-.605-.633-.036-.087-.061-.178-.076-.271s-.019-.189-.012-.283a1.33 1.33 0 0 1 .121-.43.98.98 0 0 1 .244-.334l.004-.006c.201-.199.466-.319.748-.34z"/>
+                    </svg>
+                  `;
+                }
+                else
+                {
+                  return `
+                    <svg viewBox="0 0 50 50">
+                      <style>
+                        circle {
+                          transform: rotate(-90deg);
+                          transform-origin: 50% 50%;
+                          stroke-dasharray: ${c};
+                          stroke-linecap: round;
+                          stroke: ${state ? '#9da0a2' : 'rgba(255,255,255,0.1)'};
+                          fill: ${state ? 'var(--c-fill-color-on)' : 'var(--c-fill-color-off)'};
+                        }
+                        text {
+                          font-size: var(--c-font-size);
+                          font-weight: var(--c-font-weight);
+                          letter-spacing: var(--c-letter-spacing);
+                          fill: var(--c-font-color);
+                        }
+                        tspan {
+                          font-size: var(--c-unit-font-size);
+                        }
+                        #circle_value, tspan {
+                          text-anchor: middle;
+                          dominant-baseline: central;
+                        }
+                      </style>
+                      <circle id="circle_stroke_bg" cx="25" cy="25" r="${r}" opacity="0.7" stroke-width="var(--c-stroke-width)"/>
+                      <text id="circle_value" x="50%" y="52%" text-anchor="middle" alignment-baseline="middle" dominant-baseline="middle">${input}${tspan}${unit}</tspan></text>
+                    </svg>
+                  `;
+                }
+              }
+
+            /* * * * * * * * * * * * * * * * * *
+              *                                 *
+              *             SWITCH              *
+              *                                 *
+              * * * * * * * * * * * * * * * * * */
+
+              else if (domain === 'switch') {
+                return `
+                  <svg viewBox="0 0 50 50">
+                    <style>
+                      circle {
+                        transform: rotate(-90deg);
+                        transform-origin: 50% 50%;
+                        stroke-dasharray: ${c};
+                        stroke-linecap: round;
+                        stroke: ${state ? '#9da0a2' : 'rgba(255,255,255,0.1)'};
+                        fill: ${state ? 'var(--c-fill-color-on)' : 'var(--c-fill-color-off)'};
+                      }
+                      text {
+                        font-size: var(--c-font-size);
+                        font-weight: var(--c-font-weight);
+                        letter-spacing: var(--c-letter-spacing);
+                        fill: var(--c-font-color);
+                      }
+                      tspan {
+                        font-size: var(--c-unit-font-size);
+                      }
+                      #circle_value, tspan {
+                        text-anchor: middle;
+                        dominant-baseline: central;
+                      }
+                    </style>
+                    <circle id="circle_stroke_bg" cx="25" cy="25" r="${r}" opacity="0.7" stroke-width="var(--c-stroke-width)"/>
+                    <text id="circle_value" x="50%" y="52%" text-anchor="middle" alignment-baseline="middle" dominant-baseline="middle">${input}${tspan}${unit}</tspan></text>
+                  </svg>
+                `;
               }
 
             /* * * * * * * * * * * * * * * * * *
@@ -1268,7 +1413,9 @@
               * * * * * * * * * * * * * * * * * */
 
               else if (domain === 'cover' && state) {
+                if (states[entity.entity_id].state === 'open') {
                   return circle(state, input, unit);
+                }
               }
 
             /* * * * * * * * * * * * * * * * * *
@@ -1278,7 +1425,7 @@
               * * * * * * * * * * * * * * * * * */
 
               else if (variables.state_on) {
-                  return circle(state, input, unit);
+                return circle(state, input, unit);
               }
           }
         ]]]
