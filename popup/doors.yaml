@@ -1,0 +1,215 @@
+action: fire-dom-event
+browser_mod:
+  service: browser_mod.popup
+  data:
+    title: Doors & Windows
+    content:
+      type: custom:mod-card
+      card_mod:
+        style:
+          hui-grid-card:
+            $: |
+              #root {
+                grid-gap: 0 !important;
+                padding: var(--card-content-padding);
+              }
+
+      card:
+        type: grid
+        columns: 1
+        square: false
+        cards:
+
+          # DOORS
+          - type: custom:button-card
+            entity: group.contact_sensors
+            template:
+              - sensors
+              - sensors_popup
+              - settings
+            state_display: |
+              [[[
+                if (entity) {
+                  return `
+                    <ha-icon icon="custom:contact-sensor"></ha-icon> <span class="title">Doors</span><br>
+                  `;
+                }
+              ]]]
+
+          - type: entities
+            state_color: true
+            show_header_toggle: false
+            card_mod:
+              class: content
+            entities:
+
+              - type: custom:template-entity-row
+                icon: mdi:garage-variant
+                name: Garage
+                state: "{{ states('cover.garage_door') | title }}"
+                secondary: >
+                  {% set entity_id = 'cover.garage_door' %}
+                  {% set stamp = state_attr('sensor.nominal_change_history', 'changes')[entity_id] %}
+                  {% set entity_stamp = stamp if stamp is defined else states.cover.garage_door.last_changed %}
+                  {% set time = ((as_timestamp(now()) - as_timestamp(entity_stamp))) | round(0) %}
+                  {% set minutes = ((time % 3600) / 60) | int(0) %}
+                  {% set hours = ((time % 86400) / 3600) | int(0) %}
+                  {% set days = (time / 86400) | int(0) %}
+                  {%- if time < 60 -%}
+                    Less than a minute
+                  {%- else -%}
+                    {%- if days > 0 -%}
+                      {%- if days == 1 -%}
+                        1 day
+                      {%- else -%}
+                        {{ days }} days
+                      {%- endif -%}
+                    {%- endif -%}
+                    {%- if hours > 0 -%}
+                      {%- if days > 0 -%}
+                        {{ ', ' }}
+                      {%- endif -%}
+                      {%- if hours == 1 -%}
+                        1 hour
+                      {%- else -%}
+                        {{ hours }} hours
+                      {%- endif -%}
+                    {%- endif -%}
+                    {%- if minutes > 0 -%}
+                      {%- if days > 0 or hours > 0 -%}
+                        {{ ', ' }}
+                      {%- endif -%}
+                      {%- if minutes == 1 -%}
+                        1 minute
+                      {%- else -%}
+                        {{ minutes }} minutes
+                      {%- endif -%}
+                    {%- endif -%}
+                  {%- endif -%}
+
+              - type: custom:template-entity-row
+                icon: custom:entrance-door-closed
+                name: Entrance
+                state: >
+                  {% set state = states('binary_sensor.aqara_contact_entrance_door') %}
+                  {{ 'Closed' if state == 'off' else 'Open' }}
+                secondary: >
+                  {% set entity_id = 'binary_sensor.aqara_contact_entrance_door' %}
+                  {% set stamp = state_attr('sensor.nominal_change_history', 'changes')[entity_id] %}
+                  {% set entity_stamp = stamp if stamp is defined else states.binary_sensor.aqara_contact_entrance_door.last_changed %}
+                  {% set time = ((as_timestamp(now()) - as_timestamp(entity_stamp))) | round(0) %}
+                  {% set minutes = ((time % 3600) / 60) | int(0) %}
+                  {% set hours = ((time % 86400) / 3600) | int(0) %}
+                  {% set days = (time / 86400) | int(0) %}
+                  {%- if time < 60 -%}
+                    Less than a minute
+                  {%- else -%}
+                    {%- if days > 0 -%}
+                      {%- if days == 1 -%}
+                        1 day
+                      {%- else -%}
+                        {{ days }} days
+                      {%- endif -%}
+                    {%- endif -%}
+                    {%- if hours > 0 -%}
+                      {%- if days > 0 -%}
+                        {{ ', ' }}
+                      {%- endif -%}
+                      {%- if hours == 1 -%}
+                        1 hour
+                      {%- else -%}
+                        {{ hours }} hours
+                      {%- endif -%}
+                    {%- endif -%}
+                    {%- if minutes > 0 -%}
+                      {%- if days > 0 or hours > 0 -%}
+                        {{ ', ' }}
+                      {%- endif -%}
+                      {%- if minutes == 1 -%}
+                        1 minute
+                      {%- else -%}
+                        {{ minutes }} minutes
+                      {%- endif -%}
+                    {%- endif -%}
+                  {%- endif -%}
+
+              - type: custom:template-entity-row
+                icon: custom:terrace-door
+                name: Terrace
+                state: >
+                  {% set state = states('binary_sensor.aqara_contact_terrace_door') %}
+                  {{ 'Closed' if state == 'off' else 'Open' }}
+                secondary: >
+                  {% set entity_id = 'binary_sensor.aqara_contact_terrace_door' %}
+                  {% set stamp = state_attr('sensor.nominal_change_history', 'changes')[entity_id] %}
+                  {% set entity_stamp = stamp if stamp is defined else states.binary_sensor.aqara_contact_terrace_door.last_changed %}
+                  {% set time = ((as_timestamp(now()) - as_timestamp(entity_stamp))) | round(0) %}
+                  {% set minutes = ((time % 3600) / 60) | int(0) %}
+                  {% set hours = ((time % 86400) / 3600) | int(0) %}
+                  {% set days = (time / 86400) | int(0) %}
+                  {%- if time < 60 -%}
+                    Less than a minute
+                  {%- else -%}
+                    {%- if days > 0 -%}
+                      {%- if days == 1 -%}
+                        1 day
+                      {%- else -%}
+                        {{ days }} days
+                      {%- endif -%}
+                    {%- endif -%}
+                    {%- if hours > 0 -%}
+                      {%- if days > 0 -%}
+                        {{ ', ' }}
+                      {%- endif -%}
+                      {%- if hours == 1 -%}
+                        1 hour
+                      {%- else -%}
+                        {{ hours }} hours
+                      {%- endif -%}
+                    {%- endif -%}
+                    {%- if minutes > 0 -%}
+                      {%- if days > 0 or hours > 0 -%}
+                        {{ ', ' }}
+                      {%- endif -%}
+                      {%- if minutes == 1 -%}
+                        1 minute
+                      {%- else -%}
+                        {{ minutes }} minutes
+                      {%- endif -%}
+                    {%- endif -%}
+                  {%- endif -%}
+
+
+          # WINDOWS
+          - type: custom:button-card
+            entity: group.motion_sensors
+            template:
+              - sensors
+              - sensors_popup
+              - settings
+            state_display: |
+              [[[
+                if (entity) {
+                  return `
+                    <ha-icon icon="custom:contact-sensor"></ha-icon> <span class="title">Windows</span><br>
+                  `;
+                }
+              ]]]
+
+          - type: entities
+            state_color: true
+            show_header_toggle: false
+            card_mod:
+              class: content
+            entities:
+
+              - entity: binary_sensor.aqara_contact_entrance_door
+                icon: custom:entrance-door-closed
+                name: Entrance door
+                secondary_info: last-changed
+
+              - entity: binary_sensor.aqara_contact_terrace_door
+                icon: custom:terrace-door
+                name: Terrace door
+                secondary_info: last-changed
+

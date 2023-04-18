@@ -1,0 +1,196 @@
+action: fire-dom-event
+browser_mod:
+  service: browser_mod.popup
+  data:
+    title: André
+    card_mod:
+      style:
+        #popup header
+        .: |
+          div.content {
+            margin-top: -24px !important;
+          }
+    content:
+      type: vertical-stack
+      cards:
+        - type: entities
+          card_mod:
+            class: content
+            style:
+              .: |
+                #states {
+                  padding-top: 1.2em;
+                  padding-bottom: 0em;
+                }
+              hui-vertical-stack-card$: |
+                h1 {
+                  font-size: 15px !important;
+                  font-weight: 600 !important;
+                  padding: 5px 0 4px 9px !important;
+                  letter-spacing: 0.01em !important;
+                }
+
+
+          entities:
+
+            - type: custom:hui-vertical-stack-card
+              cards:
+
+                - type: entities
+                  entities:
+                    - entity: person.andre
+                      secondary_info: last-changed
+
+                - type: history-graph
+                  show_names: false
+                  hours_to_show: 24
+                  card_mod:
+                    style: |
+                      .content {
+                        padding: 16px 16px 20px 5px !important;
+                      }
+                  entities:
+                    - entity: person.andre
+
+                  # PERSON
+                - type: markdown
+                  content: |-
+                    ## Person
+                  card_mod:
+                    style: |
+                      ha-markdown {
+                        padding: 16px 16px 0px !important;
+                      }
+
+                - type: entities
+                  entities:
+                    - type: custom:template-entity-row
+                      icon: mdi:hand-coin
+                      name: Pay-day
+                      state: "{{ state_attr('sensor.pay_day_countdown', 'lang_countdown') }}"
+                      secondary: "{{ 'On ' + state_attr('sensor.pay_day_countdown', 'day') | lower if not 'Today' in state_attr('sensor.pay_day_countdown', 'lang_countdown') }}"
+
+                  # IPHONE
+                - type: markdown
+                  content: |-
+                    ## iPhone
+                  card_mod:
+                    style: |
+                      ha-markdown {
+                        padding: 16px 16px 0px !important;
+                      }
+
+                - type: entities
+                  entities:
+                    - entity: sensor.saga_sin_iphone_battery_state
+                      icon: mdi:power-plug
+                      name: Power
+                      tap_action:
+                        action: call-service
+                        service: homeassistant.update_entity
+                        service_data:
+                          entity_id: sensor.saga_sin_iphone_battery_state
+
+                    - type: custom:bar-card
+                      width: 55%
+                      height: 2em
+                      decimal: 0
+                      unit_of_measurement: '%'
+                      positions: &bar_card_positions
+                        icon: outside
+                        indicator: 'off'
+                        name: outside
+                      severity: &bar_card_severity
+                        - color: '#6d2525'
+                          from: 0
+                          to: 29
+                        - color: '#303435'
+                          from: 30
+                          to: 59
+                        - color: '#256d3d'
+                          from: 60
+                          to: 100
+                      entity_row: true
+                      entities:
+
+                        - entity: sensor.saga_sin_iphone_battery_level
+                          name: Battery
+                          tap_action:
+                            action: call-service
+                            service: homeassistant.update_entity
+                            service_data:
+                              entity_id: sensor.saga_sin_iphone_battery_level
+
+
+                - type: custom:mod-card
+                  card_mod:
+                    style:
+                      hui-horizontal-stack-card$: |
+                        #root {
+                          justify-content: space-evenly !important;
+                          padding: 1em 2em 2.4em 2em;
+                        }
+                  card:
+                    type: horizontal-stack
+                    cards:
+                      - type: custom:button-card
+                        name: Play sound on iPhone
+                        icon: mdi:volume-high
+                        template: icon_name
+                        tap_action:
+                          action: call-service
+                          service: notify.mobile_app_saga_sin_iphone
+                          service_data:
+                            title: Find my iPhone
+                            message: Here I am
+                            data:
+                              push:
+                                sound:
+                                  name: findmy.wav
+                                  critical: 1
+                                  volume: 1
+
+        - type: map
+          default_zoom: 16
+          dark_mode: true
+          entities:
+            - device_tracker.saga_sin_iphone
+          card_mod:
+            style:
+              .: |
+                #root {
+                  height: 25em;
+                  padding-bottom: 0 !important;
+                }
+                ha-icon-button {
+                  color: var(--primary-color);
+                  zoom: 140%;
+                  margin-left: -0.2em;
+                }
+                ha-card {
+                  border-top: 2px solid #1a1a1a;
+                  border-radius: 0;
+                  transition: none;
+                  margin-bottom: -4px !important;
+                  height: 25em !important;
+                }
+              ha-map$: |
+                #map {
+                  background-color: #191919 !important;
+                }
+                .leaflet-control-attribution {
+                  display: none;
+                }
+                .leaflet-bar a {
+                  background-color: rgba(115, 123, 124, 0.2) !important;
+                  color: #9da0a2 !important;
+                  backdrop-filter: blur(0.25em);
+                  zoom: 140%;
+                }
+                a.leaflet-control-zoom-in {
+                  border-bottom: 1px solid #181818 !important;
+                }
+                .leaflet-pane.leaflet-tile-pane {
+                  filter: invert(0.95) grayscale(0.95) contrast(95%);
+                }
+

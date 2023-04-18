@@ -40,8 +40,8 @@ browser_mod:
                   #grid-margin: 0px 0px 0px 95px
                   #grid-template-columns: 10px 600px 600px 10px
                   #grid-template-rows: 330px 330px
-                  grid-template-columns: 80px 800px 800px 50px
-                  grid-template-rows: 430px 430px
+                  grid-template-columns: 3.7vw 35w 35vw 3.7vw
+                  grid-template-rows: 33.7vh 33.7vh
                   grid-template-areas: |
                     ". cam1 cam2 ."
                     ". cam3 cam4 ."

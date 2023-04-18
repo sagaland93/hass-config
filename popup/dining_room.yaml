@@ -1,95 +1,105 @@
 action: fire-dom-event
 browser_mod:
-  command: popup
-  title: Dining-room
-  style:
-    .: |
-      :host .content {
-        padding: 1.5em 1.5em 1.5em 1.5em;
-      }
-      :host .main-title {
-        pointer-events: none;
-      }
-    $: |
-      .mdc-dialog__surface {
-        background: transparent !important;
-        border-style: none !important;
-        border: 0px !important;
-        box-shadow: none;
-      }
+  service: browser_mod.popup
+  data:
+    title: Dining-room
+    style: >
+      --popup-background-color: transparent;
+    content:
+      type: custom:mod-card
+      card_mod:
+        style:
+          layout-card:
+            $grid-layout:
+              $:
+                .: |
+                  #root {
+                    margin: 15px !important;
+                  }
 
-  card:
-    type: custom:layout-card
-    layout_type: custom:grid-layout
-    layout:
-      #grid-template-columns: 15vw # 510px
-      grid-template-rows: 1fr
-      grid-template-areas: |
-        "dining"
-        "dining"
-
-      mediaquery:
-        #phone
-        "(max-width: 800px)":
-          #grid-template-columns: 1fr
-          grid-template-rows: 1fr
+      card:
+        type: custom:layout-card
+        layout_type: custom:grid-layout
+        layout:
+          grid-template-columns: 21vw
+          #grid-template-rows: 20vw 20vw
           grid-template-areas: |
-            "dining"
-            "dining"
-        #tablet
-        "(max-width: 2000px)":
-          #grid-template-columns: 1fr #20vw
-          grid-template-rows: 1fr
-          grid-template-areas: |
-            "dining"
-            "dining"
+            "dining dining dining"
+          mediaquery:
+            #phone
+            "(max-width: 800px)":
+              grid-template-columns: 20px 80vw 10px
+              #grid-template-rows: 1fr
+              grid-template-areas: |
+                ". dining ."
+            #tablet
+            "(max-width: 2000px)":
+              grid-template-columns: 21vw
+              #grid-template-rows: 1fr
+              grid-template-areas: |
+                "dining dining dining"
 
-    cards:
-
-      #################################################
-      #                                               #
-      #                 DINING-ROOM                   #
-      #                                               #
-      #################################################
-
-      - type: grid
-        #title: Dining-room
-        view_layout:
-          grid-area: dining
-        columns: 2
         cards:
 
-          - type: custom:button-card
-            entity: light.ecodim_dimmer_downlights_dining_room
-            name: Spots
-            template:
-              - light
-              - icon_light_recessed
+          #################################################
+          #                                               #
+          #                 DINING-ROOM                   #
+          #                                               #
+          #################################################
 
-          - type: custom:button-card
-            entity: light.ecodim_dimmer_ceiling_dining_room
-            name: Ceiling
-            template:
-              - light
-              - icon_ceiling_dining
+          - type: grid
+            #title: Dining-room
+            view_layout:
+              grid-area: dining
+            cards:
 
-          - type: custom:button-card
-            entity: vacuum.roborock_s6
-            name: Rolf
-            icon: phu:roborock
-            tap_action:
-              !include vacuum.yaml
-            hold_action:
-              !include vacuum.yaml
-            template:
-              - base
-              - icon_roborock
-              #- circle_status
-              # - loader
+              - type: custom:button-card
+                entity: light.ecodim_dimmer_dining_room_downlights
+                name: Spots
+                template:
+                  - light
+                  - icon_light_recessed
 
-          - type: custom:button-card
-            entity: light.vitrineskap
-            name: Cabinets
-            template:
-              - light
-              - icon_vitrineskap
+              - type: custom:button-card
+                entity: light.ecodim_dimmer_dining_room_ceiling
+                name: Ceiling
+                template:
+                  - light
+                  - icon_ceiling_dining
+
+              - type: custom:button-card
+                entity: media_player.sonos_amp_dining_room
+                name: SONOS
+                template:
+                  - media
+                  - sonos
+                  - icon_sonos
+
+              - type: custom:button-card
+                entity: vacuum.roborock_s7_maxv
+                name: Vacuum
+                icon: phu:roborock
+                state_display: >
+                  [[[
+                    if (states['sensor.template_vacuum_s7_status'].state){
+                      return states['sensor.template_vacuum_s7_status'].state;
+                    }
+                    else {
+                      return 'Unknown';
+                    }
+                  ]]]
+                triggers_update:
+                  - sensor.template_vacuum_s7_status
+                tap_action:
+                  !include vacuum_s7.yaml
+                template:
+                  - base
+                  - icon_roborock
+
+              - type: custom:button-card
+                entity: light.group_dining_room_display_cabinets
+                name: Cabinets
+                template:
+                  - light
+                  - icon_display_cabinet
+

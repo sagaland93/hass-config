@@ -40,10 +40,9 @@ browser_mod:
                 #tablet with 2000x1200 res
                 "(max-width: 2000px)":
                   grid-gap: 0.5vw
-                  grid-template-columns: 10px 1750px 10px
-                  grid-template-rows: 48vw
-                  grid-template-areas: |
-                    ". cam ."
+                  grid-template-columns: 10px 1150px 10px
+                  grid-template-rows: 37vw
+                  grid-template-areas: "cam"
 
             cards:
               - type: picture-entity

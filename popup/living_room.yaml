@@ -1,140 +1,135 @@
 action: fire-dom-event
 browser_mod:
-  command: popup
-  title: Living
-  style:
-    .: |
-      :host .content {
-        padding: 1.5em 1.5em 1.5em 1.5em;
-      }
-      :host .main-title {
-        pointer-events: none;
-      }
-    $: |
-      .mdc-dialog__surface {
-        background: transparent !important;
-        border-style: none !important;
-        border: 0px !important;
-        box-shadow: none;
-      }
+  service: browser_mod.popup
+  data:
+    title: Living-room
+    style: >
+      --popup-background-color: transparent;
+    content:
+      type: custom:mod-card
+      card_mod:
+        style:
+          layout-card:
+            $grid-layout:
+              $:
+                .: |
+                  #root {
+                    margin: 15px !important;
+                  }
 
-  card:
-    type: custom:layout-card
-    layout_type: custom:grid-layout
-    layout:
-      #grid-template-columns: 15vw # 510px
-      grid-template-rows: 1fr
-      grid-template-areas: |
-        "living"
-        "living"
-
-      mediaquery:
-        #phone
-        "(max-width: 800px)":
-          #grid-template-columns: 1fr
-          grid-template-rows: 1fr
+      card:
+        type: custom:layout-card
+        layout_type: custom:grid-layout
+        layout:
+          grid-template-columns: 21vw
+          #grid-template-rows: 20vw 20vw
           grid-template-areas: |
-            "living"
-            "living"
-        #tablet
-        "(max-width: 2000px)":
-          #grid-template-columns: 1fr #20vw
-          grid-template-rows: 1fr
-          grid-template-areas: |
-            "living"
-            "living"
+            "living living living"
+          mediaquery:
+            #phone
+            "(max-width: 800px)":
+              grid-template-columns: 20px 80vw 10px
+              #grid-template-rows: 1fr
+              grid-template-areas: |
+                ". living ."
+            #tablet
+            "(max-width: 2000px)":
+              grid-template-columns: 21vw
+              #grid-template-rows: 1fr
+              grid-template-areas: |
+                "living living living"
 
-    cards:
-
-      #################################################
-      #                                               #
-      #                    LIVING                     #
-      #                                               #
-      #################################################
-
-      - type: grid
-        #title: " " #Living
-        view_layout:
-          grid-area: living
-        columns: 2
         cards:
 
-          - type: custom:button-card
-            entity: light.ecodim_dimmer_downlights_living_room
-            name: Spots
-            template:
-              - light
-              - icon_light_recessed
+          #################################################
+          #                                               #
+          #                    LIVING                     #
+          #                                               #
+          #################################################
 
-          - type: custom:button-card
-            entity: media_player.lg_tv_77
-            name: LG TV
-            template:
-              - media
-              - icon_tv
-            triggers_update:
-              - input_boolean.lg_tv_77_screen_state
-            tap_action:
-              action: call-service
-              service: script.living_room_tv_screen_toggle
-            double_tap_action:
-              action: none
-            variables:
-              tv: input_boolean.lg_tv_77_screen_state
+          - type: grid
+            view_layout:
+              grid-area: living
+            cards:
 
-          - type: custom:button-card
-            entity: media_player.sonos_connect_stua
-            name: SONOS
-            template:
-              - sonos
-              - icon_sonos
+              - type: custom:button-card
+                entity: light.ecodim_dimmer_living_room_downlights
+                name: Spots
+                template:
+                  - light
+                  - icon_light_recessed
 
-          - type: custom:button-card
-            entity: media_player.denon_receiver
-            name: Receiver
-            template:
-              - media
-              - icon_receiver
-              - media_volume
-            variables:
-              player: '[[[ return states["sensor.active_media_players"].attributes.active; ]]]'
+              - type: custom:button-card
+                entity: media_player.lg_tv_77
+                name: LG TV
+                template:
+                  - media
+                  - icon_tv
+                triggers_update:
+                  - input_boolean.lg_tv_77_screen_state
+                tap_action:
+                  action: call-service
+                  service: script.living_room_tv_screen_toggle
+                variables:
+                  tv_screen: input_boolean.lg_tv_77_screen_state
 
-          - type: custom:button-card
-            entity: sensor.shield_real_state
-            name: SHIELD
-            template:
-              - media
-              - icon_nvidia_shield
+              - type: custom:button-card
+                entity: media_player.denon_receiver
+                name: Receiver
+                template:
+                  - media
+                  - media_volume
+                  - icon_receiver
+                variables:
+                  player: '[[[ return states["sensor.active_media_players"].attributes.active; ]]]'
+                  volume_control: media_player.denon_receiver
 
-          - type: custom:button-card
-            entity: media_player.apple_tv_1
-            name: ATV 1
-            template:
-              - media
-              - icon_apple_tv
-              - atv
+              - type: custom:button-card
+                entity: sensor.shield_real_state
+                name: SHIELD
+                template:
+                  - media
+                  - media_volume
+                  - icon_nvidia_shield
+                variables:
+                  player: '[[[ return states["sensor.active_media_players"].attributes.active; ]]]'
+                  volume_control: media_player.denon_receiver
 
-          - type: custom:button-card
-            entity: switch.lumi_plug_sub_1_left
-            name: Sub 1
-            tap_action:
-              action: call-service
-              service: switch.toggle
-              service_data:
-                entity_id: switch.lumi_plug_sub_1_left
-            template:
-              - base
-              - icon_sub
+              - type: custom:button-card
+                entity: media_player.apple_tv_1
+                name: ATV 1
+                template:
+                  - media
+                  - media_volume
+                  - icon_apple_tv
+                  - atv
+                variables:
+                  player: '[[[ return states["sensor.active_media_players"].attributes.active; ]]]'
+                  volume_control: media_player.denon_receiver
 
-          - type: custom:button-card
-            entity: switch.lumi_plug_sub_2_right
-            name: Sub 2
-            tap_action:
-              action: call-service
-              service: switch.toggle
-              service_data:
-                entity_id: switch.lumi_plug_sub_2_right
-            template:
-              - base
-              - icon_sub
-              
+              - type: custom:button-card
+                entity: media_player.sonos_port_living_room
+                name: SONOS
+                template:
+                  - sonos
+                  - icon_sonos
+
+              - type: custom:button-card
+                entity: switch.subwoofers
+                name: Subs
+                tap_action:
+                  action: call-service
+                  service: switch.toggle
+                  service_data:
+                    entity_id: switch.subwoofers
+                template:
+                  - base
+                  - icon_sub
+
+              - type: custom:button-card
+                entity: light.aqara_plug_living_room_disco_party
+                name: Disco
+                template:
+                  - base
+                  - icon_disco
+

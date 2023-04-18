@@ -1,68 +1,61 @@
 action: fire-dom-event
 browser_mod:
-  command: popup
-  title: Entrance
-  style:
-    .: |
-      :host .content {
-        padding: 1.5em 1.5em 1.5em 1.5em;
-      }
-      :host .main-title {
-        pointer-events: none;
-      }
-    $: |
-      .mdc-dialog__surface {
-        background: transparent !important;
-        border-style: none !important;
-        border: 0px !important;
-        box-shadow: none;
-      }
+  service: browser_mod.popup
+  data:
+    title: Entrance
+    style: >
+      --popup-background-color: transparent;
+    content:
+      type: custom:mod-card
+      card_mod:
+        style:
+          layout-card:
+            $grid-layout:
+              $:
+                .: |
+                  #root {
+                    margin: 15px !important;
+                  }
 
-
-  card:
-    type: custom:layout-card
-    layout_type: custom:grid-layout
-    layout:
-      #grid-template-columns: 15vw # 510px
-      grid-template-rows: 1fr
-      grid-template-areas: |
-        "entrance"
-        "entrance"
-
-      mediaquery:
-        #phone
-        "(max-width: 800px)":
-          #grid-template-columns: 1fr
-          grid-template-rows: 1fr
+      card:
+        type: custom:layout-card
+        layout_type: custom:grid-layout
+        layout:
+          grid-template-columns: 21vw
+          #grid-template-rows: 20vw 20vw
           grid-template-areas: |
-            "entrance"
-            "entrance"
-        #phone
-        "(max-width: 2000px)":
-          #grid-template-columns: 1fr #20vw
-          grid-template-rows: 1fr
-          grid-template-areas: |
-            "entrance"
-            "entrance"
+            "entrance entrance entrance"
+          mediaquery:
+            #phone
+            "(max-width: 800px)":
+              grid-template-columns: 20px 80vw 10px
+              #grid-template-rows: 1fr
+              grid-template-areas: |
+                ". entrance ."
+            #tablet
+            "(max-width: 2000px)":
+              grid-template-columns: 21vw
+              #grid-template-rows: 1fr
+              grid-template-areas: |
+                "entrance entrance entrance"
 
-    cards:
-
-      #################################################
-      #                                               #
-      #                   ENTRANCE                    #
-      #                                               #
-      #################################################
-
-      - type: grid
-        #title: Entrance
-        view_layout:
-          grid-area: entrance
-        columns: 2
         cards:
 
-          - type: custom:button-card
-            entity: light.ecodim_dimmer_downlights_entrance
-            name: Spots
-            template:
-              - light
-              - icon_light_recessed
+          #################################################
+          #                                               #
+          #                   ENTRANCE                    #
+          #                                               #
+          #################################################
+
+          - type: grid
+            #title: Entrance
+            view_layout:
+              grid-area: entrance
+            cards:
+
+              - type: custom:button-card
+                entity: light.ecodim_dimmer_entrance_downlights
+                name: Spots
+                template:
+                  - light
+                  - icon_light_recessed
