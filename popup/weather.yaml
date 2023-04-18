@@ -1,23 +1,77 @@
 action: fire-dom-event
 browser_mod:
-  command: popup
-  title: Weather forecast
-  style:
-    .: |
-      ha-card {
-        animation: none !important;
-        margin: 0px !important;
-        padding: 1.5em 2.2em 2em 2.2em !important;
-      }
-      :host .main-title {
-        pointer-events: none;
-      }
+  service: browser_mod.popup
+  data:
+    title: Weather forecast
+    style:
+      .: |
+        :host .main-title {
+          pointer-events: none;
+        }
+    content:
+      type: custom:mod-card
+      card_mod:
+        style:
+          hui-vertical-stack-card:
+            $weather-card:
+              $: |
+                ha-card {
+                  padding: 1.9em 1.9em 2.5em 1.9em !important;
+                }
+                .icon.bigger {
+                  margin-left: 3.1em;
+                }
+                .spacer {
+                  padding-top: 2.3em !important;
+                }
+                .variations {
+                  padding: 1.8em 2.2em 0px !important;
+                  line-height: 2;
+                }
+                .day {
+                  border-right: 0.1em solid rgb(78,78,78) !important;
+                }
+                .forecast .day:nth-last-child(1) {
+                  border-right: none !important;
+                  margin-right: 0px !important;
+                }
+                .precipitation {
+                  color: #00adff !important;
+                }
+                /* phone */
+                @media screen and (max-width: 800px) {
+                  ha-card {
+                    animation: none;
+                    padding: 1.5em 1em 2em 1em !important;
+                  }
+                  .icon.bigger {
+                    margin-top: -3em !important;
+                    margin-left: 2em;
+                    width: 7.5em !important;
+                  }
+                  .spacer {
+                    padding-top: 2em !important;
+                  }
+                  .variations {
+                    padding: 0px 1em !important;
+                  }
+                }
 
-  card:
-  
-    type: vertical-stack
-    cards:
-      - type: weather-forecast
-        entity: weather.pirateweather
-        name: Hvittingfoss
+      card:
+      
+        type: vertical-stack
+        cards:
+          - type: custom:weather-card
+            entity: weather.pirateweather
+            icons: "/local/svg/weather/animated/"
+            number_of_forecasts: '5'
+            forecast: 
+              card_mod:
+                style:
+                  div.lowTemp {display: none;}
+                  div.precipitation_probability {display: none;}
+                  div.precipitation {display: none;}
+            details: true
+            hourly_forecast: false
+            current: true
 
