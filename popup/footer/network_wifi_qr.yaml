@@ -1,0 +1,12 @@
+action: fire-dom-event
+browser_mod:
+  service: browser_mod.popup
+  data:
+    #timeout: 120000
+    title: WiFi
+    style: >
+      --popup-background-color: transparent;
+    content:
+      type: picture
+      image: /local/images/wifi_gjest_scanme.png
+

@@ -1,151 +1,80 @@
 action: fire-dom-event
 browser_mod:
-  command: popup
-  title: Updates
-  style:
-    .: |
-      :host .content {
-        width: 100%;
-      }
-      :host .main-title {
-        pointer-events: none;
-      }
-    hui-grid-card:
-      $: |
-        button-card:nth-child(2),
-        button-card:nth-child(4) {
-          margin: 0.6em 0 2.1em 0.8em;
-        }
-        button-card:nth-child(6) {
-          margin: 0.6em 0 0.5em 0.8em;
-        }
-        #root {
-          grid-gap: 0 !important;
-          padding: var(--card-content-padding);
-          width: 95%;
-        }
-  card:
-    type: grid
-    columns: 1
-    square: false
-    cards:
-      - type: custom:button-card
-        entity: sensor.hass_version_installed
-        template: updater_hass
+  service: browser_mod.popup
+  data:
+    title: Updates
+    card_mod:
+      style:
+        #popup header
+        .:
+    content:
+      type: custom:mod-card
+      card_mod:
+        style:
+          hui-grid-card:
+            $: |
+              button-card:nth-child(2) {
+                margin: 0.6em 0 2.1em 0.8em;
+              }
+              button-card:nth-child(4) {
+                margin: 0.6em 0 0.5em 0.8em;
+              }
+              #root {
+                grid-gap: 0 !important;
+                padding: var(--tablet-popup-content-padding);
+              }
+              
+      card:
+        type: grid
+        columns: 1
+        square: false
+        cards:
+          - type: custom:button-card
+            entity: sensor.hass_version_installed
+            template: updates_hass
+            variables:
+              available: sensor.template_updates
+              latest: sensor.hass_version_latest
+              latest_beta: sensor.hass_version_latest_beta
+              release_notes: sensor.hass_release_notes
+              release_notes_beta: sensor.hass_release_notes_beta
 
-      - type: custom:button-card
-        entity: sensor.hass_version_installed
-        triggers_update:
-          - sensor.hass_version_latest
-          - sensor.hass_version_latest_beta
-        name: Update HASS
-        icon: mdi:update
-        styles:
-          card:
-            - width: max-content
-            - filter: >
-                [[[
-                  return `[[[
-                    if (entity) {
-                      return entity.state === states['sensor.hass_version_latest'].state ||
-                        entity.state === states['sensor.hass_version_latest_beta'].state
-                          ? 'opacity(30%)'
-                          : 'drop-shadow(3px 3px 5px #00000050)';
-                    }
-                  ]]]`
-                ]]]
-            - display: >
-                [[[
-                  return `[[[
-                    return entity
-                      ? 'flex'
-                      : 'none';
-                  ]]]`
-                ]]]
-        tap_action:
-          services: |
-            [[[
-              return `[[[
-                hass.callService('browser_mod', 'toast', {
-                  message: 'Updating Home Assistant...'
-                });
-                hass.callService('update', 'install', {
-                  entity_id: 'update.home_assistant_core_update'
-                });
-              ]]]`
-            ]]]
-        template: icon_name
+          - type: custom:button-card
+            entity: sensor.hass_version_installed
+            name: Update HASS
+            variables:
+              latest: sensor.hass_version_latest
+              latest_beta: sensor.hass_version_latest_beta
+            tap_action:
+              action: call-service
+              service: browser_mod.sequence
+              service_data:
+                sequence:
+                  - service: browser_mod.notification
+                    data:
+                      message: Updating Home Assistant...
+                  - service: update.install
+                    data:
+                      entity_id: update.home_assistant_core_update
+            template: updates_hass_icon_name
 
-      - type: custom:button-card
-        entity: sensor.hacs
-        template: updater_hacs
+          ############################################
 
-      - type: custom:button-card
-        entity: sensor.hacs
-        name: Open HACS
-        icon: mdi:open-in-new
-        styles:
-          card:
-            - width: max-content
-            - filter: >
-                [[[
-                  return `[[[
-                    if (entity) {
-                      return entity.state === '0'
-                        ? 'opacity(30%)'
-                        : 'drop-shadow(3px 3px 5px #00000050)';
-                    }
-                  ]]]`
-                ]]]
-            - display: >
-                [[[
-                  return `[[[
-                    return entity && entity.state !== 'unknown'
-                      ? 'flex'
-                      : 'none';
-                  ]]]`
-                ]]]
-        template: >
-          [[[
-            return window.navigator.userAgent.match(/iPhone/i)
-              ? 'hacs_navigate_ios'
-              : 'hacs_iframe';
-          ]]]
+          - type: custom:button-card
+            variables:
+              updates: sensor.template_updates
+              other_updates: sensor.template_other_updates
+              hacs_installed: sensor.hacs_installed
+            template: updates
 
-      - type: custom:button-card
-        entity: sensor.template_updates
-        template: updater_other
-
-      - type: custom:button-card
-        entity: sensor.template_updates
-        name: Check
-        icon: mdi:reload
-        styles:
-          card:
-            - width: max-content
-            - filter: 'opacity(30%)'
-            - display: >
+          - type: custom:button-card
+            entity: sensor.template_updates
+            name: Updates
+            template:
+              - updates_icon_name
+              - >
                 [[[
-                  return `[[[
-                    return entity
-                      ? 'flex'
-                      : 'none';
-                  ]]]`
+                  return window.navigator.userAgent.match(/iPhone/i)
+                    ? 'hacs_navigate_ios'
+                    : 'hacs_iframe';
                 ]]]
-        tap_action:
-          toast: |
-            [[[
-              return `[[[
-                hass.callService('browser_mod', 'toast', {
-                  message: 'Searching for updates...',
-                  duration: 3000
-                });
-              ]]]`
-            ]]]
-          action: call-service
-          service: homeassistant.update_entity
-          service_data:
-            entity_id:
-              - sensor.udm_unifios
-              - binary_sensor.nas_update_available
-        template: icon_name

@@ -1,36 +1,38 @@
 action: fire-dom-event
 browser_mod:
-  command: popup
-  title: RSS Results
-  style:
-    .: |
-      :host .content {
-        width: 100%;
-      }
-      :host .main-title {
-        pointer-events: none;
-      }
-    hui-grid-card:
-      $: |
-        #root {
-          grid-gap: 0 !important;
-          padding: var(--card-content-padding);
-          width: max-content;
+  service: browser_mod.popup
+  data:
+    title: Recently Added
+    style:
+      .: |
+        :host .main-title {
+          pointer-events: none;
         }
-  card:
-    type: grid
-    columns: 1
-    square: false
-    cards:
-      - type: custom:button-card
-        entity: sensor.rss_search_result
-        template: rss_results_movie
+    content:
+      type: custom:mod-card
+      card_mod:
+        style:
+          hui-vertical-stack-card:
+            $hui-conditional-card>hui-vertical-stack-card$: |
+              hui-horizontal-stack-card {
+                padding: 0em 2em 1.5em 2em;
+              }
+            $hui-conditional-card>hui-vertical-stack-card$hui-horizontal-stack-card$: |
+              #root {
+                justify-content: space-evenly;
+              }
+        
+      card:
+        type: vertical-stack
+        cards:
+          - type: custom:button-card
+            entity: sensor.rss_search_result
+            template: rss_results_movie
 
-      - color_type: blank-card
-        type: custom:button-card
+          - color_type: blank-card
+            type: custom:button-card
 
-      - type: custom:button-card
-        entity: sensor.rss_search_result_tv_shows
-        template: rss_results_tv
-
+          - type: custom:button-card
+            entity: sensor.rss_search_result_tv_shows
+            template: rss_results_tv
 
