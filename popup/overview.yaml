@@ -1,0 +1,92 @@
+action: fire-dom-event
+browser_mod:
+  service: browser_mod.popup
+  data:
+    title: Overview
+    content:
+      type: custom:mod-card
+      card_mod:
+        style:
+          hui-grid-card:
+            $: |
+              #root {
+                grid-gap: 0 !important;
+                padding: var(--card-content-padding);
+              }
+
+      card:
+        type: grid
+        columns: 1
+        square: false
+        cards:
+
+          # MOTION SENSORS
+          - type: custom:button-card
+            entity: group.motion_sensors
+            template: favorite_automations
+
+          - type: entities
+            state_color: true
+            show_header_toggle: false
+            card_mod:
+              class: content
+            entities:
+
+              - type: custom:template-entity-row
+                icon: mdi:counter
+                name: Count
+                state: >
+                  {%- set domains = ['automation'] -%}
+                  {%- for domain in domains -%}
+                    {%- for item in states[domain] -%}
+                      {% if loop.first %}
+                        {{loop.length}}
+                      {% endif %}
+                    {%- endfor -%}
+                  {%- endfor -%}
+
+              - type: custom:template-entity-row
+                icon: mdi:run
+                name: Running
+                state: >
+                  {%- set domains = ['automation'] -%}
+                  {%- set running = namespace(automations=["0"]) -%}
+                  {%- for domain in domains -%}
+                    {%- for item in states[domain] -%}
+                      {% if not loop.first %}
+                        {% if item.attributes.current | int(0) > 0 %}
+                          {% if running.automations[0] == "0" %}
+                            {% set running.automations = [item.attributes.friendly_name] %}
+                          {% else %}
+                            {% set running.automations = running.automations + [item.attributes.friendly_name] %}
+                          {% endif %}
+                        {% endif %}
+                      {% endif %}
+                    {%- endfor -%}
+                  {%- endfor -%}
+                  {{ "0" if running.automations[0] == "0" else running.automations | count }}
+
+
+          # RUNNING
+          - type: custom:button-card
+            entity: group.contact_sensors
+            template: running_processes
+
+
+          - type: entities
+            state_color: true
+            show_header_toggle: false
+            card_mod:
+              class: content
+            entities:
+
+              - type: custom:auto-entities
+                card:
+                  type: entities
+                filter:
+                  include:
+                    - domain: automation
+                  exclude:
+                    - attributes:
+                        current: '= 0'
+

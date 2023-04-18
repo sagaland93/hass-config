@@ -1,128 +1,143 @@
 action: fire-dom-event
 browser_mod:
-  command: popup
-  title: Office
-  style:
-    .: |
-      :host .content {
-        padding: 1.5em 1.5em 1.5em 1.5em;
-      }
-      :host .main-title {
-        pointer-events: none;
-      }
-    $: |
-      .mdc-dialog__surface {
-        background: transparent !important;
-        border-style: none !important;
-        border: 0px !important;
-        box-shadow: none;
-      }
+  service: browser_mod.popup
+  data:
+    title: Office
+    style: >
+      --popup-background-color: transparent;
+    content:
+      type: custom:mod-card
+      card_mod:
+        style:
+          layout-card:
+            $grid-layout:
+              $:
+                .: |
+                  #root {
+                    margin: 15px !important;
+                  }
 
-  card:
-    type: custom:layout-card
-    layout_type: custom:grid-layout
-    layout:
-      #grid-template-columns: 1fr
-      grid-template-rows: 1fr
-      grid-template-areas: |
-        "office"
-        "office"
-        
-      mediaquery:
-        #phone
-        "(max-width: 800px)":
-          #grid-template-columns: 1fr
-          grid-template-rows: 1fr
+      card:
+        type: custom:layout-card
+        layout_type: custom:grid-layout
+        layout:
+          grid-template-columns: 21vw
+          #grid-template-rows: 20vw 20vw
           grid-template-areas: |
-            "office"
-            "office"
-        #portrait
-        "(max-width: 2000px)":
-          #grid-template-columns: 1fr
-          grid-template-rows: 1fr
-          grid-template-areas: |
-            "office"
-            "office"
+            "office office office"
+          mediaquery:
+            #phone
+            "(max-width: 800px)":
+              grid-template-columns: 20px 80vw 10px
+              #grid-template-rows: 1fr
+              grid-template-areas: |
+                ". office ."
+            #tablet
+            "(max-width: 2000px)":
+              grid-template-columns: 21vw
+              #grid-template-rows: 1fr
+              grid-template-areas: |
+                "office office office"
 
-    cards:
-
-      #################################################
-      #                                               #
-      #                    OFFICE                     #
-      #                                               #
-      #################################################
-
-      - type: grid
-        #title: Office
-        view_layout:
-          grid-area: office
-        columns: 2
         cards:
 
-          - type: custom:button-card
-            entity: light.superman_symbol
-            name: Symbol
-            template:
-              - light
-              - icon_superman
+          #################################################
+          #                                               #
+          #                    OFFICE                     #
+          #                                               #
+          #################################################
 
-          - type: custom:button-card
-            entity: light.hue_fair_ceiling_office
-            name: Ceiling
-            template:
-              - light
-              - icon_hue_fair
+          - type: grid
+            view_layout:
+              grid-area: office
+            cards:
 
-          - type: custom:button-card
-            entity: light.hue_play_1
-            name: Play 1
-            template:
-              - light
-              - icon_hue_play
+              - type: custom:button-card
+                entity: light.hue_strip_office_superman_symbol
+                name: Symbol
+                template:
+                  - light
+                  - icon_superman
 
-          - type: custom:button-card
-            entity: light.hue_play_2
-            name: Play 2
-            template:
-              - light
-              - icon_hue_play
+              - type: custom:button-card
+                entity: light.hue_fair_office_ceiling
+                name: Ceiling
+                template:
+                  - light
+                  - icon_hue_fair
 
-          - type: custom:button-card
-            entity: switch.lumi_plug_heater_office_on_off
-            name: Heater
-            template:
-              - base
-              - icon_heater
-              - climate
-            variables:
-              circle_input: >
-                [[[
-                  if (states['sensor.temp_sensor_pc_room'].state) {
-                    return (states['sensor.temp_sensor_pc_room'].state);
-                  }
-                ]]]
-            hold_action:
-              !include office_heater.yaml
-                
-          - type: custom:button-card
-            entity: switch.office_pc
-            name: PC
-            hold_action:
-              !include office_pc.yaml
-            template:
-              - base
-              - icon_win_pc
-              - lock
+              - type: custom:button-card
+                entity: light.hue_play_office_monitor_top
+                name: Play 1
+                template:
+                  - light
+                  - icon_hue_play
 
-          - type: custom:button-card
-            entity: input_boolean.office_amp_power_state
-            name: Amp
-            triggers_update:
-              - input_boolean.office_amp_power_state
-            tap_action:
-              action: call-service
-              service: script.office_amp_power_switch
-            template:
-              - base
-              - icon_denon_pma
+              - type: custom:button-card
+                entity: switch.office_pc
+                name: PC
+                tap_action:
+                  !include office_pc.yaml
+                template:
+                  - base
+                  - icon_win_pc
+                  - lock
+
+              - type: custom:button-card
+                entity: switch.lumi_plug_office_heater
+                name: Heater
+                template:
+                  - base
+                  - climate
+                  - icon_heater
+                variables:
+                  circle_input: >
+                    [[[
+                      var temp = states['sensor.aqara_temp_office'].state;
+                      if (temp) {
+                        return (Math.round(temp));
+                      }
+                    ]]]
+                double_tap_action:
+                  !include office_heater.yaml
+                    
+              - type: custom:button-card
+                entity: light.hue_play_office_monitor_bottom
+                name: Play 2
+                template:
+                  - light
+                  - icon_hue_play
+
+              - type: custom:button-card
+                entity: input_boolean.office_amp_power_state
+                name: Amp
+                triggers_update:
+                  - input_boolean.office_amp_power_state
+                tap_action:
+                  action: call-service
+                  service: script.office_amp_power_switch
+                template:
+                  - base
+                  - icon_denon_pma
+
+              - type: custom:button-card
+                entity: vacuum.roborock_s6
+                name: Vacuum
+                icon: phu:roborock
+                state_display: >
+                  [[[
+                    if (states['sensor.template_vacuum_s6_status'].state){
+                      return states['sensor.template_vacuum_s6_status'].state;
+                    }
+                    else {
+                      return 'Unknown';
+                    }
+                  ]]]
+                triggers_update:
+                  - sensor.template_vacuum_s6_status
+                tap_action:
+                  !include vacuum_s6.yaml
+                template:
+                  - base
+                  - icon_roborock
 

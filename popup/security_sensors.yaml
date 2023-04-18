@@ -1,116 +1,117 @@
 action: fire-dom-event
 browser_mod:
-  command: popup
-  title: Sensors
-  style:
-    .: |
-      :host .main-title {
-        pointer-events: none;
-      }
-    hui-grid-card:
-      $: |
-        #root {
-          grid-gap: 0 !important;
-          padding: var(--card-content-padding);
-        }
-  card:
-    type: grid
-    columns: 1
-    square: false
-    cards:
+  service: browser_mod.popup
+  data:
+    title: Sensors
+    content:
+      type: custom:mod-card
+      card_mod:
+        style:
+          hui-grid-card:
+            $: |
+              #root {
+                grid-gap: 0 !important;
+                padding: var(--card-content-padding);
+              }
 
-      # CONTACT SENSORS
-      - type: custom:button-card
-        entity: group.contact_sensors
-        template: contact_sensors
+      card:
+        type: grid
+        columns: 1
+        square: false
+        cards:
 
-
-      - type: entities
-        state_color: true
-        show_header_toggle: false
-        card_mod:
-          class: content
-        entities:
-
-          - entity: binary_sensor.contact_sensor_entrance
-            icon: custom:entrance-door-closed
-            name: Entrance door
-            secondary_info: last-changed
-
-          - entity: binary_sensor.contact_sensor_terrace_door
-            icon: custom:terrace-door
-            name: Terrace door
-            secondary_info: last-changed
-
-          - entity: binary_sensor.contact_sensor_office
-            icon: phu:panel-door-close
-            name: Office door
-            secondary_info: last-changed
+          # CONTACT SENSORS
+          - type: custom:button-card
+            entity: group.contact_sensors
+            template: contact_sensors
 
 
-      # MOTION SENSORS
-      - type: custom:button-card
-        entity: group.motion_sensors
-        template: motion_sensors
+          - type: entities
+            state_color: true
+            show_header_toggle: false
+            card_mod:
+              class: content
+            entities:
 
-      - type: entities
-        state_color: true
-        show_header_toggle: false
-        card_mod:
-          class: content
-        entities:
+              - entity: binary_sensor.aqara_contact_entrance_door
+                icon: custom:entrance-door-closed
+                name: Entrance door
+                secondary_info: last-changed
 
-          - entity: binary_sensor.motion_driveway
-            icon: custom:park-sign-round
-            name: Driveway
-            secondary_info: last-changed
+              - entity: binary_sensor.aqara_contact_terrace_door
+                icon: custom:terrace-door
+                name: Terrace door
+                secondary_info: last-changed
 
-          - entity: binary_sensor.motion_sensor_entrance
-            icon: custom:entrance-door
-            name: Entrance
-            secondary_info: last-changed
+              - entity: binary_sensor.aqara_contact_office_door
+                icon: phu:panel-door-close
+                name: Office door
+                secondary_info: last-changed
 
-          - entity: binary_sensor.motion_sensor_hallway
-            icon: custom:hallway-art
-            name: Hallway
-            secondary_info: last-changed
 
-          - entity: binary_sensor.motion_sensor_bathroom
-            icon: custom:bathroom
-            name: Bathroom
-            secondary_info: last-changed
+          # MOTION SENSORS
+          - type: custom:button-card
+            entity: group.motion_sensors
+            template: motion_sensors
 
-          - entity: binary_sensor.occupancy_stairs_top
-            icon: phu:rooms-staircase
-            name: Stairs
-            secondary_info: last-changed
+          - type: entities
+            state_color: true
+            show_header_toggle: false
+            card_mod:
+              class: content
+            entities:
 
-          - entity: binary_sensor.motion_sensor_plant
-            icon: custom:plant
-            name: Plant
-            secondary_info: last-changed
+              - entity: binary_sensor.motion_driveway
+                icon: custom:park-sign-round
+                name: Driveway
+                secondary_info: last-changed
 
-          - entity: binary_sensor.motion_living_room
-            icon: custom:living-room
-            name: Living-room
-            secondary_info: last-changed
+              - entity: binary_sensor.aqara_motion_entrance
+                icon: custom:entrance-door
+                name: Entrance
+                secondary_info: last-changed
 
-          - entity: binary_sensor.motion_sensor_dining_table
-            icon: custom:dining-room
-            name: Dining-room
-            secondary_info: last-changed
+              - entity: binary_sensor.aqara_motion_hallway
+                icon: custom:hallway-art
+                name: Hallway
+                secondary_info: last-changed
 
-          - entity: binary_sensor.motion_sensor_kitchen
-            icon: custom:kitchen
-            name: Kitchen
-            secondary_info: last-changed
+              - entity: binary_sensor.aqara_motion_bathroom
+                icon: custom:bathroom
+                name: Bathroom
+                secondary_info: last-changed
 
-          #- entity: binary_sensor.motion_sensor_tv_cabinet
-          #  icon: custom:tv-cabinet
-          #  name: TV Cabinet
-          #  secondary_info: last-changed
+              - entity: binary_sensor.hue_motion_stairs_top
+                icon: phu:rooms-staircase
+                name: Stairs
+                secondary_info: last-changed
 
-          - entity: binary_sensor.motion_sensor_wc
-            icon: custom:toilet-closed
-            name: WC
-            secondary_info: last-changed
+              - entity: binary_sensor.aqara_motion_hallway_dashboard
+                icon: mdi:tablet
+                name: Dashboard
+                secondary_info: last-changed
+
+              - entity: binary_sensor.motion_living_room
+                icon: custom:living-room
+                name: Living-room
+                secondary_info: last-changed
+
+              - entity: binary_sensor.aqara_motion_dining_room
+                icon: custom:dining-room
+                name: Dining-room
+                secondary_info: last-changed
+
+              - entity: binary_sensor.aqara_motion_kitchen
+                icon: custom:kitchen
+                name: Kitchen
+                secondary_info: last-changed
+
+              #- entity: binary_sensor.aqara_motion_living_room
+              #  icon: custom:tv-cabinet
+              #  name: TV Cabinet
+              #  secondary_info: last-changed
+
+              - entity: binary_sensor.aqara_motion_downstairs_wc
+                icon: custom:toilet-closed
+                name: WC
+                secondary_info: last-changed
