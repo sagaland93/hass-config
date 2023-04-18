@@ -1,71 +1,96 @@
 action: fire-dom-event
 browser_mod:
-  command: popup
-  title: Hallway
-  style:
-    .: |
-      :host .content {
-        padding: 1.5em 1.5em 1.5em 1.5em;
-      }
-      :host .main-title {
-        pointer-events: none;
-      }
-    $: |
-      .mdc-dialog__surface {
-        background: transparent !important;
-        border-style: none !important;
-        border: 0px !important;
-        box-shadow: none;
-      }
+  service: browser_mod.popup
+  data:
+    title: Hallway
+    style: >
+      --popup-background-color: transparent;
+    content:
+      type: custom:mod-card
+      card_mod:
+        style:
+          layout-card:
+            $grid-layout:
+              $:
+                .: |
+                  #root {
+                    margin: 15px !important;
+                  }
 
-  card:
-    type: custom:layout-card
-    layout_type: custom:grid-layout
-    layout:
-      grid-template-columns: 385px 510px
-      grid-template-rows: 1fr
-      grid-template-areas: |
-        "hallway"
-      mediaquery:
-        #phone
-        "(max-width: 800px)":
-          grid-template-columns: 1fr
-          grid-template-rows: repeat(2, 1fr)
+      card:
+        type: custom:layout-card
+        layout_type: custom:grid-layout
+        layout:
+          #grid-template-columns: 15vw
+          grid-template-columns: 21vw
+          #grid-template-rows: 20vw 20vw
           grid-template-areas: |
-            "hallway"
-            "hallway"
-    cards:
+            "hallway hallway hallway"
+          mediaquery:
+            #phone
+            "(max-width: 800px)":
+              grid-template-columns: 20px 80vw 10px
+              #grid-template-rows: 1fr
+              grid-template-areas: |
+                ". hallway ."
+            #tablet
+            "(max-width: 2000px)":
+              grid-template-columns: 21vw
+              #grid-template-rows: 1fr
+              grid-template-areas: |
+                "hallway hallway hallway"
 
-      #################################################
-      #                                               #
-      #                    HALLWAY                    #
-      #                                               #
-      #################################################
-
-      - type: grid
-        #title: Hallway
-        view_layout:
-          grid-area: hallway
-        columns: 2
         cards:
 
-          - type: custom:button-card
-            entity: light.ecodim_dimmer_downlights_hallway
-            name: Spots
-            template:
-              - light
-              - icon_light_recessed
+          #################################################
+          #                                               #
+          #                    HALLWAY                    #
+          #                                               #
+          #################################################
 
-          - type: custom:button-card
-            entity: light.hue_color_hallway_lamp
-            name: Lamp
-            template:
-              - light
-              - icon_silus_dome
+          - type: grid
+            #title: Hallway
+            view_layout:
+              grid-area: hallway
+            cards:
 
-          - type: custom:button-card
-            entity: light.kommode
-            name: Cabinet
-            template:
-              - light
-              - icon_light_flush
+              - type: custom:button-card
+                entity: light.ecodim_dimmer_stairs_downlights
+                name: Stairs
+                template:
+                  - light
+                  - icon_light_recessed
+
+              - type: custom:button-card
+                entity: light.ecodim_dimmer_hallway_downlights
+                name: Hallway
+                template:
+                  - light
+                  - icon_light_recessed
+
+              - type: custom:button-card
+                entity: light.hue_bulb_color_hallway_lamp
+                name: Lamp
+                template:
+                  - light
+                  - icon_hue
+
+              - type: custom:button-card
+                entity: light.ikea_driver_hallway_display_cabinet
+                name: Cabinet
+                template:
+                  - light
+                  - icon_light_flush
+
+              ### OFF ###
+              - type: conditional
+                conditions:
+                  - entity: sensor.christmas_mode
+                    state: 'on'
+                card: 
+                  type: custom:button-card
+                  entity: light.christmas_tree
+                  name: Tree
+                  template:
+                    - base
+                    - icon_christmas_tree
