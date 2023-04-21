@@ -64,24 +64,28 @@ template:
     # SELECT - CONDITIONAL CAMERA
     - name: conditional_camera
       state: >
-        {% set default = 'Driveway Snapshot' %}
-        {% set cameras = [
-          states.binary_sensor.motion_driveway,
-          states.binary_sensor.motion_doorbell,
-          states.binary_sensor.motion_living_room,
-          states.binary_sensor.motion_terrace ] %}
-
-        {% macro camera(state) %}
-        {% set state = cameras | selectattr('state','eq',state) | list %}
-        {% set last_changed = default if state | length == 0 else state | map(attribute='last_changed') | list | max %}
-          {{ state | selectattr('last_changed','eq', last_changed) | map(attribute='name') | list | join }}
-        {% endmacro %}
-
-        {% if camera %}
-          {{ camera('off') | replace('Motion','Snapshot') }}
-        {% else %}
-          {{ default }}
-        {% endif %}
+        {% set timestamps = [
+          states.sensor.driveway_last_motion_detected,
+          states.sensor.doorbell_last_motion_detected,
+          states.sensor.living_room_last_motion_detected,
+          states.sensor.terrace_last_motion_detected ] %}
+        {% set current_time = now().timestamp() %}
+        {% set closest_timestamp = timestamps[0] %} {# Assume first timestamp is closest initially #}
+        {% set closest_time_diff = current_time - as_timestamp(timestamps[0].state) %}
+        {% set closest_friendly_name = timestamps[0].attributes.friendly_name | replace('Last Motion Detected','Snapshot') %}
+        {% set timestamp1 = timestamps[1] %}
+        {% set time_diff1 = current_time - as_timestamp(timestamp1.state) %}
+        {% set friendly_name1 = timestamp1.attributes.friendly_name | replace('Last Motion Detected','Snapshot') %}
+        {% set timestamp2 = timestamps[2] %}
+        {% set time_diff2 = current_time - as_timestamp(timestamp2.state) %}
+        {% set friendly_name2 = timestamp2.attributes.friendly_name | replace('Last Motion Detected','Snapshot') %}
+        {% set timestamp3 = timestamps[3] %}
+        {% set time_diff3 = current_time - as_timestamp(timestamp3.state) %}
+        {% set friendly_name3 = timestamp3.attributes.friendly_name | replace('Last Motion Detected','Snapshot') %}
+        {% set time_diffs = [time_diff1, time_diff2, time_diff3] %}
+        {% set friendly_names = [friendly_name1, friendly_name2, friendly_name3] %}
+        {% set closest_time_diff, closest_friendly_name, closest_timestamp = time_diffs | min, friendly_names[time_diffs.index(time_diffs | min)], [timestamp1, timestamp2, timestamp3][time_diffs.index(time_diffs | min)] %}
+        {{ closest_friendly_name }}
       options: >
         {% set cameras = [
           states.camera.driveway_snapshot,
