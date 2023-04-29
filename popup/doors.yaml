@@ -49,41 +49,25 @@ browser_mod:
                 state: "{{ states('cover.garage_door') | title }}"
                 secondary: >
                   {% set entity_id = 'cover.garage_door' %}
-                  {% set stamp = state_attr('sensor.nominal_change_history', 'changes')[entity_id] %}
-                  {% set entity_stamp = stamp if stamp is defined else states.cover.garage_door.last_changed %}
-                  {% set time = ((as_timestamp(now()) - as_timestamp(entity_stamp))) | round(0) %}
-                  {% set minutes = ((time % 3600) / 60) | int(0) %}
-                  {% set hours = ((time % 86400) / 3600) | int(0) %}
-                  {% set days = (time / 86400) | int(0) %}
-                  {%- if time < 60 -%}
+                  {% set entity_stamp = state_attr('sensor.nominal_change_history', 'changes').get(entity_id, states.cover.garage_door.last_changed) %}
+                  {% set time = (as_timestamp(now()) - as_timestamp(entity_stamp)) | round(0) %}
+                  {% if time < 60 %}
                     Less than a minute
-                  {%- else -%}
+                  {% else %}
+                    {% set total_minutes = time // 60 %}
+                    {% set days = total_minutes // 1440 %}
+                    {% set hours = (total_minutes % 1440) // 60 %}
+                    {% set minutes = total_minutes % 60 %}
                     {%- if days > 0 -%}
-                      {%- if days == 1 -%}
-                        1 day
-                      {%- else -%}
-                        {{ days }} days
-                      {%- endif -%}
+                      {{ days }} day{{ 's' if days > 1 else '' }}
                     {%- endif -%}
                     {%- if hours > 0 -%}
-                      {%- if days > 0 -%}
-                        {{ ', ' }}
-                      {%- endif -%}
-                      {%- if hours == 1 -%}
-                        1 hour
-                      {%- else -%}
-                        {{ hours }} hours
-                      {%- endif -%}
+                      {%- if days > 0 -%}, {% endif -%}
+                      {{ hours }} hour{{ 's' if hours > 1 else '' }}
                     {%- endif -%}
-                    {%- if minutes > 0 -%}
-                      {%- if days > 0 or hours > 0 -%}
-                        {{ ', ' }}
-                      {%- endif -%}
-                      {%- if minutes == 1 -%}
-                        1 minute
-                      {%- else -%}
-                        {{ minutes }} minutes
-                      {%- endif -%}
+                    {%- if minutes > 0 and days == 0 -%}
+                      {% if days > 0 or hours > 0 %}, {% endif -%}
+                      {{ minutes }} minute{{ 's' if minutes > 1 else '' }}
                     {%- endif -%}
                   {%- endif -%}
 
@@ -95,41 +79,25 @@ browser_mod:
                   {{ 'Closed' if state == 'off' else 'Open' }}
                 secondary: >
                   {% set entity_id = 'binary_sensor.aqara_contact_entrance_door' %}
-                  {% set stamp = state_attr('sensor.nominal_change_history', 'changes')[entity_id] %}
-                  {% set entity_stamp = stamp if stamp is defined else states.binary_sensor.aqara_contact_entrance_door.last_changed %}
-                  {% set time = ((as_timestamp(now()) - as_timestamp(entity_stamp))) | round(0) %}
-                  {% set minutes = ((time % 3600) / 60) | int(0) %}
-                  {% set hours = ((time % 86400) / 3600) | int(0) %}
-                  {% set days = (time / 86400) | int(0) %}
-                  {%- if time < 60 -%}
+                  {% set entity_stamp = state_attr('sensor.nominal_change_history', 'changes').get(entity_id, states.binary_sensor.aqara_contact_entrance_door.last_changed) %}
+                  {% set time = (as_timestamp(now()) - as_timestamp(entity_stamp)) | round(0) %}
+                  {% if time < 60 %}
                     Less than a minute
-                  {%- else -%}
+                  {% else %}
+                    {% set total_minutes = time // 60 %}
+                    {% set days = total_minutes // 1440 %}
+                    {% set hours = (total_minutes % 1440) // 60 %}
+                    {% set minutes = total_minutes % 60 %}
                     {%- if days > 0 -%}
-                      {%- if days == 1 -%}
-                        1 day
-                      {%- else -%}
-                        {{ days }} days
-                      {%- endif -%}
+                      {{ days }} day{{ 's' if days > 1 else '' }}
                     {%- endif -%}
                     {%- if hours > 0 -%}
-                      {%- if days > 0 -%}
-                        {{ ', ' }}
-                      {%- endif -%}
-                      {%- if hours == 1 -%}
-                        1 hour
-                      {%- else -%}
-                        {{ hours }} hours
-                      {%- endif -%}
+                      {%- if days > 0 -%}, {% endif -%}
+                      {{ hours }} hour{{ 's' if hours > 1 else '' }}
                     {%- endif -%}
-                    {%- if minutes > 0 -%}
-                      {%- if days > 0 or hours > 0 -%}
-                        {{ ', ' }}
-                      {%- endif -%}
-                      {%- if minutes == 1 -%}
-                        1 minute
-                      {%- else -%}
-                        {{ minutes }} minutes
-                      {%- endif -%}
+                    {%- if minutes > 0 and days == 0 -%}
+                      {% if days > 0 or hours > 0 %}, {% endif -%}
+                      {{ minutes }} minute{{ 's' if minutes > 1 else '' }}
                     {%- endif -%}
                   {%- endif -%}
 
@@ -141,41 +109,25 @@ browser_mod:
                   {{ 'Closed' if state == 'off' else 'Open' }}
                 secondary: >
                   {% set entity_id = 'binary_sensor.aqara_contact_terrace_door' %}
-                  {% set stamp = state_attr('sensor.nominal_change_history', 'changes')[entity_id] %}
-                  {% set entity_stamp = stamp if stamp is defined else states.binary_sensor.aqara_contact_terrace_door.last_changed %}
-                  {% set time = ((as_timestamp(now()) - as_timestamp(entity_stamp))) | round(0) %}
-                  {% set minutes = ((time % 3600) / 60) | int(0) %}
-                  {% set hours = ((time % 86400) / 3600) | int(0) %}
-                  {% set days = (time / 86400) | int(0) %}
-                  {%- if time < 60 -%}
+                  {% set entity_stamp = state_attr('sensor.nominal_change_history', 'changes').get(entity_id, states.binary_sensor.aqara_contact_terrace_door.last_changed) %}
+                  {% set time = (as_timestamp(now()) - as_timestamp(entity_stamp)) | round(0) %}
+                  {% if time < 60 %}
                     Less than a minute
-                  {%- else -%}
+                  {% else %}
+                    {% set total_minutes = time // 60 %}
+                    {% set days = total_minutes // 1440 %}
+                    {% set hours = (total_minutes % 1440) // 60 %}
+                    {% set minutes = total_minutes % 60 %}
                     {%- if days > 0 -%}
-                      {%- if days == 1 -%}
-                        1 day
-                      {%- else -%}
-                        {{ days }} days
-                      {%- endif -%}
+                      {{ days }} day{{ 's' if days > 1 else '' }}
                     {%- endif -%}
                     {%- if hours > 0 -%}
-                      {%- if days > 0 -%}
-                        {{ ', ' }}
-                      {%- endif -%}
-                      {%- if hours == 1 -%}
-                        1 hour
-                      {%- else -%}
-                        {{ hours }} hours
-                      {%- endif -%}
+                      {%- if days > 0 -%}, {% endif -%}
+                      {{ hours }} hour{{ 's' if hours > 1 else '' }}
                     {%- endif -%}
-                    {%- if minutes > 0 -%}
-                      {%- if days > 0 or hours > 0 -%}
-                        {{ ', ' }}
-                      {%- endif -%}
-                      {%- if minutes == 1 -%}
-                        1 minute
-                      {%- else -%}
-                        {{ minutes }} minutes
-                      {%- endif -%}
+                    {%- if minutes > 0 and days == 0 -%}
+                      {% if days > 0 or hours > 0 %}, {% endif -%}
+                      {{ minutes }} minute{{ 's' if minutes > 1 else '' }}
                     {%- endif -%}
                   {%- endif -%}
 
