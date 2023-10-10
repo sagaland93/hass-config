@@ -4,6 +4,7 @@ My personal config - based on [Mattias's config](https://github.com/matt8707/has
 
 ![image](https://user-images.githubusercontent.com/93126880/203490436-2ed45a66-965b-4289-9b4a-26de1685903d.png)
 
+[!["Buy Me a Beer"](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/sagaland93)
 
 ## Features
 
