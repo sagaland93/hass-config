@@ -1979,64 +1979,36 @@
     double_tap_action:
       action: fire-dom-event
       browser_mod:
-        service: browser_mod.sequence
+        service: browser_mod.popup
         data:
           sequence:
-            #- service: browser_mod.close_popup
-            - service: browser_mod.popup
-              data:
-                sequence:
-                style: >
-                  --popup-background-color: transparent;
-                content:
-                  type: custom:more-info-card
-                  entity: '[[[ return variables.light_entity; ]]]'
-                card_mod:
-                  style:
-                    more-info-card:
-                      $ha-card:
-                        .: |
-                          state-card-content {
-                            display: none !important;
-                          }
-                        $: |
-                          .card-header {
-                            display: none !important;
-                          }
-                        more-info-light:
-                          $: |
-                            ha-attributes {
-                              display: none !important;
-                            }
-                            .buttons {
-                              margin-bottom: 0 !important;
-                            }
-                            .buttons md-outlined-icon-button:nth-child(2) {
-                              display: none !important;
-                            }
-                            .controls {
-                              margin-bottom: 0 !important;
-                            }
-
-
-  color_picker:
-    variables:
-      light_entity: '[[[ return entity.entity_id ]]]'
-    tap_action:
-      action: fire-dom-event
-      browser_mod:
-        service: browser_mod.sequence
-        data:
-          sequence:
-            #- service: browser_mod.close_popup
-            - service: browser_mod.popup
-              data:
-                sequence:
-                style: >
-                  --popup-background-color: transparent;
-                content:
-                  type: custom:color-picker
-                  entity: '[[[ return variables.light_entity; ]]]'
+          style: >
+            --popup-background-color: transparent;
+            --popup-border-width: 0px;
+          content:
+            type: custom:more-info-card
+            entity: '[[[ return variables.light_entity; ]]]'
+          card_mod:
+            style:
+              more-info-card:
+                $ha-card:
+                  .: |
+                    state-card-content {
+                      display: none !important;
+                    }
+                  $: |
+                    .card-header {
+                      display: none !important;
+                    }
+                  more-info-content:
+                    $more-info-light:
+                      $: |
+                        ha-attributes {
+                          display: none !important;
+                        }
+                        .controls {
+                          margin-bottom: 0 !important;
+                        }
 
 
   #################################################
@@ -2050,9 +2022,14 @@
       - base
     variables:
       light_entity: '[[[ return entity.entity_id ]]]'
+      occupancy: ''
     state_display: >
       [[[
-        if (variables.state == 'no') {
+        let occupancy = states[variables.occupancy] !== undefined ? states[variables.occupancy].state : 'none';
+        if (occupancy === 'on') {
+          return 'Occupied';
+        }
+        else if (variables.state == 'no') {
           return 'Off';
         }
         else if (variables.state == 'yes') {
@@ -2076,6 +2053,7 @@
                 sequence:
                 style: >
                   --popup-background-color: transparent;
+                  --popup-border-width: 0px;
                 card_mod:
                   style:
                     more-info-card:
@@ -2088,20 +2066,22 @@
                           .card-header {
                             display: none !important;
                           }
-                        more-info-light:
-                          $: |
-                            ha-attributes {
-                              display: none !important;
-                            }
-                            .buttons {
-                              margin-bottom: 0 !important;
-                            }
-                            .buttons md-outlined-icon-button:nth-child(2) {
-                              display: none !important;
-                            }
-                            .controls {
-                              margin-bottom: 0 !important;
-                            }
+                        more-info-content:
+                          $more-info-light:
+                            $: |
+                              ha-attributes {
+                                display: none !important;
+                              }
+                              .buttons {
+                                margin-bottom: 0 !important;
+                              }
+                              .controls {
+                                margin-bottom: 0 !important;
+                              }
+                              ha-more-info-control-select-container {
+                                
+                              }
+
                 content:
                   type: custom:more-info-card
                   entity: '[[[ return variables.light_entity; ]]]'
