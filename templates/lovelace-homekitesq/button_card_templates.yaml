@@ -112,7 +112,7 @@
   extra_styles:
     extra_styles: >
       [[[
-        if (entity) {
+        if (entity && entity.attributes && entity.attributes.hs_color !== null) {
           let hs = entity.attributes.hs_color === undefined,
             h = hs || entity.attributes.hs_color[0],
             s = hs || entity.attributes.hs_color[1],
