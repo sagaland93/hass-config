@@ -217,29 +217,31 @@ template:
       state: >
         {% set hours = now().strftime('%H') %}
         {% set minutes = now().strftime('%M') %}
-        {% set date = now().strftime('%D') %}
+        {% set date = now().strftime('%d/%m') %}
         {% if "01/01" in date %}
           New year
-        {% elif "12/24" in date %}
+        {% elif "24/12" in date %}
           Christmas
-        {% elif "12/25" in date %}
+        {% elif "25/12" in date %}
           First Christmas day
-        {% elif "12/26" in date %}
+        {% elif "26/12" in date %}
           Second Christmas day
-        {% elif "01/30" in date %}
+        {% elif "30/01" in date %}
           Mamma
-        {% elif "02/12" in date %}
+        {% elif "12/02" in date %}
           Mother's day
-        {% elif "02/14" in date %}
+        {% elif "14/02" in date %}
           Valentine's day
-        {% elif "05/17" in date %}
+        {% elif "17/05" in date %}
           Constitution Day
-        {% elif "05/20" in date %}
+        {% elif "20/05" in date %}
           Birthday
-        {% elif "09/02" in date %}
+        {% elif "02/09" in date %}
           Pappa
-        {% elif "11/12" in date %}
+        {% elif "12/11" in date %}
           Father's day
+        {% elif "04/05" in date %}
+          Star Wars
         {% else %}
           nothing
         {% endif %}
